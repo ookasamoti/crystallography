@@ -1,0 +1,126 @@
+{
+  "variants": {
+    "face=floor,wedges=1,hits=0": { "model": "crystallography:block/wedge_1-1"},
+    "face=floor,wedges=1,hits=1": { "model": "crystallography:block/wedge_1-2"},
+    "face=floor,wedges=1,hits=2": { "model": "crystallography:block/wedge_1-3"},
+    "face=floor,wedges=1,hits=3": { "model": "crystallography:block/wedge_1-4"},
+
+    "face=ceiling,wedges=1,hits=0": { "model": "crystallography:block/wedge_1-1", "x": 180},
+    "face=ceiling,wedges=1,hits=1": { "model": "crystallography:block/wedge_1-2", "x": 180},
+    "face=ceiling,wedges=1,hits=2": { "model": "crystallography:block/wedge_1-3", "x": 180},
+    "face=ceiling,wedges=1,hits=3": { "model": "crystallography:block/wedge_1-4", "x": 180},
+
+    "face=wall,facing=east,wedges=1,hits=0": { "model": "crystallography:block/wedge_1-1", "x": 90, "y": 90 },
+    "face=wall,facing=east,wedges=1,hits=1": { "model": "crystallography:block/wedge_1-2", "x": 90, "y": 90 },
+    "face=wall,facing=east,wedges=1,hits=2": { "model": "crystallography:block/wedge_1-3", "x": 90, "y": 90 },
+    "face=wall,facing=east,wedges=1,hits=3": { "model": "crystallography:block/wedge_1-4", "x": 90, "y": 90 },
+
+    "face=wall,facing=north,wedges=1,hits=0": { "model": "crystallography:block/wedge_1-1", "x": 90 },
+    "face=wall,facing=north,wedges=1,hits=1": { "model": "crystallography:block/wedge_1-2", "x": 90 },
+    "face=wall,facing=north,wedges=1,hits=2": { "model": "crystallography:block/wedge_1-3", "x": 90 },
+    "face=wall,facing=north,wedges=1,hits=3": { "model": "crystallography:block/wedge_1-4", "x": 90 },
+
+    "face=wall,facing=south,wedges=1,hits=0": { "model": "crystallography:block/wedge_1-1", "x": 90, "y": 180 },
+    "face=wall,facing=south,wedges=1,hits=1": { "model": "crystallography:block/wedge_1-2", "x": 90, "y": 180 },
+    "face=wall,facing=south,wedges=1,hits=2": { "model": "crystallography:block/wedge_1-3", "x": 90, "y": 180 },
+    "face=wall,facing=south,wedges=1,hits=3": { "model": "crystallography:block/wedge_1-4", "x": 90, "y": 180 },
+
+    "face=wall,facing=west,wedges=1,hits=0": { "model": "crystallography:block/wedge_1-1", "x": 90, "y": 270 },
+    "face=wall,facing=west,wedges=1,hits=1": { "model": "crystallography:block/wedge_1-2", "x": 90, "y": 270 },
+    "face=wall,facing=west,wedges=1,hits=2": { "model": "crystallography:block/wedge_1-3", "x": 90, "y": 270 },
+    "face=wall,facing=west,wedges=1,hits=3": { "model": "crystallography:block/wedge_1-4", "x": 90, "y": 270 },
+
+
+    "face=floor,wedges=2,hits=0": { "model": "crystallography:block/wedge_2-1"},
+    "face=floor,wedges=2,hits=1": { "model": "crystallography:block/wedge_2-2"},
+    "face=floor,wedges=2,hits=2": { "model": "crystallography:block/wedge_2-3"},
+    "face=floor,wedges=2,hits=3": { "model": "crystallography:block/wedge_2-4"},
+
+    "face=ceiling,wedges=2,hits=0": { "model": "crystallography:block/wedge_2-1", "x": 180},
+    "face=ceiling,wedges=2,hits=1": { "model": "crystallography:block/wedge_2-2", "x": 180},
+    "face=ceiling,wedges=2,hits=2": { "model": "crystallography:block/wedge_2-3", "x": 180},
+    "face=ceiling,wedges=2,hits=3": { "model": "crystallography:block/wedge_2-4", "x": 180},
+
+    "face=wall,facing=east,wedges=2,hits=0": { "model": "crystallography:block/wedge_2-1", "x": 90, "y": 90 },
+    "face=wall,facing=east,wedges=2,hits=1": { "model": "crystallography:block/wedge_2-2", "x": 90, "y": 90 },
+    "face=wall,facing=east,wedges=2,hits=2": { "model": "crystallography:block/wedge_2-3", "x": 90, "y": 90 },
+    "face=wall,facing=east,wedges=2,hits=3": { "model": "crystallography:block/wedge_2-4", "x": 90, "y": 90 },
+
+    "face=wall,facing=north,wedges=2,hits=0": { "model": "crystallography:block/wedge_2-1", "x": 90 },
+    "face=wall,facing=north,wedges=2,hits=1": { "model": "crystallography:block/wedge_2-2", "x": 90 },
+    "face=wall,facing=north,wedges=2,hits=2": { "model": "crystallography:block/wedge_2-3", "x": 90 },
+    "face=wall,facing=north,wedges=2,hits=3": { "model": "crystallography:block/wedge_2-4", "x": 90 },
+
+    "face=wall,facing=south,wedges=2,hits=0": { "model": "crystallography:block/wedge_2-1", "x": 90, "y": 180 },
+    "face=wall,facing=south,wedges=2,hits=1": { "model": "crystallography:block/wedge_2-2", "x": 90, "y": 180 },
+    "face=wall,facing=south,wedges=2,hits=2": { "model": "crystallography:block/wedge_2-3", "x": 90, "y": 180 },
+    "face=wall,facing=south,wedges=2,hits=3": { "model": "crystallography:block/wedge_2-4", "x": 90, "y": 180 },
+
+    "face=wall,facing=west,wedges=2,hits=0": { "model": "crystallography:block/wedge_2-1", "x": 90, "y": 270 },
+    "face=wall,facing=west,wedges=2,hits=1": { "model": "crystallography:block/wedge_2-2", "x": 90, "y": 270 },
+    "face=wall,facing=west,wedges=2,hits=2": { "model": "crystallography:block/wedge_2-3", "x": 90, "y": 270 },
+    "face=wall,facing=west,wedges=2,hits=3": { "model": "crystallography:block/wedge_2-4", "x": 90, "y": 270 },
+
+
+    "face=floor,wedges=3,hits=0": { "model": "crystallography:block/wedge_3-1"},
+    "face=floor,wedges=3,hits=1": { "model": "crystallography:block/wedge_3-2"},
+    "face=floor,wedges=3,hits=2": { "model": "crystallography:block/wedge_3-3"},
+    "face=floor,wedges=3,hits=3": { "model": "crystallography:block/wedge_3-4"},
+
+    "face=ceiling,wedges=3,hits=0": { "model": "crystallography:block/wedge_3-1", "x": 180},
+    "face=ceiling,wedges=3,hits=1": { "model": "crystallography:block/wedge_3-2", "x": 180},
+    "face=ceiling,wedges=3,hits=2": { "model": "crystallography:block/wedge_3-3", "x": 180},
+    "face=ceiling,wedges=3,hits=3": { "model": "crystallography:block/wedge_3-4", "x": 180},
+
+    "face=wall,facing=east,wedges=3,hits=0": { "model": "crystallography:block/wedge_3-1", "x": 90, "y": 90 },
+    "face=wall,facing=east,wedges=3,hits=1": { "model": "crystallography:block/wedge_3-2", "x": 90, "y": 90 },
+    "face=wall,facing=east,wedges=3,hits=2": { "model": "crystallography:block/wedge_3-3", "x": 90, "y": 90 },
+    "face=wall,facing=east,wedges=3,hits=3": { "model": "crystallography:block/wedge_3-4", "x": 90, "y": 90 },
+
+    "face=wall,facing=north,wedges=3,hits=0": { "model": "crystallography:block/wedge_3-1", "x": 90 },
+    "face=wall,facing=north,wedges=3,hits=1": { "model": "crystallography:block/wedge_3-2", "x": 90 },
+    "face=wall,facing=north,wedges=3,hits=2": { "model": "crystallography:block/wedge_3-3", "x": 90 },
+    "face=wall,facing=north,wedges=3,hits=3": { "model": "crystallography:block/wedge_3-4", "x": 90 },
+
+    "face=wall,facing=south,wedges=3,hits=0": { "model": "crystallography:block/wedge_3-1", "x": 90, "y": 180 },
+    "face=wall,facing=south,wedges=3,hits=1": { "model": "crystallography:block/wedge_3-2", "x": 90, "y": 180 },
+    "face=wall,facing=south,wedges=3,hits=2": { "model": "crystallography:block/wedge_3-3", "x": 90, "y": 180 },
+    "face=wall,facing=south,wedges=3,hits=3": { "model": "crystallography:block/wedge_3-4", "x": 90, "y": 180 },
+
+    "face=wall,facing=west,wedges=3,hits=0": { "model": "crystallography:block/wedge_3-1", "x": 90, "y": 270 },
+    "face=wall,facing=west,wedges=3,hits=1": { "model": "crystallography:block/wedge_3-2", "x": 90, "y": 270 },
+    "face=wall,facing=west,wedges=3,hits=2": { "model": "crystallography:block/wedge_3-3", "x": 90, "y": 270 },
+    "face=wall,facing=west,wedges=3,hits=3": { "model": "crystallography:block/wedge_3-4", "x": 90, "y": 270 },
+
+
+    "face=floor,wedges=4,hits=0": { "model": "crystallography:block/wedge_4-1"},
+    "face=floor,wedges=4,hits=1": { "model": "crystallography:block/wedge_4-2"},
+    "face=floor,wedges=4,hits=2": { "model": "crystallography:block/wedge_4-3"},
+    "face=floor,wedges=4,hits=3": { "model": "crystallography:block/wedge_4-4"},
+
+    "face=ceiling,wedges=4,hits=0": { "model": "crystallography:block/wedge_4-1", "x": 180},
+    "face=ceiling,wedges=4,hits=1": { "model": "crystallography:block/wedge_4-2", "x": 180},
+    "face=ceiling,wedges=4,hits=2": { "model": "crystallography:block/wedge_4-3", "x": 180},
+    "face=ceiling,wedges=4,hits=3": { "model": "crystallography:block/wedge_4-4", "x": 180},
+
+    "face=wall,facing=east,wedges=4,hits=0": { "model": "crystallography:block/wedge_4-1", "x": 90, "y": 90 },
+    "face=wall,facing=east,wedges=4,hits=1": { "model": "crystallography:block/wedge_4-2", "x": 90, "y": 90 },
+    "face=wall,facing=east,wedges=4,hits=2": { "model": "crystallography:block/wedge_4-3", "x": 90, "y": 90 },
+    "face=wall,facing=east,wedges=4,hits=3": { "model": "crystallography:block/wedge_4-4", "x": 90, "y": 90 },
+
+    "face=wall,facing=north,wedges=4,hits=0": { "model": "crystallography:block/wedge_4-1", "x": 90 },
+    "face=wall,facing=north,wedges=4,hits=1": { "model": "crystallography:block/wedge_4-2", "x": 90 },
+    "face=wall,facing=north,wedges=4,hits=2": { "model": "crystallography:block/wedge_4-3", "x": 90 },
+    "face=wall,facing=north,wedges=4,hits=3": { "model": "crystallography:block/wedge_4-4", "x": 90 },
+
+    "face=wall,facing=south,wedges=4,hits=0": { "model": "crystallography:block/wedge_4-1", "x": 90, "y": 180 },
+    "face=wall,facing=south,wedges=4,hits=1": { "model": "crystallography:block/wedge_4-2", "x": 90, "y": 180 },
+    "face=wall,facing=south,wedges=4,hits=2": { "model": "crystallography:block/wedge_4-3", "x": 90, "y": 180 },
+    "face=wall,facing=south,wedges=4,hits=3": { "model": "crystallography:block/wedge_4-4", "x": 90, "y": 180 },
+
+    "face=wall,facing=west,wedges=4,hits=0": { "model": "crystallography:block/wedge_4-1", "x": 90, "y": 270 },
+    "face=wall,facing=west,wedges=4,hits=1": { "model": "crystallography:block/wedge_4-2", "x": 90, "y": 270 },
+    "face=wall,facing=west,wedges=4,hits=2": { "model": "crystallography:block/wedge_4-3", "x": 90, "y": 270 },
+    "face=wall,facing=west,wedges=4,hits=3": { "model": "crystallography:block/wedge_4-4", "x": 90, "y": 270 }
+  }
+}

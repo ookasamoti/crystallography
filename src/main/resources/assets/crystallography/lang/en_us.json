@@ -1,0 +1,12 @@
+{
+  "creativetab.crystallography.tab_name" : "crystallography",
+  "block.crystallography.jewelry_table": "Jewelry Table",
+  "block.crystallography.wedge": "Wedge",
+  "item.crystallography.tool_rod_tier1": "Tool Rod tier1",
+  "item.crystallography.tool_rod_tier2": "Tool Rod tier2",
+  "item.crystallography.tool_rod_tier3": "Tool Rod tier3",
+  "item.crystallography.tool_wand_tier1": "Tool Wand tier1",
+  "item.crystallography.tool_wand_tier2": "Tool Wand tier2",
+  "item.crystallography.tool_wand_tier3": "Tool Wand tier3",
+  "container.jewelry_table": "Jewelry Table"
+}
