@@ -1,11 +1,16 @@
 package net.ookasamoti.crystallography.common.items.crystals;
 
+import net.minecraft.ChatFormatting;
+import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.core.component.DataComponentType;
 import net.minecraft.network.chat.Component;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.TooltipFlag;
 import net.minecraft.world.level.Level;
+import net.ookasamoti.crystallography.data.CrystalSpecRange;
+import net.ookasamoti.crystallography.data.CrystalSpecResolved;
+import net.ookasamoti.crystallography.data.CrystalStatsRegistry;
 import net.ookasamoti.crystallography.setup.DataComponentsRegistry;
 import org.jetbrains.annotations.Nullable;
 
@@ -38,27 +43,76 @@ public class Crystal extends Item {
     }
 
     @Override
-    public void appendHoverText(ItemStack stack,
-                                Item.TooltipContext ctx,
-                                List<Component> tip,
-                                TooltipFlag flag) {
-        var type = DataComponentsRegistry.CRYSTAL_STATS.get();
+    public void appendHoverText(ItemStack stack, TooltipContext context, List<Component> tooltip, TooltipFlag flag) {
+        // NBT優先で確定ステータスを取得。無ければ固定値（min==max）のみフォールバック
+        CrystalSpecResolved resolved = CrystalNBT.resolveForUse(stack).orElseGet(() ->
+                CrystalStatsRegistry.get(stack)
+                        .filter(CrystalSpecRange::allFixed)
+                        .map(r -> new CrystalSpecResolved(
+                                r.tier(),
+                                r.hardness().min(),
+                                r.carat().min(),
+                                r.clarity().min(),
+                                r.categories()
+                        ))
+                        .orElse(null)
+        );
 
-        CrystalStats st = stack.get(type);
-        if (st == null) {
-            tip.add(Component.translatable("tooltip.crystallography.unidentified"));
+        if (!Screen.hasShiftDown()) {
+            // ◈ Crystal item
+            tooltip.add(Component.literal("◈ ")
+                    .append(Component.translatable("tooltip.crystallography.crystal_item"))
+                    .withStyle(ChatFormatting.AQUA));
+            // Press Shift for more info
+            tooltip.add(Component.translatable("tooltip.crystallography.press_shift")
+                    .withStyle(ChatFormatting.DARK_GRAY));
             return;
         }
 
-        tip.add(Component.translatable("tooltip.crystallography.weight",
-                String.format("%.2f", st.weight())));
-        tip.add(Component.translatable("tooltip.crystallography.purity",
-                String.format("%.2f", st.purity())));
-        tip.add(Component.translatable("tooltip.crystallography.hardness",
-                st.hardness()));
-        for (var t : st.traits()) {
-            tip.add(Component.literal(" - " + t));
+        // Shift 押下時詳細
+        if (resolved != null) {
+            tooltip.add(Component.translatable(
+                    "tooltip.crystallography.hardness",
+                    format1(resolved.hardness())
+            ).withStyle(ChatFormatting.GRAY));
+
+            tooltip.add(Component.translatable(
+                    "tooltip.crystallography.carat",
+                    format2(resolved.carat())
+            ).withStyle(ChatFormatting.GRAY));
+
+            tooltip.add(Component.translatable(
+                    "tooltip.crystallography.clarity",
+                    format2(resolved.clarity())
+            ).withStyle(ChatFormatting.GRAY));
+
+            // カテゴリ表示（[category] → 説明）
+            if (resolved.categories() != null && !resolved.categories().isEmpty()) {
+                for (String cat : resolved.categories()) {
+                    // [category]
+                    tooltip.add(Component.literal("[" + cat + "]").withStyle(ChatFormatting.GOLD));
+                    // category explanation（翻訳キー: tooltip.crystallography.category.<cat>.desc）
+                    tooltip.add(Component.translatable("tooltip.crystallography.category." + cat + ".desc")
+                            .withStyle(ChatFormatting.DARK_GRAY));
+                }
+            }
+        } else {
+            // ステータス未確定（古いアイテムなど）の保険
+            tooltip.add(Component.translatable("tooltip.crystallography.unresolved")
+                    .withStyle(ChatFormatting.RED));
         }
+
+        super.appendHoverText(stack, context, tooltip, flag);
     }
+
+// --- ここから下は同クラス内の最小ヘルパー ---
+
+    private static String format1(float f) {
+        return String.format(java.util.Locale.ROOT, "%.1f", f);
+    }
+    private static String format2(float f) {
+        return String.format(java.util.Locale.ROOT, "%.2f", f);
+    }
+
 
 }
