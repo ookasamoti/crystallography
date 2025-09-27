@@ -3,6 +3,7 @@ package net.ookasamoti.crystallography.data;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.core.registries.BuiltInRegistries;
+import net.ookasamoti.crystallography.common.item.crystal.CrystalSpecRange;
 
 import java.util.HashMap;
 import java.util.Map;

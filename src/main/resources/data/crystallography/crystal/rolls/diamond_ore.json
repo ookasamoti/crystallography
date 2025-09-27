@@ -1,0 +1,9 @@
+{
+  "input": "minecraft:diamond_ore",
+  "picks": ["#minecraft:pickaxes"],
+  "results": [
+    { "item": "crystallography:diamond_crystal", "weight": 70, "type": "crystal" },
+    { "item": "crystallography:pink_diamond_crystal", "weight": 10, "type": "crystal" },
+    { "item": "minecraft:diamond", "weight": 20, "type": "vanilla" }
+  ]
+}

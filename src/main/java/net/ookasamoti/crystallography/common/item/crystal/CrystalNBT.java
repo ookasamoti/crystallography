@@ -1,10 +1,9 @@
-package net.ookasamoti.crystallography.common.items.crystals;
+package net.ookasamoti.crystallography.common.item.crystal;
 
 import net.minecraft.core.component.DataComponents;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.component.CustomData;
-import net.ookasamoti.crystallography.data.CrystalSpecResolved;
 import net.ookasamoti.crystallography.data.CrystalStatsRegistry;
 
 import java.util.Optional;

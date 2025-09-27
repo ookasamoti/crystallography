@@ -6,7 +6,7 @@ import net.neoforged.bus.api.IEventBus;
 import net.neoforged.neoforge.registries.DeferredHolder;
 import net.neoforged.neoforge.registries.DeferredRegister;
 import net.ookasamoti.crystallography.CrystallographyMod;
-import net.ookasamoti.crystallography.common.items.crystals.CrystalStats;
+import net.ookasamoti.crystallography.common.item.crystal.CrystalStats;
 
 public final class DataComponentsRegistry {
     public static final DeferredRegister<DataComponentType<?>> DATA_COMPONENT_TYPES =

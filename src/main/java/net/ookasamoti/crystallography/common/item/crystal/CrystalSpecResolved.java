@@ -1,4 +1,4 @@
-package net.ookasamoti.crystallography.data;
+package net.ookasamoti.crystallography.common.item.crystal;
 
 import java.util.Set;
 

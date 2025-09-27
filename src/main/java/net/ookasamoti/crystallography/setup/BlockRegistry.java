@@ -8,8 +8,9 @@ import net.neoforged.bus.api.IEventBus;
 import net.neoforged.neoforge.registries.DeferredBlock;
 import net.neoforged.neoforge.registries.DeferredRegister;
 import net.ookasamoti.crystallography.CrystallographyMod;
-import net.ookasamoti.crystallography.common.blocks.JewelryTableBlock;
-import net.ookasamoti.crystallography.common.blocks.Wedge;
+import net.ookasamoti.crystallography.common.block.JewelryTableBlock;
+import net.ookasamoti.crystallography.common.block.LapidaryAnvilBlock;
+import net.ookasamoti.crystallography.common.block.Wedge;
 
 public final class BlockRegistry {
     public static final DeferredRegister.Blocks BLOCKS = DeferredRegister.createBlocks(CrystallographyMod.MOD_ID);
@@ -31,9 +32,18 @@ public final class BlockRegistry {
                     .noOcclusion())
     );
 
+    public static final DeferredBlock<LapidaryAnvilBlock> LAPIDARY_ANVIL = BLOCKS.register("lapidary_anvil", () ->
+            new LapidaryAnvilBlock(BlockBehaviour.Properties.of()
+                    .mapColor(MapColor.METAL)
+                    .strength(5.0f, 6.0f)
+                    .sound(SoundType.METAL)
+                    .noOcclusion())
+    );
+
     public static void registerBlockItems() {
         ItemRegistry.ITEMS.registerItem("wedge", props -> new BlockItem(WEDGE.get(), props));
         ItemRegistry.ITEMS.registerItem("jewelry_table", props -> new BlockItem(JEWELRY_TABLE.get(), props));
+        ItemRegistry.ITEMS.registerItem("lapidary_anvil", props -> new BlockItem(LAPIDARY_ANVIL.get(), props));
     }
 
     public static void register(IEventBus bus) {

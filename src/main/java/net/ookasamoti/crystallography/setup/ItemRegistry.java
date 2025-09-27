@@ -5,8 +5,8 @@ import net.neoforged.bus.api.IEventBus;
 import net.neoforged.neoforge.registries.DeferredRegister;
 import net.neoforged.neoforge.registries.DeferredItem;
 import net.ookasamoti.crystallography.CrystallographyMod;
-import net.ookasamoti.crystallography.common.items.tool.ToolRod;
-import net.ookasamoti.crystallography.common.items.tool.ToolWand;
+import net.ookasamoti.crystallography.common.item.tool.ToolRod;
+import net.ookasamoti.crystallography.common.item.tool.ToolWand;
 
 public class ItemRegistry {
     public static final DeferredRegister.Items ITEMS = DeferredRegister.createItems(CrystallographyMod.MOD_ID);

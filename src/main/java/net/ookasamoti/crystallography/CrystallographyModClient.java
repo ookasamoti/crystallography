@@ -8,6 +8,7 @@ import net.neoforged.neoforge.client.event.RegisterMenuScreensEvent;
 import net.neoforged.neoforge.client.gui.ConfigurationScreen;
 import net.neoforged.neoforge.client.gui.IConfigScreenFactory;
 import net.ookasamoti.crystallography.client.screen.JewelryTableScreen;
+import net.ookasamoti.crystallography.client.screen.LapidaryAnvilScreen;
 import net.ookasamoti.crystallography.setup.MenuTypesRegistry;
 
 import java.util.Objects;
@@ -22,6 +23,6 @@ public class CrystallographyModClient {
     @SubscribeEvent
     static void onRegisterScreens(RegisterMenuScreensEvent event) {
         event.register(MenuTypesRegistry.JEWELRY_TABLE_MENU.get(), JewelryTableScreen::new);
-        CrystallographyMod.LOGGER.info("Registered JewelryTable screen via RegisterMenuScreensEvent");
+        event.register(MenuTypesRegistry.LAPIDARY_ANVIL_MENU.get(), LapidaryAnvilScreen::new);
     }
 }

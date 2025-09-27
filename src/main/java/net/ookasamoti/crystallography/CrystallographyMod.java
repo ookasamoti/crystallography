@@ -1,7 +1,10 @@
 package net.ookasamoti.crystallography;
 
 import net.neoforged.fml.ModContainer;
-import net.ookasamoti.crystallography.common.items.crystals.CrystalSpecs;
+import net.neoforged.neoforge.event.AddReloadListenerEvent;
+import net.ookasamoti.crystallography.common.item.crystal.CrystalSpecs;
+import net.ookasamoti.crystallography.data.CrystalRollsReloader;
+import net.ookasamoti.crystallography.data.CrystalStatsReloader;
 import net.ookasamoti.crystallography.setup.*;
 import org.slf4j.Logger;
 
@@ -24,7 +27,8 @@ public class CrystallographyMod {
         modEventBus.addListener(this::commonSetup);
 
         NeoForge.EVENT_BUS.register(this);
-        NeoForge.EVENT_BUS.addListener(CrystalSpecs::onReload);
+//        NeoForge.EVENT_BUS.addListener(CrystalSpecs::onReload);
+        NeoForge.EVENT_BUS.addListener(CrystallographyMod::onAddReloadListeners);
 
         //register
         ItemRegistry.register(modEventBus);
@@ -33,6 +37,11 @@ public class CrystallographyMod {
         BlockEntitiesRegistry.register(modEventBus);
         CreativeTabRegistry.register(modEventBus);
         MenuTypesRegistry.register(modEventBus);
+    }
+
+    private static void onAddReloadListeners(AddReloadListenerEvent e) {
+        e.addListener(new CrystalStatsReloader());
+        e.addListener(new CrystalRollsReloader());
     }
 
     private void commonSetup(final FMLCommonSetupEvent event) {

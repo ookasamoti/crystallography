@@ -8,9 +8,13 @@ import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.packs.resources.ResourceManager;
 import net.minecraft.server.packs.resources.SimpleJsonResourceReloadListener;
 import net.minecraft.util.profiling.ProfilerFiller;
+import net.ookasamoti.crystallography.common.item.crystal.CrystalSpecRange;
+import net.ookasamoti.crystallography.common.util.LapidaryAnvilOperations;
 import org.jetbrains.annotations.NotNull;
 
+import java.util.HashSet;
 import java.util.Map;
+import java.util.Set;
 
 public final class CrystalStatsReloader extends SimpleJsonResourceReloadListener {
     private static final Gson GSON = new GsonBuilder().create();
@@ -43,14 +47,23 @@ public final class CrystalStatsReloader extends SimpleJsonResourceReloadListener
             FloatRange carat    = FloatRange.fromJson(root.getAsJsonObject("carat"));
             FloatRange clarity  = FloatRange.fromJson(root.getAsJsonObject("clarity"));
 
-            java.util.Set<String> categories = java.util.Set.of();
+            Set<String> categories = Set.of();
             if (root.has("category")) {
-                var set = new java.util.HashSet<String>();
+                var set = new HashSet<String>();
                 for (var el : root.getAsJsonArray("category")) set.add(el.getAsString());
-                categories = java.util.Set.copyOf(set);
+                categories = Set.copyOf(set);
             }
 
-            var spec = new CrystalSpecRange(tier, hardness, carat, clarity, categories);
+            LapidaryAnvilOperations.CrackResult crack_result = null;
+            if (root.has("crack_result")) {
+                var cr = root.getAsJsonObject("crack_result");
+                var outId = ResourceLocation.tryParse(cr.get("item").getAsString());
+                int count = cr.has("count") ? cr.get("count").getAsInt() : 1;
+                if (outId != null) crack_result = new LapidaryAnvilOperations.CrackResult(outId, count);
+            }
+
+
+            var spec = new CrystalSpecRange(tier, hardness, carat, clarity, categories, crack_result);
             CrystalStatsRegistry.put(itemId, spec);
         }
     }

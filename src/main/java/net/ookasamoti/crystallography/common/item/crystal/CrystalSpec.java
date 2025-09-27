@@ -1,4 +1,4 @@
-package net.ookasamoti.crystallography.common.items.crystals;
+package net.ookasamoti.crystallography.common.item.crystal;
 
 import net.minecraft.resources.ResourceLocation;
 import java.util.List;

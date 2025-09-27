@@ -1,5 +1,5 @@
-// net.ookasamoti.crystallography.common.items.crystals.CrystalSpecs
-package net.ookasamoti.crystallography.common.items.crystals;
+// net.ookasamoti.crystallography.common.item.crystal.CrystalSpecs
+package net.ookasamoti.crystallography.common.item.crystal;
 
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
@@ -11,8 +11,6 @@ import net.minecraft.server.packs.resources.SimplePreparableReloadListener;
 import net.minecraft.util.profiling.ProfilerFiller;
 import net.minecraft.world.item.Item;
 
-import net.neoforged.fml.common.Mod;
-import net.neoforged.bus.api.SubscribeEvent;
 import net.neoforged.neoforge.event.AddReloadListenerEvent;
 import net.ookasamoti.crystallography.CrystallographyMod;
 
@@ -53,10 +51,6 @@ public final class CrystalSpecs extends SimplePreparableReloadListener<Map<Item,
 
                 ResourceLocation itemId = ResourceLocation.parse(root.get("item").getAsString());
                 Item item = BuiltInRegistries.ITEM.get(itemId);
-                if (item == null) {
-                    CrystallographyMod.LOGGER.warn("CrystalSpecs: unknown item {}", itemId);
-                    return;
-                }
 
                 int tier = root.get("tier").getAsInt();
                 int hardness = root.get("hardness").getAsInt();

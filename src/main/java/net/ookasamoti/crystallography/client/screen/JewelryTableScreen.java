@@ -11,7 +11,8 @@ import net.ookasamoti.crystallography.CrystallographyMod;
 import org.jetbrains.annotations.NotNull;
 
 public class JewelryTableScreen extends AbstractContainerScreen<JewelryTableMenu> {
-    private static final ResourceLocation TEXTURE = ResourceLocation.tryParse(CrystallographyMod.MOD_ID + ":textures/gui/jewelry_table_gui.png");
+    private static final ResourceLocation TEXTURE = ResourceLocation.tryParse(
+            CrystallographyMod.MOD_ID + ":textures/gui/jewelry_table_gui.png");
 
     public JewelryTableScreen(JewelryTableMenu menu, Inventory inventory, Component title) {
         super(menu, inventory, title);

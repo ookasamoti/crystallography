@@ -1,8 +1,8 @@
-package net.ookasamoti.crystallography.common.items.tool;
+package net.ookasamoti.crystallography.common.item.tool;
 
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.enchantment.Enchantment;
-import net.ookasamoti.crystallography.common.items.crystals.Crystal;
+import net.ookasamoti.crystallography.common.item.crystal.Crystal;
 
 import java.util.*;
 

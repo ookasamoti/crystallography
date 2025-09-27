@@ -1,6 +1,9 @@
-package net.ookasamoti.crystallography.data;
+package net.ookasamoti.crystallography.common.item.crystal;
 
-import java.util.Set;
+import net.ookasamoti.crystallography.common.util.LapidaryAnvilOperations;
+import net.ookasamoti.crystallography.data.FloatRange;
+
+import javax.annotation.Nullable;
 import java.util.random.RandomGenerator;
 
 public record CrystalSpecRange(
@@ -8,7 +11,8 @@ public record CrystalSpecRange(
         FloatRange hardness,
         FloatRange carat,
         FloatRange clarity,
-        Set<String> categories) {
+        java.util.Set<String> categories,
+        @Nullable LapidaryAnvilOperations.CrackResult crackResult) {
 
     public boolean allFixed() {
         return hardness.isFixed() && carat.isFixed() && clarity.isFixed();
@@ -23,5 +27,9 @@ public record CrystalSpecRange(
 
     private static float lerp(float t, FloatRange r) {
         return r.min() + (r.max() - r.min()) * t;
+    }
+
+    public LapidaryAnvilOperations.CrackResult crackResult() {
+        return crackResult;
     }
 }

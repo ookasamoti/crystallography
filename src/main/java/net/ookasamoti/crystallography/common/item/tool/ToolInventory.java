@@ -1,4 +1,4 @@
-package net.ookasamoti.crystallography.common.items.tool;
+package net.ookasamoti.crystallography.common.item.tool;
 
 import net.minecraft.core.HolderLookup;
 import net.minecraft.core.component.DataComponents;
@@ -7,7 +7,7 @@ import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.component.CustomData;
 import net.neoforged.neoforge.items.IItemHandlerModifiable;
 import net.neoforged.neoforge.items.ItemStackHandler;
-import net.ookasamoti.crystallography.common.items.crystals.Crystal;
+import net.ookasamoti.crystallography.common.item.crystal.Crystal;
 
 public class ToolInventory {
 

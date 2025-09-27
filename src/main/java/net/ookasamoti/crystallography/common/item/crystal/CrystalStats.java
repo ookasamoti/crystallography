@@ -1,4 +1,4 @@
-package net.ookasamoti.crystallography.common.items.crystals;
+package net.ookasamoti.crystallography.common.item.crystal;
 
 import com.mojang.serialization.Codec;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
@@ -6,7 +6,6 @@ import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.network.codec.ByteBufCodecs;
 import net.minecraft.network.codec.StreamCodec;
 import net.minecraft.resources.ResourceLocation;
-import net.minecraft.util.Mth;
 import net.minecraft.util.RandomSource;
 
 import java.util.List;
@@ -36,7 +35,7 @@ public record CrystalStats(float weight, float purity, int hardness, List<Resour
         float carat   = roll(spec.caratMin(),   spec.caratMax(),   r);
         float clarity = roll(spec.clarityMin(), spec.clarityMax(), r);
         int hardness  = spec.hardness();
-        var traits = List.copyOf(spec.categories()); // ひとまず categories をそのまま表示用に
+        var traits = List.copyOf(spec.categories());
         return new CrystalStats(carat, clarity, hardness, traits);
     }
 }

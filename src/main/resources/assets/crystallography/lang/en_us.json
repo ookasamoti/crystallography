@@ -8,5 +8,12 @@
   "item.crystallography.tool_wand_tier1": "Tool Wand tier1",
   "item.crystallography.tool_wand_tier2": "Tool Wand tier2",
   "item.crystallography.tool_wand_tier3": "Tool Wand tier3",
-  "container.jewelry_table": "Jewelry Table"
+  "container.jewelry_table": "Jewelry Table",
+  "block.crystallography.lapidary_anvil": "Lapidary Anvil",
+  "tooltip.crystallography.unresolved": "Status Unresolved",
+  "tooltip.crystallography.clarity": "Clarity",
+  "tooltip.crystallography.carat": "Carat",
+  "tooltip.crystallography.hardness": "Hardness",
+  "tooltip.crystallography.press_shift": "Press §eShift§r for more Information",
+  "tooltip.crystallography.crystal_item": "§9Crystal§r"
 }

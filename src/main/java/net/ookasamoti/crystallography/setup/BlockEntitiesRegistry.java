@@ -6,7 +6,8 @@ import net.neoforged.bus.api.IEventBus;
 import net.neoforged.neoforge.registries.DeferredHolder;
 import net.neoforged.neoforge.registries.DeferredRegister;
 import net.ookasamoti.crystallography.CrystallographyMod;
-import net.ookasamoti.crystallography.common.blocks.JewelryTableBlockEntity;
+import net.ookasamoti.crystallography.common.block.entity.JewelryTableBlockEntity;
+import net.ookasamoti.crystallography.common.block.entity.LapidaryAnvilBlockEntity;
 
 public class BlockEntitiesRegistry {
     public static final DeferredRegister<BlockEntityType<?>> BLOCK_ENTITIES =
@@ -17,6 +18,14 @@ public class BlockEntitiesRegistry {
                     () -> BlockEntityType.Builder.of(
                             JewelryTableBlockEntity::new,
                             BlockRegistry.JEWELRY_TABLE.get()
+                    ).build(null)
+            );
+
+    public static final DeferredHolder<BlockEntityType<?>, BlockEntityType<LapidaryAnvilBlockEntity>> LAPIDARY_ANVIL_BE =
+            BLOCK_ENTITIES.register("lapidary_anvil_be",
+                    () -> BlockEntityType.Builder.of(
+                            LapidaryAnvilBlockEntity::new,
+                            BlockRegistry.LAPIDARY_ANVIL.get()
                     ).build(null)
             );
 

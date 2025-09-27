@@ -1,4 +1,4 @@
-package net.ookasamoti.crystallography.common.blocks;
+package net.ookasamoti.crystallography.common.block.entity;
 
 import net.minecraft.core.BlockPos;
 import net.minecraft.network.chat.Component;
