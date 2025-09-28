@@ -1,7 +1,7 @@
 {
   "item": "crystallography:diamond_crystal",
   "tier": 3,
-  "hardness": { "min": 3.0, "max": 3.0 },
+  "hardness": 650,
   "carat":    { "min": 1.0, "max": 1.2 },
   "clarity":  { "min": 0.9, "max": 0.95 },
   "category": [

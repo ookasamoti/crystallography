@@ -26,8 +26,7 @@ public class ToolInventory {
 
     private static CompoundTag readOrCreateCustomTag(ItemStack stack) {
         CustomData data = stack.getOrDefault(DataComponents.CUSTOM_DATA, CustomData.EMPTY);
-        CompoundTag tag = data.copyTag();
-        return tag != null ? tag : new CompoundTag();
+        return data.copyTag();
     }
 
     private static void writeCustomTag(ItemStack stack, CompoundTag root) {

@@ -2,18 +2,32 @@
   "creativetab.crystallography.tab_name" : "crystallography",
   "block.crystallography.jewelry_table": "Jewelry Table",
   "block.crystallography.wedge": "Wedge",
+
   "item.crystallography.tool_rod_tier1": "Tool Rod tier1",
   "item.crystallography.tool_rod_tier2": "Tool Rod tier2",
   "item.crystallography.tool_rod_tier3": "Tool Rod tier3",
   "item.crystallography.tool_wand_tier1": "Tool Wand tier1",
   "item.crystallography.tool_wand_tier2": "Tool Wand tier2",
   "item.crystallography.tool_wand_tier3": "Tool Wand tier3",
+
+  "item.crystallography.diamond_crystal": "Diamond Crystal",
+  "item.crystallography.pink_diamond_crystal": "Pink Diamond Crystal",
+
   "container.jewelry_table": "Jewelry Table",
   "block.crystallography.lapidary_anvil": "Lapidary Anvil",
+
   "tooltip.crystallography.unresolved": "Status Unresolved",
-  "tooltip.crystallography.clarity": "Clarity",
-  "tooltip.crystallography.carat": "Carat",
   "tooltip.crystallography.hardness": "Hardness",
+  "tooltip.crystallography.carat": "Carat",
+  "tooltip.crystallography.clarity": "Clarity",
   "tooltip.crystallography.press_shift": "Press §eShift§r for more Information",
-  "tooltip.crystallography.crystal_item": "§9Crystal§r"
+  "tooltip.crystallography.crystal_item": "§9Crystal§r",
+  "tooltip.crystallography.hardness_label": "Haardness",
+  "tooltip.crystallography.carat_label": "Carat",
+  "tooltip.crystallography.clarity_label": "Clarity",
+
+  "tooltip.crystallography.category.gem.name": "Gem",
+  "tooltip.crystallography.category.gem.desc": "Gem desc",
+  "tooltip.crystallography.category.diamond.name": "Diamond",
+  "tooltip.crystallography.category.diamond.desc": "Diamond desc"
 }

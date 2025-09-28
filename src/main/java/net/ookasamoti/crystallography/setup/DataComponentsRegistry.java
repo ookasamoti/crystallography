@@ -23,4 +23,6 @@ public final class DataComponentsRegistry {
     public static void register(IEventBus bus) {
         DATA_COMPONENT_TYPES.register(bus);
     }
+
+    private DataComponentsRegistry() {}
 }

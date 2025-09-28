@@ -12,8 +12,9 @@ import net.minecraft.world.entity.player.Inventory;
 import net.ookasamoti.crystallography.CrystallographyMod;
 import org.jetbrains.annotations.NotNull;
 
-public class LapidaryAnvilScreen extends AbstractContainerScreen<LapidaryAnvilMenu> {
+// LapidaryAnvilScreen.java
 
+public class LapidaryAnvilScreen extends AbstractContainerScreen<LapidaryAnvilMenu> {
     private static final ResourceLocation TEXTURE = ResourceLocation.tryParse(
             CrystallographyMod.MOD_ID + ":textures/gui/lapidary_anvil_gui.png");
 
@@ -23,7 +24,7 @@ public class LapidaryAnvilScreen extends AbstractContainerScreen<LapidaryAnvilMe
     public LapidaryAnvilScreen(LapidaryAnvilMenu menu, Inventory inv, Component title) {
         super(menu, inv, title);
         this.imageWidth = 176;
-        this.imageHeight = 180;
+        this.imageHeight = 198;
     }
 
     @Override
@@ -32,19 +33,18 @@ public class LapidaryAnvilScreen extends AbstractContainerScreen<LapidaryAnvilMe
         int x = leftPos;
         int y = topPos;
 
-        btnCrackOre = Button.builder(Component.literal("⛏"), b ->
-                {
-                    assert Minecraft.getInstance().gameMode != null;
-                    Minecraft.getInstance().gameMode.handleInventoryButtonClick(menu.containerId, LapidaryAnvilMenu.BTN_CRACK_ORE);
-                }
-        ).bounds(x + 20, y + 90, 20, 20).build();
+        this.inventoryLabelY = this.inventoryLabelY + 32;
 
-        btnCrackGems = Button.builder(Component.literal("◆"), b ->
-                {
-                    assert Minecraft.getInstance().gameMode != null;
-                    Minecraft.getInstance().gameMode.handleInventoryButtonClick(menu.containerId, LapidaryAnvilMenu.BTN_CRACK_GEMS);
-                }
-        ).bounds(x + 116 + 6*18 - 20, y + 90, 20, 20).build();
+        btnCrackOre = Button.builder(Component.literal("⛏"), b -> {
+            assert Minecraft.getInstance().gameMode != null;
+            Minecraft.getInstance().gameMode.handleInventoryButtonClick(menu.containerId, LapidaryAnvilMenu.BTN_CRACK_ORE);
+        }).bounds(x + 20, y + 80, 20, 20).build();
+
+        int diamondBtnX = x + (116 + 5 * 18 - 20) - 60;
+        btnCrackGems = Button.builder(Component.literal("◆"), b -> {
+            assert Minecraft.getInstance().gameMode != null;
+            Minecraft.getInstance().gameMode.handleInventoryButtonClick(menu.containerId, LapidaryAnvilMenu.BTN_CRACK_GEMS);
+        }).bounds(diamondBtnX, y + 80, 20, 20).build();
 
         addRenderableWidget(btnCrackOre);
         addRenderableWidget(btnCrackGems);
@@ -63,20 +63,16 @@ public class LapidaryAnvilScreen extends AbstractContainerScreen<LapidaryAnvilMe
     }
 
     @Override
-    protected void renderBg(GuiGraphics guiGraphics, float partialTicks, int mouseX, int mouseY) {
-        RenderSystem.setShader(GameRenderer::getPositionTexShader);
-        RenderSystem.setShaderColor(1F, 1F, 1F, 1F);
-        RenderSystem.setShaderTexture(0, TEXTURE);
-
-        int x = (width - imageWidth) / 2;
-        int y = (height - imageHeight) / 2;
-        guiGraphics.blit(TEXTURE, x, y, 0, 0, imageWidth, imageHeight);
+    protected void renderBg(GuiGraphics guiGraphics, float partialTick, int mouseX, int mouseY) {
+        assert TEXTURE != null;
+        guiGraphics.blit(TEXTURE, leftPos, topPos, 0, 0, imageWidth, imageHeight);
     }
 
     @Override
-    public void render(@NotNull GuiGraphics guiGraphics, int mouseX, int mouseY, float partialTick) {
+    public void render(GuiGraphics guiGraphics, int mouseX, int mouseY, float partialTick) {
         this.renderBackground(guiGraphics, mouseX, mouseY, partialTick);
         super.render(guiGraphics, mouseX, mouseY, partialTick);
         this.renderTooltip(guiGraphics, mouseX, mouseY);
     }
 }
+

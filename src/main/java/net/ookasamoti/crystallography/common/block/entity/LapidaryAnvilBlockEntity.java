@@ -14,12 +14,14 @@ import org.jetbrains.annotations.NotNull;
 
 public class LapidaryAnvilBlockEntity extends BlockEntity {
 
-    public static final int SLOT_ORE   = 0;
+    public static final int SLOT_PICK  = 0;
     public static final int SLOT_WEDGE = 1;
-    public static final int SLOT_PICK  = 2;
+    public static final int SLOT_ORE   = 2;
+
     public static final int SLOT_RIGHT_START = 3;
-    public static final int SLOT_RIGHT_END   = 20; // inclusive
-    public static final int SLOT_COUNT = 21;
+    public static final int SLOT_RIGHT_END   = 17;
+
+    public static final int SLOT_COUNT = 18;
 
     private final ItemStackHandler items = new ItemStackHandler(SLOT_COUNT) {
         @Override

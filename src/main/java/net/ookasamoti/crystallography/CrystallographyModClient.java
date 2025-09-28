@@ -7,6 +7,7 @@ import net.neoforged.fml.common.Mod;
 import net.neoforged.neoforge.client.event.RegisterMenuScreensEvent;
 import net.neoforged.neoforge.client.gui.ConfigurationScreen;
 import net.neoforged.neoforge.client.gui.IConfigScreenFactory;
+import net.ookasamoti.crystallography.client.event.CrystalClientHooks;
 import net.ookasamoti.crystallography.client.screen.JewelryTableScreen;
 import net.ookasamoti.crystallography.client.screen.LapidaryAnvilScreen;
 import net.ookasamoti.crystallography.setup.MenuTypesRegistry;
@@ -16,6 +17,8 @@ import java.util.Objects;
 @Mod(value = CrystallographyMod.MOD_ID, dist = Dist.CLIENT)
 public class CrystallographyModClient {
     public CrystallographyModClient(ModContainer container) {
+        CrystalClientHooks.bootstrapClient();
+
         container.registerExtensionPoint(IConfigScreenFactory.class, ConfigurationScreen::new);
         Objects.requireNonNull(container.getEventBus()).addListener(CrystallographyModClient::onRegisterScreens);
     }

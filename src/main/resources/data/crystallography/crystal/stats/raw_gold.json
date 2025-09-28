@@ -4,6 +4,6 @@
   "hardness": 650,
   "carat": { "min": 2.3, "max": 2.3 },
   "clarity": { "min": 1.6, "max": 1.6 },
-  "categories": [
+  "category": [
   ]
 }

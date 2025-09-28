@@ -49,8 +49,6 @@ public class JewelryTableMenu extends AbstractContainerMenu {
         this.blockEntity = (JewelryTableBlockEntity) entity;
         this.level = inv.player.level();
 
-        addPlayerInventorySlots(inv);
-
         this.toolSlot = this.addSlot(new SlotItemHandler(blockEntity.getItemHandler(), 0, TOOL_SLOT_X, TOOL_SLOT_Y) {
             @Override
             public boolean mayPlace(@NotNull ItemStack stack) {
@@ -83,7 +81,19 @@ public class JewelryTableMenu extends AbstractContainerMenu {
             });
         }
 
+        // player inventory
+        addPlayerInventorySlots(inv);
+
         updateCrystalSlotsActive();
+    }
+
+    private void addPlayerInventorySlots(Inventory playerInventory) {
+        for (int i = 0; i < 3; ++i)
+            for (int j = 0; j < 9; ++j)
+                this.addSlot(new Slot(playerInventory, j + i * 9 + 9, 8 + j * 18, 84 + i * 18));
+
+        for (int k = 0; k < 9; ++k)
+            this.addSlot(new Slot(playerInventory, k, 8 + k * 18, 142));
     }
 
     private boolean hasTool() {
@@ -149,15 +159,6 @@ public class JewelryTableMenu extends AbstractContainerMenu {
         else slot.setChanged();
 
         return ret;
-    }
-
-    private void addPlayerInventorySlots(Inventory playerInventory) {
-        for (int i = 0; i < 3; ++i)
-            for (int j = 0; j < 9; ++j)
-                this.addSlot(new Slot(playerInventory, j + i * 9 + 9, 8 + j * 18, 84 + i * 18));
-
-        for (int k = 0; k < 9; ++k)
-            this.addSlot(new Slot(playerInventory, k, 8 + k * 18, 142));
     }
 
     @Override

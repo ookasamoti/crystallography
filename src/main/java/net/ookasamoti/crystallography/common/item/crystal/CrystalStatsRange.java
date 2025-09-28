@@ -3,7 +3,7 @@ package net.ookasamoti.crystallography.common.item.crystal;
 import net.ookasamoti.crystallography.common.util.LapidaryAnvilOperations;
 import net.ookasamoti.crystallography.data.FloatRange;
 
-public record CrystalSpecRange(
+public record CrystalStatsRange(
         int tier,
         FloatRange hardness,
         FloatRange carat,
