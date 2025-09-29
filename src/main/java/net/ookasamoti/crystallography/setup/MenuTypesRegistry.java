@@ -31,7 +31,7 @@ public final class MenuTypesRegistry {
                             return new JewelryTableMenu(windowId, inventory, tableBE, tableBE.getContainerData());
                         } else {
                             CrystallographyMod.LOGGER.warn("Failed to open JewelryTableMenu: BE not found at {}", pos);
-                            return new JewelryTableMenu(windowId, inventory, be, new SimpleContainerData(1));
+                            return new JewelryTableMenu(windowId, inventory, (JewelryTableBlockEntity) be, new SimpleContainerData(1));
                         }
                     })
             );

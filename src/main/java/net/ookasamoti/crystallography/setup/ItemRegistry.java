@@ -20,8 +20,8 @@ public class ItemRegistry {
     public static final DeferredItem<Item> TOOL_WAND_TIER2 = ITEMS.registerItem("tool_wand_tier2", props -> new ToolWand(props, 2));
     public static final DeferredItem<Item> TOOL_WAND_TIER3 = ITEMS.registerItem("tool_wand_tier3", props -> new ToolWand(props, 3));
 
-    public static final DeferredItem<Item> DIAMOND_CRYSTAL = ITEMS.register("diamond_crystal", () -> new Crystal(new Item.Properties().stacksTo(64)));
-    public static final DeferredItem<Item> PINK_DIAMOND_CRYSTAL = ITEMS.register("pink_diamond_crystal.json", () -> new Crystal(new Item.Properties().stacksTo(64)));
+    public static final DeferredItem<Item> DIAMOND_CRYSTAL = ITEMS.register("diamond_crystal", () -> new Crystal(new Item.Properties().stacksTo(1)));
+    public static final DeferredItem<Item> PINK_DIAMOND_CRYSTAL = ITEMS.register("pink_diamond_crystal", () -> new Crystal(new Item.Properties().stacksTo(1)));
 
     public static void register(IEventBus bus) {
         ITEMS.register(bus);
