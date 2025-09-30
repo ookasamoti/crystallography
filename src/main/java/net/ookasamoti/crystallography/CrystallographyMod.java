@@ -37,6 +37,7 @@ public class CrystallographyMod {
         BlockEntitiesRegistry.register(modEventBus);
         CreativeTabRegistry.register(modEventBus);
         MenuTypesRegistry.register(modEventBus);
+        ToolComponentsRegistry.register(modEventBus);
     }
 
     private static void onAddReloadListeners(AddReloadListenerEvent e) {

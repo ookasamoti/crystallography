@@ -32,9 +32,9 @@ public class Crystal extends Item {
         if(!l.isClientSide) getOrCreateStats(s,l);
     }
 
-    @Override
-    public void inventoryTick(@NotNull ItemStack s, Level l, @NotNull Entity e, int slot, boolean sel){
-        if(!l.isClientSide) getOrCreateStats(s,l);
-    }
+//    @Override
+//    public void inventoryTick(@NotNull ItemStack s, Level l, @NotNull Entity e, int slot, boolean sel){
+//        if(!l.isClientSide) getOrCreateStats(s,l);
+//    }
 }
 
