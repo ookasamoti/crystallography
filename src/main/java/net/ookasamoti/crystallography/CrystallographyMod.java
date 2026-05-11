@@ -4,6 +4,7 @@ import net.neoforged.fml.ModContainer;
 import net.neoforged.neoforge.event.AddReloadListenerEvent;
 import net.ookasamoti.crystallography.data.CrystalRollsReloader;
 import net.ookasamoti.crystallography.data.CrystalStatsReloader;
+import net.ookasamoti.crystallography.network.ModNet;
 import net.ookasamoti.crystallography.setup.*;
 import org.slf4j.Logger;
 
@@ -30,6 +31,7 @@ public class CrystallographyMod {
         NeoForge.EVENT_BUS.addListener(CrystallographyMod::onAddReloadListeners);
 
         //register
+        ModNet.register(modEventBus);
         DataComponentsRegistry.register(modEventBus);
         ItemRegistry.register(modEventBus);
         BlockRegistry.register(modEventBus);
