@@ -1,6 +1,8 @@
 package net.ookasamoti.crystallography.common.block.entity;
 
 import net.minecraft.core.BlockPos;
+import net.minecraft.core.HolderLookup;
+import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.chat.Component;
 import net.minecraft.world.Containers;
 import net.minecraft.world.MenuProvider;
@@ -49,6 +51,20 @@ public class JewelryTableBlockEntity extends BlockEntity implements MenuProvider
     }
 
     public IItemHandler getItemHandler() { return itemHandler; }
+
+    @Override
+    protected void saveAdditional(@NotNull CompoundTag tag, @NotNull HolderLookup.Provider registries) {
+        super.saveAdditional(tag, registries);
+        tag.put("inventory", itemHandler.serializeNBT(registries));
+    }
+
+    @Override
+    protected void loadAdditional(@NotNull CompoundTag tag, @NotNull HolderLookup.Provider registries) {
+        super.loadAdditional(tag, registries);
+        if (tag.contains("inventory")) {
+            itemHandler.deserializeNBT(registries, tag.getCompound("inventory"));
+        }
+    }
 
     @Override
     public @NotNull Component getDisplayName() {
