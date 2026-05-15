@@ -10,6 +10,7 @@ import net.minecraft.network.chat.Component;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.entity.player.Inventory;
 import net.ookasamoti.crystallography.CrystallographyMod;
+import net.ookasamoti.crystallography.common.menu.LapidaryAnvilMenu;
 import org.jetbrains.annotations.NotNull;
 
 // LapidaryAnvilScreen.java

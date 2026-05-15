@@ -1,4 +1,4 @@
-package net.ookasamoti.crystallography.client.screen;
+package net.ookasamoti.crystallography.common.menu;
 
 import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.world.entity.player.Inventory;

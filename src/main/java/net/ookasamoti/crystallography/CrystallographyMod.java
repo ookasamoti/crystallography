@@ -11,11 +11,8 @@ import org.slf4j.Logger;
 import com.mojang.logging.LogUtils;
 
 import net.neoforged.bus.api.IEventBus;
-import net.neoforged.bus.api.SubscribeEvent;
 import net.neoforged.fml.common.Mod;
-import net.neoforged.fml.event.lifecycle.FMLCommonSetupEvent;
 import net.neoforged.neoforge.common.NeoForge;
-import net.neoforged.neoforge.event.server.ServerStartingEvent;
 
 @Mod(CrystallographyMod.MOD_ID)
 public class CrystallographyMod {
@@ -23,14 +20,8 @@ public class CrystallographyMod {
     public static final Logger LOGGER = LogUtils.getLogger();
 
     public CrystallographyMod(IEventBus modEventBus, ModContainer modContainer) {
-
-        modEventBus.addListener(this::commonSetup);
-
-        NeoForge.EVENT_BUS.register(this);
-//        NeoForge.EVENT_BUS.addListener(CrystalSpecs::onReload);
         NeoForge.EVENT_BUS.addListener(CrystallographyMod::onAddReloadListeners);
 
-        //register
         DataComponentsRegistry.register(modEventBus);
         ItemRegistry.register(modEventBus);
         BlockRegistry.register(modEventBus);
@@ -45,13 +36,5 @@ public class CrystallographyMod {
     private static void onAddReloadListeners(AddReloadListenerEvent e) {
         e.addListener(new CrystalStatsReloader());
         e.addListener(new CrystalRollsReloader());
-    }
-
-    private void commonSetup(final FMLCommonSetupEvent event) {
-    }
-
-    @SubscribeEvent
-    public void onServerStarting(ServerStartingEvent event) {
-
     }
 }

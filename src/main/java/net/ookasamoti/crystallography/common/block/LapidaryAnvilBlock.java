@@ -13,7 +13,7 @@ import net.minecraft.world.level.block.RenderShape;
 import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.phys.BlockHitResult;
-import net.ookasamoti.crystallography.client.screen.LapidaryAnvilMenu;
+import net.ookasamoti.crystallography.common.menu.LapidaryAnvilMenu;
 import net.ookasamoti.crystallography.common.block.entity.LapidaryAnvilBlockEntity;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;

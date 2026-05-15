@@ -11,7 +11,6 @@ import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.enchantment.EnchantmentHelper;
 import net.minecraft.world.item.enchantment.Enchantments;
 import net.neoforged.neoforge.items.ItemHandlerHelper;
-import net.ookasamoti.crystallography.CrystallographyMod;
 import net.ookasamoti.crystallography.common.block.entity.LapidaryAnvilBlockEntity;
 import net.ookasamoti.crystallography.data.CrystalRollsRegistry;
 import net.ookasamoti.crystallography.data.CrystalStatsRegistry;
@@ -25,7 +24,6 @@ public final class LapidaryAnvilOperations {
     public record CrackResult(ResourceLocation item, int count) {}
 
     public static void crackOre(LapidaryAnvilBlockEntity be, ServerPlayer sp) {
-        CrystallographyMod.LOGGER.debug("Anvil: crackOre clicked");
         var level = sp.serverLevel();
         var items = be.getItems();
 
@@ -35,14 +33,7 @@ public final class LapidaryAnvilOperations {
         if (ore.isEmpty() || wedge.isEmpty() || pick.isEmpty()) return;
 
         var rollListOpt = CrystalRollsRegistry.get(ore);
-//        if (rollListOpt.isEmpty()) return;
-        if (rollListOpt.isEmpty()) {
-            CrystallographyMod.LOGGER.debug("Anvil: rollListOpt Empty");
-            return;
-        } else {
-            CrystallographyMod.LOGGER.debug("Anvil: rollListOpt Present");
-            CrystallographyMod.LOGGER.debug("Anvil: rollListOpt size = {}", rollListOpt.get().size());
-        }
+        if (rollListOpt.isEmpty()) return;
 
         if (!consumeOne(ore)) return;
         if (level.random.nextFloat() < 0.30f) consumeOne(wedge);
@@ -56,7 +47,6 @@ public final class LapidaryAnvilOperations {
     }
 
     public static void crackGems(LapidaryAnvilBlockEntity be, ServerPlayer sp) {
-        CrystallographyMod.LOGGER.debug("Anvil: crackGems clicked");
         var level = sp.serverLevel();
         var items = be.getItems();
         for (int i = LapidaryAnvilBlockEntity.SLOT_RIGHT_START; i <= LapidaryAnvilBlockEntity.SLOT_RIGHT_END; i++) {
@@ -64,22 +54,11 @@ public final class LapidaryAnvilOperations {
             if (st.isEmpty()) continue;
 
             var specRangeOpt = CrystalStatsRegistry.get(st);
-//            if (specRangeOpt.isEmpty()) continue;
-            if (specRangeOpt.isEmpty()) {
-                CrystallographyMod.LOGGER.debug("Anvil: specRangeOpt Empty");
-                continue;
-            } else {
-                CrystallographyMod.LOGGER.debug("Anvil: specRangeOpt Present");
-            }
+            if (specRangeOpt.isEmpty()) continue;
 
             var crack = specRangeOpt.get().crackResult();
-//            if (crack == null) continue;
-            if (crack == null) {
-                CrystallographyMod.LOGGER.debug("Anvil: crack == null");
-                continue;
-            } else {
-                CrystallographyMod.LOGGER.debug("Anvil: crack = " + crack.item() + " x" + crack.count());
-            }
+            if (crack == null) continue;
+
             if (!consumeOne(st)) continue;
             var out = new ItemStack(net.minecraft.core.registries.BuiltInRegistries.ITEM.get(crack.item()), crack.count());
             insertOrDrop(be, List.of(out), level, be.getBlockPos());

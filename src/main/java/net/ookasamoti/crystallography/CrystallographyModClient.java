@@ -12,7 +12,7 @@ import net.neoforged.neoforge.client.event.RegisterMenuScreensEvent;
 import net.neoforged.neoforge.client.gui.ConfigurationScreen;
 import net.neoforged.neoforge.client.gui.IConfigScreenFactory;
 import net.ookasamoti.crystallography.client.event.CrystalClientHooks;
-import net.ookasamoti.crystallography.client.screen.JewelryTableMenu;
+import net.ookasamoti.crystallography.common.menu.JewelryTableMenu;
 import net.ookasamoti.crystallography.client.screen.JewelryTableScreen;
 import net.ookasamoti.crystallography.client.screen.LapidaryAnvilScreen;
 import net.ookasamoti.crystallography.common.item.tool.ToolBase;

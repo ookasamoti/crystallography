@@ -10,8 +10,8 @@ import net.neoforged.bus.api.IEventBus;
 import net.neoforged.neoforge.common.extensions.IMenuTypeExtension;
 import net.neoforged.neoforge.registries.DeferredRegister;
 import net.ookasamoti.crystallography.CrystallographyMod;
-import net.ookasamoti.crystallography.client.screen.JewelryTableMenu;
-import net.ookasamoti.crystallography.client.screen.LapidaryAnvilMenu;
+import net.ookasamoti.crystallography.common.menu.JewelryTableMenu;
+import net.ookasamoti.crystallography.common.menu.LapidaryAnvilMenu;
 import net.ookasamoti.crystallography.common.block.entity.JewelryTableBlockEntity;
 
 import java.util.function.Supplier;

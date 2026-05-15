@@ -13,6 +13,7 @@ import net.minecraft.world.item.ItemStack;
 import net.neoforged.neoforge.network.PacketDistributor;
 import net.ookasamoti.crystallography.CrystallographyMod;
 import net.ookasamoti.crystallography.client.gui.dial.DialDrawer;
+import net.ookasamoti.crystallography.common.menu.JewelryTableMenu;
 import net.ookasamoti.crystallography.client.gui.dial.DialLayout;
 import net.ookasamoti.crystallography.client.gui.dial.DialSlot;
 import net.ookasamoti.crystallography.common.item.crystal.CrystalStatsRange;

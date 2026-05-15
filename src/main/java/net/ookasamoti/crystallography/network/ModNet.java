@@ -4,7 +4,7 @@ import net.minecraft.server.level.ServerPlayer;
 import net.neoforged.bus.api.IEventBus;
 import net.neoforged.neoforge.network.event.RegisterPayloadHandlersEvent;
 import net.ookasamoti.crystallography.CrystallographyMod;
-import net.ookasamoti.crystallography.client.screen.JewelryTableMenu;
+import net.ookasamoti.crystallography.common.menu.JewelryTableMenu;
 
 public final class ModNet {
     private ModNet() {}

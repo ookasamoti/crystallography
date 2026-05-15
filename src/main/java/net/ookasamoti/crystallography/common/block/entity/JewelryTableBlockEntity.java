@@ -15,7 +15,7 @@ import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.state.BlockState;
 import net.neoforged.neoforge.items.IItemHandler;
 import net.neoforged.neoforge.items.ItemStackHandler;
-import net.ookasamoti.crystallography.client.screen.JewelryTableMenu;
+import net.ookasamoti.crystallography.common.menu.JewelryTableMenu;
 import net.ookasamoti.crystallography.setup.BlockEntitiesRegistry;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
