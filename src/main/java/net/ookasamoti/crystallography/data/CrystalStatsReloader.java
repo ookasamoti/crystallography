@@ -56,8 +56,10 @@ public final class CrystalStatsReloader extends SimpleJsonResourceReloadListener
                     }
                 }
 
+                int tint = parseHexColor(root.get("tint"), CrystalStatsRange.NO_TINT);
+
                 CrystalStatsRegistry.put(itemRL, new CrystalStatsRange(
-                        tier, hardness, carat, clarity, categories, crack
+                        tier, hardness, carat, clarity, categories, crack, tint
                 ));
 
             } catch (Exception ex) {
@@ -96,6 +98,17 @@ public final class CrystalStatsReloader extends SimpleJsonResourceReloadListener
     private static float getFloatOrDefault(JsonElement el, float def) {
         if (el == null) return def;
         try { return el.getAsFloat(); } catch (Exception ignored) { return def; }
+    }
+
+    private static int parseHexColor(JsonElement el, int def) {
+        if (el == null) return def;
+        try {
+            String s = el.getAsString().trim();
+            if (s.startsWith("#")) s = s.substring(1);
+            long v = Long.parseLong(s, 16);
+            if (s.length() <= 6) v |= 0xFF000000L;
+            return (int) v;
+        } catch (Exception ignored) { return def; }
     }
 
     private static java.util.Set<String> parseStringSet(JsonElement el) {

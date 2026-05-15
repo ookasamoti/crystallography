@@ -12,11 +12,14 @@ import net.minecraft.client.renderer.GameRenderer;
 import net.minecraft.util.Mth;
 import org.joml.Matrix4f;
 
+import java.util.Random;
+
 /**
  * 円/リング/弧 などの図形描画（1.21系 MeshData API 対応）。
  */
 public final class DialDrawer {
     private DialDrawer(){}
+
 
     /** 塗りつぶし円（中心/半径/ARGB） */
     public static void filledCircle(GuiGraphics g, float cx, float cy, float radius, int argb) {
@@ -30,7 +33,7 @@ public final class DialDrawer {
         BufferBuilder buf = Tesselator.getInstance()
                 .begin(VertexFormat.Mode.TRIANGLE_FAN, DefaultVertexFormat.POSITION_COLOR);
 
-        buf.addVertex(pose, cx, cy, 0).setColor(c[0], c[1], c[2], c[3]); // center
+        buf.addVertex(pose, cx, cy, 0).setColor(c[0], c[1], c[2], c[3]);
         for (int i = 0; i <= segments; i++) {
             double ang = Math.PI * 2.0 * i / segments;
             float x = cx + (float)Math.cos(ang) * radius;
@@ -76,11 +79,40 @@ public final class DialDrawer {
         if (mesh != null) BufferUploader.drawWithShader(mesh);
     }
 
-    /** 円アウトライン（薄いリングで描く） */
+    /**
+     * 円アウトライン。
+     * 線は thickness の 20% の細さ、30% の箇所にランダム分散したギャップ、
+     * かつ全体が時間とともにゆっくり回転する。
+     */
     public static void circleOutline(GuiGraphics g, float cx, float cy, float radius, float thickness, int argb) {
-        float outer = radius + thickness * 0.5f;
-        float inner = Math.max(0f, radius - thickness * 0.5f);
-        filledRing(g, cx, cy, inner, outer, argb);
+        float t     = thickness * 0.2f;
+        float outer = radius + t * 0.5f;
+        float inner = Math.max(0f, radius - t * 0.5f);
+        float rot   = (float)((System.currentTimeMillis() % 6000L) / 6000.0 * Math.PI * 2.0);
+
+        // radius を seed にすることで呼び出しごとに独立したパターンを安定生成
+        Random rng = new Random((long)(radius * 1000));
+        float twoPi = (float)(Math.PI * 2.0);
+        int gapCount = 3 + rng.nextInt(2);
+
+        float[] gapFrac = new float[gapCount];
+        float sum = 0;
+        for (int i = 0; i < gapCount; i++) { gapFrac[i] = rng.nextFloat() + 0.3f; sum += gapFrac[i]; }
+        for (int i = 0; i < gapCount; i++) gapFrac[i] = gapFrac[i] / sum * 0.30f;
+
+        float[] arcFrac = new float[gapCount];
+        sum = 0;
+        for (int i = 0; i < gapCount; i++) { arcFrac[i] = rng.nextFloat() + 0.3f; sum += arcFrac[i]; }
+        for (int i = 0; i < gapCount; i++) arcFrac[i] = arcFrac[i] / sum * 0.70f;
+
+        float angle = 0;
+        for (int i = 0; i < gapCount; i++) {
+            float arcStart = angle;
+            angle += arcFrac[i] * twoPi;
+            float arcEnd = angle;
+            angle += gapFrac[i] * twoPi;
+            arc(g, cx, cy, inner, outer, arcStart + rot, arcEnd + rot, argb);
+        }
     }
 
     // ---- helpers ----

@@ -3,7 +3,7 @@ package net.ookasamoti.crystallography.network;
 import net.minecraft.server.level.ServerPlayer;
 import net.neoforged.bus.api.IEventBus;
 import net.neoforged.neoforge.network.event.RegisterPayloadHandlersEvent;
-import net.ookasamoti.crystallography.CrystallographyMod; // MOD_ID / LOGGER を想定
+import net.ookasamoti.crystallography.CrystallographyMod;
 import net.ookasamoti.crystallography.client.screen.JewelryTableMenu;
 
 public final class ModNet {
@@ -14,7 +14,6 @@ public final class ModNet {
     }
 
     private static void onRegisterPayloads(RegisterPayloadHandlersEvent event) {
-        // プロトコルバージョン文字列（NeoForge docs の例でも "1" を使う）
         var reg = event.registrar("1");
 
         CrystallographyMod.LOGGER.info("[Net] Register payloads");
@@ -33,6 +32,22 @@ public final class ModNet {
                         menu.rotateCrystalsViewServer(msg.steps());
                     } else if (msg.ring() == RotateRingC2S.RING_REGISTRIES) {
                         menu.rotateRegistriesViewServer(msg.steps());
+                    }
+                })
+        );
+
+        reg.playToServer(
+                JewelryActionC2S.TYPE,
+                JewelryActionC2S.STREAM_CODEC,
+                (msg, ctx) -> ctx.enqueueWork(() -> {
+                    if (!(ctx.player() instanceof ServerPlayer sp)) return;
+                    if (!(sp.containerMenu instanceof JewelryTableMenu menu)) return;
+                    if (menu.containerId != msg.containerId()) return;
+
+                    switch (msg.action()) {
+                        case JewelryActionC2S.ACTION_SELECT_FORM    -> menu.serverSelectForm(msg.param());
+                        case JewelryActionC2S.ACTION_TOGGLE_CRYSTAL -> menu.serverToggleCrystal(msg.param());
+                        case JewelryActionC2S.ACTION_REGISTER       -> menu.serverRegister(msg.param());
                     }
                 })
         );

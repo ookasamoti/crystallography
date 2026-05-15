@@ -14,5 +14,5 @@ public record ToolLoadoutList(java.util.List<ToolLoadout> entries) {
                     .map(ToolLoadoutList::new, ToolLoadoutList::entries);
 
     public int clampActive(int idx){ return entries.isEmpty() ? 0 : Math.floorMod(idx, entries.size()); }
-    public boolean full(){ return entries.size() >= 30; } // 上限30
+    public boolean full(int maxLoadouts){ return entries.size() >= maxLoadouts; }
 }

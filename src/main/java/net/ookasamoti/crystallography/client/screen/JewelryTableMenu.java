@@ -15,10 +15,14 @@ import net.ookasamoti.crystallography.common.item.tool.ToolBase;
 import net.ookasamoti.crystallography.common.item.tool.ToolInventory;
 import net.ookasamoti.crystallography.common.item.tool.ToolRod;
 import net.ookasamoti.crystallography.common.item.tool.ToolWand;
+import net.ookasamoti.crystallography.common.item.tool.component.ToolForm;
+import net.ookasamoti.crystallography.common.item.tool.component.ToolLoadout;
+import net.ookasamoti.crystallography.common.item.tool.component.ToolStats;
 import net.ookasamoti.crystallography.setup.BlockRegistry;
 import net.ookasamoti.crystallography.setup.MenuTypesRegistry;
 import org.jetbrains.annotations.NotNull;
 
+import java.util.ArrayList;
 import java.util.EnumMap;
 import java.util.Map;
 import java.util.Objects;
@@ -47,8 +51,18 @@ public class JewelryTableMenu extends AbstractContainerMenu {
     public static int   radiusOf(Ring r){ return Objects.requireNonNull(DEF.get(r)).radius(); }
     public static float baseDegOf(Ring r){ return Objects.requireNonNull(DEF.get(r)).baseDeg(); }
 
+    /* ===== フォームマッピング ===== */
+    private static final ToolForm[] ROD_FORMS  = {
+            ToolForm.PICKAXE, ToolForm.SHOVEL, ToolForm.HOE,
+            ToolForm.SWORD,   ToolForm.AXE,    ToolForm.SPEAR
+    };
+    private static final ToolForm[] WAND_FORMS = {
+            ToolForm.BOW, ToolForm.CROSSBOW, ToolForm.KNIFE,
+            ToolForm.WAND, ToolForm.FISHING_ROD, ToolForm.SHIELD
+    };
+
     /* ===== 状態 ===== */
-    public enum UiState { EMPTY, EDIT_CRYSTALS, REGISTER_SETUP }
+    public enum UiState { EMPTY, EDIT_CRYSTALS, FORM_SELECTED }
 
     public final JewelryTableBlockEntity blockEntity;
     private final Level level;
@@ -62,7 +76,6 @@ public class JewelryTableMenu extends AbstractContainerMenu {
     private int headCrystals   = 0;
     private int headRegistries = 0;
     private int activeCrystalSlots = 0;
-    private ItemStack selectedCrystal = ItemStack.EMPTY;
     private ItemStack lastCenterTool = ItemStack.EMPTY;
 
     private int playerStartIndex = -1;
@@ -73,6 +86,11 @@ public class JewelryTableMenu extends AbstractContainerMenu {
 
     private final ItemStackHandler fallbackEmpty = new ItemStackHandler(9);
     private IItemHandler backingCrystals = fallbackEmpty;
+
+    /** クライアント・サーバー双方で管理する保留中フォームインデックス（-1 = 未選択） */
+    public int pendingFormIndex = -1;
+    /** クライアント・サーバー双方で管理する選択済み結晶のbacking index一覧 */
+    public final ArrayList<Integer> pendingCrystals = new ArrayList<>();
 
     public JewelryTableMenu(int id, Inventory inv, FriendlyByteBuf buf) {
         this(id, inv,
@@ -118,8 +136,7 @@ public class JewelryTableMenu extends AbstractContainerMenu {
                 () -> backingCrystals,
                 vi -> {
                     int size = Math.max(1, backingCrystals.getSlots());
-                    int shift = (vi == countOf(Ring.CRYSTALS) - 1) ? size - 1 : vi;
-                    int idx = (headCrystals + shift) % size;
+                    int idx = (headCrystals + vi) % size;
                     if (idx < 0) idx += size;
                     return idx;
                 },
@@ -188,9 +205,13 @@ public class JewelryTableMenu extends AbstractContainerMenu {
             default         -> 0;
         };
     }
+    public UiState getUiState() { return uiState; }
+    public IItemHandler getBackingCrystals() { return backingCrystals; }
 
     /** クライアント専用: CENTER スロットの変化を検知したときに呼ぶ */
     public void clientSyncState() {
+        pendingFormIndex = -1;
+        pendingCrystals.clear();
         bindCrystalsBacking();
         refreshCrystalCapacity();
         refreshUiState();
@@ -206,6 +227,8 @@ public class JewelryTableMenu extends AbstractContainerMenu {
     /* ---------- UI state ---------- */
     private void refreshUiState() {
         ItemStack tool = rings.get(Ring.CENTER)[0].peekRealItem();
+        pendingFormIndex = -1;
+        pendingCrystals.clear();
         uiState = isTool(tool) ? UiState.EDIT_CRYSTALS : UiState.EMPTY;
     }
 
@@ -213,29 +236,21 @@ public class JewelryTableMenu extends AbstractContainerMenu {
         for (Ring r : Ring.values())
             for (DialSlot s : rings.get(r)) { s.setMode(DialSlot.Mode.HIDDEN); s.setVisibleFlag(false); }
 
-        showFirstN(Ring.CENTER, 1,
-                (uiState == UiState.REGISTER_SETUP) ? DialSlot.Mode.BUTTON : DialSlot.Mode.INTERACTIVE);
-
-        if (uiState == UiState.EMPTY) {
-            selectedCrystal = ItemStack.EMPTY;
-            return;
-        }
-
-        showFirstN(Ring.TOOLS, countOf(Ring.TOOLS),
-                (uiState == UiState.EDIT_CRYSTALS) ? DialSlot.Mode.BUTTON : DialSlot.Mode.HIDDEN);
-
-        showFirstN(Ring.REGISTRIES, 3, DialSlot.Mode.DECORATION);
-
-        DialSlot.Mode crystalMode = (uiState == UiState.EDIT_CRYSTALS) ? DialSlot.Mode.INTERACTIVE : DialSlot.Mode.BUTTON;
-        showFirstN(Ring.CRYSTALS, activeCrystalSlots, crystalMode);
-
-        DialSlot[] crystalArr = rings.get(Ring.CRYSTALS);
-        DialSlot lastCrystal = crystalArr[crystalArr.length - 1];
-        lastCrystal.setVisibleFlag(true);
-        lastCrystal.setMode(DialSlot.Mode.DECORATION);
-
-        if (uiState != UiState.REGISTER_SETUP) {
-            selectedCrystal = ItemStack.EMPTY;
+        switch (uiState) {
+            case EMPTY -> {
+                showFirstN(Ring.CENTER, 1, DialSlot.Mode.INTERACTIVE);
+            }
+            case EDIT_CRYSTALS -> {
+                showFirstN(Ring.CENTER, 1, DialSlot.Mode.INTERACTIVE);
+                showFirstN(Ring.TOOLS, countOf(Ring.TOOLS), DialSlot.Mode.BUTTON);
+                showFirstN(Ring.REGISTRIES, 6, DialSlot.Mode.BUTTON);
+                showFirstN(Ring.CRYSTALS, activeCrystalSlots, DialSlot.Mode.INTERACTIVE);
+            }
+            case FORM_SELECTED -> {
+                showFirstN(Ring.CENTER, 1, DialSlot.Mode.BUTTON);
+                showFirstN(Ring.REGISTRIES, 6, DialSlot.Mode.BUTTON);
+                showFirstN(Ring.CRYSTALS, activeCrystalSlots, DialSlot.Mode.BUTTON);
+            }
         }
     }
 
@@ -247,6 +262,85 @@ public class JewelryTableMenu extends AbstractContainerMenu {
             arr[i].setVisibleFlag(vis);
             arr[i].setMode(vis ? mode : DialSlot.Mode.HIDDEN);
         }
+    }
+
+    /* ---------- フォーム選択アクション（クライアント・サーバー共通） ---------- */
+
+    /**
+     * フォームを選択する。formIndex=-1 で選択解除。
+     * クライアント側でも直接呼んでローカル状態を即時更新する。
+     */
+    public void applySelectForm(int formIndex) {
+        boolean hasTool = isTool(rings.get(Ring.CENTER)[0].peekRealItem());
+        if (formIndex < 0 || !hasTool) {
+            pendingFormIndex = -1;
+            pendingCrystals.clear();
+            uiState = hasTool ? UiState.EDIT_CRYSTALS : UiState.EMPTY;
+        } else {
+            pendingFormIndex = formIndex;
+            pendingCrystals.clear();
+            uiState = UiState.FORM_SELECTED;
+        }
+        layoutSlots();
+    }
+
+    /** 結晶選択トグル。クライアント側でも直接呼んで即時更新する。 */
+    public void applyToggleCrystal(int crystalBacking) {
+        if (pendingFormIndex < 0) return;
+        if (!pendingCrystals.remove((Integer) crystalBacking)) {
+            if (pendingCrystals.size() < ToolLoadout.CRYSTAL_SLOTS) {
+                pendingCrystals.add(crystalBacking);
+            }
+        }
+    }
+
+    /* ---------- サーバー専用アクション ---------- */
+
+    public void serverSelectForm(int formIndex) {
+        applySelectForm(formIndex);
+        broadcastChanges();
+    }
+
+    public void serverToggleCrystal(int crystalBacking) {
+        applyToggleCrystal(crystalBacking);
+        broadcastChanges();
+    }
+
+    /** 結晶3つ選択後、指定フォームでツールに登録する。 */
+    public void serverRegister(int formIndex) {
+        if (pendingCrystals.size() != ToolLoadout.CRYSTAL_SLOTS) return;
+
+        ItemStack toolStack = rings.get(Ring.CENTER)[0].peekRealItem();
+        if (!isTool(toolStack)) return;
+
+        boolean isWand = toolStack.getItem() instanceof ToolWand;
+        ToolForm[] forms = isWand ? WAND_FORMS : ROD_FORMS;
+        if (formIndex < 0 || formIndex >= forms.length) return;
+        ToolForm form = forms[formIndex];
+
+        int tier = getToolTier();
+        int[] crystalIndices = pendingCrystals.stream().mapToInt(Integer::intValue).toArray();
+
+        ToolStats stats = ToolBase.buildStats(form, tier, crystalIndices, backingCrystals);
+        ToolLoadout loadout = new ToolLoadout(form, crystalIndices, stats);
+
+        ItemStack modified = toolStack.copy();
+        int newIndex = ToolBase.getLoadout(modified).entries().size();
+        if (!ToolBase.addLoadout(modified, loadout)) return;
+        ToolBase.setActiveIndex(modified, newIndex);
+        ToolBase.applyComputedStats(modified);
+
+        writeToCenter(modified);
+        applySelectForm(-1);
+        broadcastChanges();
+    }
+
+    /** CENTER スロットのモードを一時的に INTERACTIVE にしてアイテムを書き込む。 */
+    private void writeToCenter(ItemStack stack) {
+        DialSlot cs = rings.get(Ring.CENTER)[0];
+        cs.setMode(DialSlot.Mode.INTERACTIVE);
+        cs.set(stack);
+        // layoutSlots() 呼び出し後に正しいモードに戻る
     }
 
     /* ---------- ツール判定 / tier ---------- */
@@ -262,15 +356,24 @@ public class JewelryTableMenu extends AbstractContainerMenu {
 
     private void bindCrystalsBacking() {
         ItemStack tool = rings.get(Ring.CENTER)[0].peekRealItem();
-        backingCrystals = isTool(tool)
-                ? ToolInventory.get(tool, 9, level.registryAccess())
-                : fallbackEmpty;
+        if (isTool(tool)) {
+            int slots = ToolBase.crystalSlotCount(getToolTier());
+            backingCrystals = ToolInventory.get(tool, slots, level.registryAccess());
+        } else {
+            backingCrystals = fallbackEmpty;
+        }
     }
 
     private void refreshCrystalCapacity() {
-        activeCrystalSlots = switch (getToolTier()) { case 1 -> 5; case 2 -> 7; default -> 9; };
+        activeCrystalSlots = ToolBase.crystalSlotCount(getToolTier());
         int size = Math.max(1, backingCrystals.getSlots());
         headCrystals = mod(headCrystals, size);
+    }
+
+    /* ---------- クリスタル backing アクセサ ---------- */
+    public int crystalBackingOf(int vi) {
+        int size = Math.max(1, backingCrystals.getSlots());
+        return mod(headCrystals + vi, size);
     }
 
     /* ---------- リング回転 ---------- */
@@ -335,38 +438,13 @@ public class JewelryTableMenu extends AbstractContainerMenu {
         }
     }
 
-    /* ---------- ボタン処理 ---------- */
+    /* ---------- ボタン処理（BUTTON スロットは C2S パケット経由、clicked は通常スロットのみ） ---------- */
     @Override
     public void clicked(int slotId, int button, @NotNull ClickType clickType, @NotNull Player player) {
         if (slotId >= 0 && slotId < this.slots.size()) {
             Slot sl = this.slots.get(slotId);
             if (sl instanceof DialSlot rs && rs.mode() == DialSlot.Mode.BUTTON) {
-                if (uiState == UiState.EMPTY) return;
-                Ring ring = Ring.values()[rs.ring()];
-
-                if (uiState == UiState.EDIT_CRYSTALS && ring == Ring.TOOLS) {
-                    return;
-                }
-
-                if (uiState == UiState.REGISTER_SETUP) {
-                    if (ring == Ring.CRYSTALS) {
-                        ItemStack stack = rs.peekRealItem();
-                        if (!stack.isEmpty() && stack.getItem() instanceof Crystal) {
-                            selectedCrystal = ItemStack.matches(selectedCrystal, stack)
-                                    ? ItemStack.EMPTY
-                                    : stack.copyWithCount(1);
-                            super.broadcastChanges();
-                        }
-                        return;
-                    }
-                    if (ring == Ring.CENTER) {
-                        uiState = UiState.EDIT_CRYSTALS;
-                        selectedCrystal = ItemStack.EMPTY;
-                        layoutSlots();
-                        super.broadcastChanges();
-                        return;
-                    }
-                }
+                // BUTTONスロットへのクリックは C2S パケットで処理済みのため何もしない
                 return;
             }
         }
@@ -382,7 +460,7 @@ public class JewelryTableMenu extends AbstractContainerMenu {
         ItemStack in = slot.getItem();
         ItemStack ret = in.copy();
 
-        final int centerFirst  = firstIndex.get(Ring.CENTER);
+        final int centerFirst   = firstIndex.get(Ring.CENTER);
         final int crystalsFirst = firstIndex.get(Ring.CRYSTALS);
         final int crystalsEnd   = crystalsFirst + activeCrystalSlots;
 
@@ -390,12 +468,14 @@ public class JewelryTableMenu extends AbstractContainerMenu {
         boolean fromCrystals = (index >= crystalsFirst && index < crystalsEnd);
         boolean fromPlayer   = (index >= playerStartIndex && index < playerEndIndex);
 
+        // BUTTON モードのスロットは getItem() が EMPTY を返すため、
+        // fromCenter/fromCrystals は FORM_SELECTED 中は自動的に false になる
         if (fromCenter || fromCrystals) {
             if (!this.moveItemStackTo(in, playerStartIndex, playerEndIndex, true)) return ItemStack.EMPTY;
         } else if (fromPlayer) {
             if (isTool(in)) {
                 if (!this.moveItemStackTo(in, centerFirst, centerFirst + 1, false)) return ItemStack.EMPTY;
-            } else if (in.getItem() instanceof Crystal && uiState != UiState.EMPTY) {
+            } else if (in.getItem() instanceof Crystal && uiState == UiState.EDIT_CRYSTALS) {
                 if (!this.moveItemStackTo(in, crystalsFirst, crystalsEnd, false)) return ItemStack.EMPTY;
             } else {
                 return ItemStack.EMPTY;

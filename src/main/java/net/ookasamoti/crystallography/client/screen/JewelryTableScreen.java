@@ -11,9 +11,14 @@ import net.minecraft.world.inventory.Slot;
 import net.minecraft.world.item.ItemStack;
 import net.neoforged.neoforge.network.PacketDistributor;
 import net.ookasamoti.crystallography.CrystallographyMod;
+import net.ookasamoti.crystallography.client.gui.dial.DialDrawer;
 import net.ookasamoti.crystallography.client.gui.dial.DialLayout;
 import net.ookasamoti.crystallography.client.gui.dial.DialSlot;
+import net.ookasamoti.crystallography.common.item.crystal.CrystalStatsRange;
+import net.ookasamoti.crystallography.common.item.tool.ToolBase;
 import net.ookasamoti.crystallography.common.item.tool.ToolWand;
+import net.ookasamoti.crystallography.data.CrystalStatsRegistry;
+import net.ookasamoti.crystallography.network.JewelryActionC2S;
 import net.ookasamoti.crystallography.network.RotateRingC2S;
 import org.jetbrains.annotations.NotNull;
 
@@ -23,6 +28,10 @@ public class JewelryTableScreen extends AbstractContainerScreen<JewelryTableMenu
             ResourceLocation.parse(CrystallographyMod.MOD_ID + ":textures/gui/jewelry_table_gui.png");
     private static final ResourceLocation GRADIENT =
             ResourceLocation.parse(CrystallographyMod.MOD_ID + ":textures/gui/jewelry_table_gradient.png");
+
+    /* ===== フォーム名（テクスチャパス用） ===== */
+    private static final String[] ROD_FORM_NAMES  = {"pickaxe", "shovel", "hoe", "sword", "axe", "spear"};
+    private static final String[] WAND_FORM_NAMES = {"bow", "crossbow", "knife", "wrench", "fishing_rod", "shield"};
 
     /* ===== ツール種別アイコン ===== */
     private static final ResourceLocation[] ROD_ICONS = {
@@ -47,20 +56,17 @@ public class JewelryTableScreen extends AbstractContainerScreen<JewelryTableMenu
     private static final ResourceLocation CRYSTAL_ICON =
             ResourceLocation.parse("minecraft:textures/item/empty_slot_quartz.png");
 
-    private static final ResourceLocation REGISTRY_ICON =
-            ResourceLocation.parse("crystallography:textures/item/empty_slot_stick.png");
-
     private static final int TOOL_SLOT_X = JewelryTableMenu.TOOL_SLOT_X;
     private static final int TOOL_SLOT_Y = JewelryTableMenu.TOOL_SLOT_Y;
 
     private DialLayout layTools, layCrystals, layRegistries, layCenter;
 
     private ItemStack lastKnownCenter = ItemStack.EMPTY;
+    private int selectedToolBacking = -1;
 
     public JewelryTableScreen(JewelryTableMenu menu, Inventory inv, Component title) {
         super(menu, inv, title);
     }
-
 
     @Override
     protected void init() {
@@ -95,6 +101,81 @@ public class JewelryTableScreen extends AbstractContainerScreen<JewelryTableMenu
 
         int[] cc = scissorRectContainer();
         menu.applyClipBoxToAllRings(cc[0], cc[1], cc[2], cc[3]);
+    }
+
+    // ---- クリック ----
+    @Override
+    public boolean mouseClicked(double mx, double my, int button) {
+        int[] sc = scissorRectPixels();
+        if (pointInRect((int)mx, (int)my, sc[0], sc[1], sc[2], sc[3])) {
+
+            // REGISTRIESボタン: フォーム選択 or 登録
+            DialSlot[] regSlots = menu.getRingSlots(JewelryTableMenu.Ring.REGISTRIES);
+            int headReg = menu.getHead(JewelryTableMenu.Ring.REGISTRIES);
+            for (int vi = 0; vi < regSlots.length; vi++) {
+                DialSlot s = regSlots[vi];
+                if (!s.getVisibleFlag() || s.mode() != DialSlot.Mode.BUTTON) continue;
+                int sx = leftPos + s.x, sy = topPos + s.y;
+                if (mx >= sx && mx < sx + 16 && my >= sy && my < sy + 16) {
+                    int formIndex = (headReg + vi) % ROD_ICONS.length;
+                    handleRegistryClick(formIndex);
+                    return true;
+                }
+            }
+
+            // FORM_SELECTED状態: CRYSTALSクリック → 結晶選択トグル（アイテム取り出し禁止）
+            if (menu.pendingFormIndex >= 0) {
+                DialSlot[] crystalSlots = menu.getRingSlots(JewelryTableMenu.Ring.CRYSTALS);
+                for (int vi = 0; vi < crystalSlots.length; vi++) {
+                    DialSlot s = crystalSlots[vi];
+                    if (!s.getVisibleFlag()) continue;
+                    int sx = leftPos + s.x, sy = topPos + s.y;
+                    if (mx >= sx && mx < sx + 16 && my >= sy && my < sy + 16) {
+                        if (!s.peekRealItem().isEmpty()) {
+                            int backing = menu.crystalBackingOf(vi);
+                            menu.applyToggleCrystal(backing);
+                            PacketDistributor.sendToServer(new JewelryActionC2S(
+                                    menu.containerId, JewelryActionC2S.ACTION_TOGGLE_CRYSTAL, backing));
+                        }
+                        return true; // 常にインターセプト（アイテム取り出し防止）
+                    }
+                }
+            }
+
+            // EDIT_CRYSTALSのTOOLSボタン: ツール選択トグル（クライアント専用ビジュアル）
+            for (DialSlot s : menu.getRingSlots(JewelryTableMenu.Ring.TOOLS)) {
+                if (!s.getVisibleFlag() || s.mode() != DialSlot.Mode.BUTTON) continue;
+                int sx = leftPos + s.x, sy = topPos + s.y;
+                if (mx >= sx && mx < sx + 16 && my >= sy && my < sy + 16) {
+                    int toolCount = JewelryTableMenu.countOf(JewelryTableMenu.Ring.TOOLS);
+                    int backing = (menu.getHead(JewelryTableMenu.Ring.TOOLS) + s.visualIndex()) % toolCount;
+                    selectedToolBacking = (selectedToolBacking == backing) ? -1 : backing;
+                    return true;
+                }
+            }
+        }
+        return super.mouseClicked(mx, my, button);
+    }
+
+    /** REGISTRIESボタンクリック時の処理 */
+    private void handleRegistryClick(int formIndex) {
+        if (menu.pendingCrystals.size() == JewelryTableMenu.countOf(JewelryTableMenu.Ring.CENTER)
+                || menu.pendingCrystals.size() >= 3) {
+            // 3つ選択済み → 登録
+            menu.applySelectForm(-1); // クライアントで即時リセット
+            PacketDistributor.sendToServer(new JewelryActionC2S(
+                    menu.containerId, JewelryActionC2S.ACTION_REGISTER, formIndex));
+        } else if (menu.pendingFormIndex == formIndex) {
+            // 同じフォームをクリック → 選択解除
+            menu.applySelectForm(-1);
+            PacketDistributor.sendToServer(new JewelryActionC2S(
+                    menu.containerId, JewelryActionC2S.ACTION_SELECT_FORM, -1));
+        } else {
+            // 新しいフォームを選択
+            menu.applySelectForm(formIndex);
+            PacketDistributor.sendToServer(new JewelryActionC2S(
+                    menu.containerId, JewelryActionC2S.ACTION_SELECT_FORM, formIndex));
+        }
     }
 
     // ---- ホイール ----
@@ -166,39 +247,61 @@ public class JewelryTableScreen extends AbstractContainerScreen<JewelryTableMenu
             ItemStack center = menu.getRingSlots(JewelryTableMenu.Ring.CENTER)[0].peekRealItem();
             ResourceLocation[] toolIcons = (center.getItem() instanceof ToolWand) ? WAND_ICONS : ROD_ICONS;
 
-            // TOOLSボタンアイコン（headTools でサイクル）
+            // TOOLSボタンアイコン（EDIT_CRYSTALS時のみ表示、選択中は白円）
             int headTools = menu.getHead(JewelryTableMenu.Ring.TOOLS);
+            int toolCount = JewelryTableMenu.countOf(JewelryTableMenu.Ring.TOOLS);
             DialSlot[] toolSlots = menu.getRingSlots(JewelryTableMenu.Ring.TOOLS);
             for (int i = 0; i < toolSlots.length; i++) {
                 DialSlot s = toolSlots[i];
                 if (s.getVisibleFlag() && s.mode() == DialSlot.Mode.BUTTON) {
                     g.blit(toolIcons[(i + headTools) % toolIcons.length],
                             leftPos + s.x, topPos + s.y, 0, 0, 16, 16, 16, 16);
+                    if ((headTools + i) % toolCount == selectedToolBacking) {
+                        float icx = leftPos + s.x + 8f, icy = topPos + s.y + 8f;
+                        DialDrawer.circleOutline(g, icx, icy,  9.55f, 1.5f, 0xFFFFFFFF);
+                        DialDrawer.circleOutline(g, icx, icy, 10.45f, 1.5f, 0xFFFFFFFF);
+                    }
                 }
             }
 
-            // CRYSTALS空スロットプレースホルダー
+            // CRYSTALSスロット: 空プレースホルダー + 選択インジケーター
             DialSlot[] crystalSlots = menu.getRingSlots(JewelryTableMenu.Ring.CRYSTALS);
-            for (DialSlot s : crystalSlots) {
-                if (s.getVisibleFlag() && s.peekRealItem().isEmpty()) {
+            for (int vi = 0; vi < crystalSlots.length; vi++) {
+                DialSlot s = crystalSlots[vi];
+                if (!s.getVisibleFlag()) continue;
+                if (s.peekRealItem().isEmpty()) {
                     g.blit(CRYSTAL_ICON, leftPos + s.x, topPos + s.y, 0, 0, 16, 16, 16, 16);
                 }
+                if (menu.pendingFormIndex >= 0
+                        && menu.pendingCrystals.contains(menu.crystalBackingOf(vi))) {
+                    float icx = leftPos + s.x + 8f, icy = topPos + s.y + 8f;
+                    DialDrawer.circleOutline(g, icx, icy,  9.55f, 1.5f, 0xFFFFFFFF);
+                    DialDrawer.circleOutline(g, icx, icy, 10.45f, 1.5f, 0xFFFFFFFF);
+                }
             }
 
-            // REGISTRIES空スロットプレースホルダー
+            // REGISTRIESボタン: ツールフォームアイコン + 選択インジケーター
             DialSlot[] registrySlots = menu.getRingSlots(JewelryTableMenu.Ring.REGISTRIES);
-            for (DialSlot s : registrySlots) {
-                if (s.getVisibleFlag() && s.peekRealItem().isEmpty()) {
-                    g.blit(REGISTRY_ICON, leftPos + s.x, topPos + s.y, 0, 0, 16, 16, 16, 16);
+            int headReg = menu.getHead(JewelryTableMenu.Ring.REGISTRIES);
+            for (int vi = 0; vi < registrySlots.length; vi++) {
+                DialSlot s = registrySlots[vi];
+                if (!s.getVisibleFlag() || s.mode() != DialSlot.Mode.BUTTON) continue;
+                int formIndex = (headReg + vi) % toolIcons.length;
+                g.blit(toolIcons[formIndex], leftPos + s.x, topPos + s.y, 0, 0, 16, 16, 16, 16);
+                if (formIndex == menu.pendingFormIndex) {
+                    float icx = leftPos + s.x + 8f, icy = topPos + s.y + 8f;
+                    DialDrawer.circleOutline(g, icx, icy,  9.55f, 1.5f, 0xFFFFFFFF);
+                    DialDrawer.circleOutline(g, icx, icy, 10.45f, 1.5f, 0xFFFFFFFF);
                 }
             }
 
             // 装飾スロット（isActive=false）の実アイテム描画
-            // バニラの renderSlots ループは isActive=true のスロットしか描画しないため、
-            // clip 境界にかかる装飾スロットは明示的にここで描画する
             for (JewelryTableMenu.Ring ring : JewelryTableMenu.Ring.values()) {
                 for (DialSlot s : menu.getRingSlots(ring)) {
                     if (s.getVisibleFlag() && !s.isActive()) {
+                        // FORM_SELECTED時のCENTERはプレビューで差し替えるためスキップ
+                        if (ring == JewelryTableMenu.Ring.CENTER
+                                && menu.getUiState() == JewelryTableMenu.UiState.FORM_SELECTED) continue;
                         ItemStack item = s.peekRealItem();
                         if (!item.isEmpty()) {
                             g.renderItem(item, leftPos + s.x, topPos + s.y);
@@ -213,7 +316,7 @@ public class JewelryTableScreen extends AbstractContainerScreen<JewelryTableMenu
         }
     }
 
-    // ---- スロット描画（RadialSlotはscissor付き） ----
+    // ---- スロット描画（DialSlotはscissor付き） ----
     @Override
     protected void renderSlot(@NotNull GuiGraphics g, @NotNull Slot slot) {
         if (slot instanceof DialSlot) {
@@ -234,11 +337,70 @@ public class JewelryTableScreen extends AbstractContainerScreen<JewelryTableMenu
         ItemStack current = menu.getRingSlots(JewelryTableMenu.Ring.CENTER)[0].peekRealItem();
         if (!ItemStack.matches(current, lastKnownCenter)) {
             lastKnownCenter = current.copy();
+            selectedToolBacking = -1;
             menu.clientSyncState();
         }
         renderBackground(g, mouseX, mouseY, pt);
         super.render(g, mouseX, mouseY, pt);
+        if (menu.getUiState() == JewelryTableMenu.UiState.FORM_SELECTED) {
+            renderCenterPreview(g);
+        }
         renderTooltip(g, mouseX, mouseY);
+    }
+
+    // ---- CENTERプレビュー（FORM_SELECTED時にツールプレビューをCENTER位置に描画） ----
+    private void renderCenterPreview(GuiGraphics g) {
+        if (menu.pendingFormIndex < 0) return;
+
+        DialSlot centerSlot = menu.getRingSlots(JewelryTableMenu.Ring.CENTER)[0];
+        int px = leftPos + centerSlot.x;
+        int py = topPos + centerSlot.y;
+
+        ItemStack center = centerSlot.peekRealItem();
+        boolean isWand = center.getItem() instanceof ToolWand;
+        String[] formNames = isWand ? WAND_FORM_NAMES : ROD_FORM_NAMES;
+        String form = formNames[menu.pendingFormIndex % formNames.length];
+        int tier = (center.getItem() instanceof ToolBase tb) ? tb.getTier() : 1;
+        String prefix = isWand ? "toolwand_" : "toolrod_";
+
+        int tint = getFirstCrystalTint();
+        float r, gr, b;
+        if (tint == CrystalStatsRange.NO_TINT) {
+            r = gr = b = 1f;
+        } else {
+            r  = ((tint >> 16) & 0xFF) / 255f;
+            gr = ((tint >>  8) & 0xFF) / 255f;
+            b  = ( tint        & 0xFF) / 255f;
+        }
+
+        RenderSystem.enableBlend();
+        RenderSystem.defaultBlendFunc();
+
+        for (String suffix : new String[]{"center", "left", "right"}) {
+            ResourceLocation tex = ResourceLocation.parse(
+                    CrystallographyMod.MOD_ID + ":textures/item/" + prefix + form + "_" + suffix + ".png");
+            RenderSystem.setShaderColor(r, gr, b, 1f);
+            g.blit(tex, px, py, 0, 0, 16, 16, 16, 16);
+        }
+
+        ResourceLocation tierTex = ResourceLocation.parse(
+                CrystallographyMod.MOD_ID + ":textures/item/" + prefix + form + "_tier" + tier + ".png");
+        RenderSystem.setShaderColor(1f, 1f, 1f, 1f);
+        g.blit(tierTex, px, py, 0, 0, 16, 16, 16, 16);
+
+        RenderSystem.setShaderColor(1f, 1f, 1f, 1f);
+        RenderSystem.disableBlend();
+    }
+
+    /** 最初に選択された結晶のtintを取得する（未選択なら NO_TINT） */
+    private int getFirstCrystalTint() {
+        if (menu.pendingCrystals.isEmpty()) return CrystalStatsRange.NO_TINT;
+        int firstBacking = menu.pendingCrystals.get(0);
+        var inv = menu.getBackingCrystals();
+        if (firstBacking >= inv.getSlots()) return CrystalStatsRange.NO_TINT;
+        ItemStack crystal = inv.getStackInSlot(firstBacking);
+        if (crystal.isEmpty()) return CrystalStatsRange.NO_TINT;
+        return CrystalStatsRegistry.get(crystal).map(CrystalStatsRange::tint).orElse(CrystalStatsRange.NO_TINT);
     }
 
     // ---- scissor補助 ----

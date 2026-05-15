@@ -9,8 +9,12 @@ public record CrystalStatsRange(
         FloatRange carat,
         FloatRange clarity,
         java.util.Set<String> categories,
-        @org.jetbrains.annotations.Nullable LapidaryAnvilOperations.CrackResult crackResult
+        @org.jetbrains.annotations.Nullable LapidaryAnvilOperations.CrackResult crackResult,
+        int tint
 ) {
+    /** tint未設定のデフォルト値（無着色） */
+    public static final int NO_TINT = -1;
+
     public boolean allFixed() {
         return hardness.isFixed() && carat.isFixed() && clarity.isFixed();
     }

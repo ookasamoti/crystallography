@@ -5,38 +5,47 @@ import com.mojang.serialization.codecs.RecordCodecBuilder;
 import net.minecraft.network.RegistryFriendlyByteBuf;
 import net.minecraft.network.codec.ByteBufCodecs;
 import net.minecraft.network.codec.StreamCodec;
-import net.minecraft.world.item.ItemStack;
 
 import java.util.Arrays;
 
-public record ToolLoadout(ToolForm form, ItemStack[] crystals) {
+public record ToolLoadout(ToolForm form, int[] crystalIndices, ToolStats stats) {
 
-    // --- ItemStack[] <-> json のための補助 Codec ---
-    private static final Codec<ItemStack[]> ITEMSTACK_ARRAY_CODEC =
-            ItemStack.CODEC.listOf().xmap(
-                    list -> list.toArray(ItemStack[]::new),
-                    Arrays::asList
+    /** 1つのツール登録に使う結晶スロット数（固定）。 */
+    public static final int CRYSTAL_SLOTS = 3;
+
+    public ToolLoadout {
+        if (crystalIndices.length != CRYSTAL_SLOTS)
+            throw new IllegalArgumentException("crystalIndices must have exactly " + CRYSTAL_SLOTS + " elements");
+    }
+
+    // ---- JSON Codec ----
+    private static final Codec<int[]> INT_ARRAY_CODEC =
+            Codec.INT.listOf().xmap(
+                    list -> list.stream().mapToInt(Integer::intValue).toArray(),
+                    arr  -> Arrays.stream(arr).boxed().toList()
             );
 
-    // --- ItemStack[] <-> ByteBuf のための補助 StreamCodec ---
-    private static final StreamCodec<RegistryFriendlyByteBuf, ItemStack[]> ITEMSTACK_ARRAY_STREAM_CODEC =
-            ItemStack.STREAM_CODEC
-                    .apply(ByteBufCodecs.list()) // List<ItemStack>
-                    .map(list -> list.toArray(ItemStack[]::new), Arrays::asList);
-
-    // ---------- JSON Codec ----------
     public static final Codec<ToolLoadout> CODEC = RecordCodecBuilder.create(i -> i.group(
             Codec.STRING.xmap(ToolForm::valueOf, ToolForm::name)
                     .fieldOf("form").forGetter(ToolLoadout::form),
-            ITEMSTACK_ARRAY_CODEC
-                    .fieldOf("crystals").forGetter(ToolLoadout::crystals)
+            INT_ARRAY_CODEC
+                    .fieldOf("crystal_indices").forGetter(ToolLoadout::crystalIndices),
+            ToolStats.CODEC
+                    .fieldOf("stats").forGetter(ToolLoadout::stats)
     ).apply(i, ToolLoadout::new));
 
-    // ---------- Network StreamCodec ----------
+    // ---- Network StreamCodec ----
+    private static final StreamCodec<RegistryFriendlyByteBuf, int[]> INT3_STREAM_CODEC =
+            StreamCodec.of(
+                    (buf, arr) -> { for (int v : arr) buf.writeVarInt(v); },
+                    buf -> new int[]{ buf.readVarInt(), buf.readVarInt(), buf.readVarInt() }
+            );
+
     public static final StreamCodec<RegistryFriendlyByteBuf, ToolLoadout> STREAM_CODEC =
             StreamCodec.composite(
                     ByteBufCodecs.STRING_UTF8.map(ToolForm::valueOf, ToolForm::name), ToolLoadout::form,
-                    ITEMSTACK_ARRAY_STREAM_CODEC, ToolLoadout::crystals,
+                    INT3_STREAM_CODEC,    ToolLoadout::crystalIndices,
+                    ToolStats.STREAM_CODEC, ToolLoadout::stats,
                     ToolLoadout::new
             );
 }

@@ -8,5 +8,6 @@
     "gem",
     "diamond"
   ],
-  "crack_result": { "item": "minecraft:diamond", "count": 1 }
+  "crack_result": { "item": "minecraft:diamond", "count": 1 },
+  "tint": "#B9F2FF"
 }
