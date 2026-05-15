@@ -8,7 +8,7 @@ import net.minecraft.network.codec.StreamCodec;
 
 import java.util.Arrays;
 
-public record ToolLoadout(ToolForm form, int[] crystalIndices, ToolStats stats) {
+public record ToolLoadout(int slotIndex, ToolForm form, int[] crystalIndices, ToolStats stats) {
 
     /** 1つのツール登録に使う結晶スロット数（固定）。 */
     public static final int CRYSTAL_SLOTS = 3;
@@ -26,6 +26,8 @@ public record ToolLoadout(ToolForm form, int[] crystalIndices, ToolStats stats) 
             );
 
     public static final Codec<ToolLoadout> CODEC = RecordCodecBuilder.create(i -> i.group(
+            Codec.INT.optionalFieldOf("slot_index", 0)
+                    .forGetter(ToolLoadout::slotIndex),
             Codec.STRING.xmap(ToolForm::valueOf, ToolForm::name)
                     .fieldOf("form").forGetter(ToolLoadout::form),
             INT_ARRAY_CODEC
@@ -43,9 +45,10 @@ public record ToolLoadout(ToolForm form, int[] crystalIndices, ToolStats stats) 
 
     public static final StreamCodec<RegistryFriendlyByteBuf, ToolLoadout> STREAM_CODEC =
             StreamCodec.composite(
-                    ByteBufCodecs.STRING_UTF8.map(ToolForm::valueOf, ToolForm::name), ToolLoadout::form,
-                    INT3_STREAM_CODEC,    ToolLoadout::crystalIndices,
-                    ToolStats.STREAM_CODEC, ToolLoadout::stats,
+                    ByteBufCodecs.VAR_INT,                                                   ToolLoadout::slotIndex,
+                    ByteBufCodecs.STRING_UTF8.map(ToolForm::valueOf, ToolForm::name),        ToolLoadout::form,
+                    INT3_STREAM_CODEC,                                                       ToolLoadout::crystalIndices,
+                    ToolStats.STREAM_CODEC,                                                  ToolLoadout::stats,
                     ToolLoadout::new
             );
 }

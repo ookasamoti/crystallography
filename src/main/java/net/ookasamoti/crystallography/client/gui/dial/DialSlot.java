@@ -8,49 +8,59 @@ import net.neoforged.neoforge.items.IItemHandler;
 import net.neoforged.neoforge.items.IItemHandlerModifiable;
 import org.jetbrains.annotations.NotNull;
 
+import java.lang.reflect.Field;
 import java.util.Objects;
 import java.util.function.IntUnaryOperator;
 import java.util.function.Supplier;
 
 /**
- * 円配置向けカスタムスロット（"スロット/表示専用/非表示"の3状態）。
+ * 円配置向けカスタムスロット。
  *
- * 重要：
- * - DECORATION は「スロットとして存在しない（ヒット無し）」にするため isActive()=false。
- *   → そのままだと AbstractContainerScreen#renderSlot が描画もしないため、
- *      Screen 側で rs.peekRealItem() を使って DECORATION を手描きする前提。
- * - INTERACTIVE のみ通常スロットとして動作（set/remove も有効）。
- *
- * handlerSupplier は IItemHandler で受ける（IItemHandlerModifiable も渡せる）。
- * 変更操作は IItemHandlerModifiable のときのみ行う。
- *
- * コンストラクタ引数順:
- *   (handlerSupplier, mapper, ringOrdinal, visualIndex, x, y, initialMode, diameterPx)
+ * Slot.x/y はリフレクションで書き換えることでヒットボックスごと移動させる。
+ * origX/origY がコンストラクタで設定した元の位置。
+ * INTERACTIVE のみ通常スロットとして動作。BUTTON/DECORATION/HIDDEN は isActive()=false。
  */
 public class DialSlot extends Slot {
 
     public enum Mode { INTERACTIVE, DECORATION, HIDDEN, BUTTON }
+
+    // ---- Slot.x/y を書き換えるリフレクション ----
+    private static final Field FIELD_X;
+    private static final Field FIELD_Y;
+    static {
+        Field fx = null, fy = null;
+        try {
+            fx = Slot.class.getDeclaredField("x");
+            fy = Slot.class.getDeclaredField("y");
+            fx.setAccessible(true);
+            fy.setAccessible(true);
+        } catch (ReflectiveOperationException e) {
+            // フォールバック：ヒットボックスは動かないが描画は維持される
+        }
+        FIELD_X = fx;
+        FIELD_Y = fy;
+    }
 
     private final Supplier<? extends IItemHandler> handlerSupplier;
     private final IntUnaryOperator mapper;
     private final int ringOrdinal;
     private final int visualIndex;
 
+    /** コンストラクタで設定した元のコンテナ座標（reset 用） */
+    public final int origX, origY;
+
+    /** 整数 slot.x/y に対するサブピクセル補正（描画専用。毎フレーム Screen 側が更新）。 */
+    public float renderFracX = 0f, renderFracY = 0f;
+
     private Mode mode;
     private boolean visibleFlag = true;
     private int diameter = 16;
 
-    // 入力用クリップ（コンテナ座標：Slot.x/y はコンテナ基準）
+    // クリップ（コンテナ座標）
     private boolean hasClip = false;
     private int clipX0 = Integer.MIN_VALUE, clipY0 = Integer.MIN_VALUE;
     private int clipX1 = Integer.MAX_VALUE, clipY1 = Integer.MAX_VALUE;
 
-    /**
-     * @param ringOrdinal  所属リングの enum ordinal（{@code Ring.values()[rs.ring()]} で逆引きできる）
-     * @param visualIndex  リング内の視覚インデックス（mapper に渡される）
-     * @param x            コンテナ座標 X（スロット左上）
-     * @param y            コンテナ座標 Y（スロット左上）
-     */
     public DialSlot(Supplier<? extends IItemHandler> handlerSupplier,
                     IntUnaryOperator mapper,
                     int ringOrdinal,
@@ -58,7 +68,6 @@ public class DialSlot extends Slot {
                     int x, int y,
                     Mode initialMode,
                     int diameterPx) {
-        // Slot は Container を要求するためダミーを渡す（実データは handlerSupplier に委譲）
         super(new SimpleContainer(1), 0, x, y);
         this.handlerSupplier = Objects.requireNonNull(handlerSupplier);
         this.mapper          = Objects.requireNonNull(mapper);
@@ -66,24 +75,44 @@ public class DialSlot extends Slot {
         this.visualIndex     = visualIndex;
         this.mode            = Objects.requireNonNull(initialMode);
         this.diameter        = Math.max(1, diameterPx);
+        this.origX           = x;
+        this.origY           = y;
+    }
+
+    // ---- 位置移動 ----
+
+    /**
+     * Slot.x/y をリフレクションで書き換えてヒットボックスごと移動する。
+     * クライアント専用（描画スレッドからのみ呼ぶこと）。
+     */
+    public void moveTo(int newX, int newY) {
+        if (FIELD_X == null || FIELD_Y == null) return;
+        try {
+            FIELD_X.setInt(this, newX);
+            FIELD_Y.setInt(this, newY);
+        } catch (IllegalAccessException ignored) {}
+    }
+
+    /** 元の位置に戻す。 */
+    public void resetPosition() {
+        moveTo(origX, origY);
     }
 
     // ---- public API ----
 
-    /** 所属リングの ordinal。{@code Ring.values()[rs.ring()]} で enum に戻せる。 */
     public int ring()        { return ringOrdinal; }
     public int visualIndex() { return visualIndex; }
 
     public Mode mode()                { return mode; }
     public void setMode(Mode m)       { this.mode = Objects.requireNonNull(m); }
 
-    public boolean getVisibleFlag()   { return visibleFlag; }
+    public boolean getVisibleFlag()       { return visibleFlag; }
     public void setVisibleFlag(boolean v) { this.visibleFlag = v; }
 
-    public int  diameter()            { return diameter; }
-    public void setDiameter(int px)   { this.diameter = Math.max(1, px); }
+    public int  diameter()           { return diameter; }
+    public void setDiameter(int px)  { this.diameter = Math.max(1, px); }
 
-    /** 入力（クリック）向けクリップ：半開区間 [x0,x1) [y0,y1) */
+    /** クリップ（コンテナ座標の半開区間 [x0,x1) [y0,y1)）を設定。 */
     public void setClipBox(int x0, int y0, int x1, int y1) {
         if (x1 < x0) { int t = x0; x0 = x1; x1 = t; }
         if (y1 < y0) { int t = y0; y0 = y1; y1 = t; }
@@ -97,10 +126,7 @@ public class DialSlot extends Slot {
         clipX1 = Integer.MAX_VALUE; clipY1 = Integer.MAX_VALUE;
     }
 
-    /**
-     * モードに関係なく「実際の中身」を覗く。
-     * Screen 側が DECORATION を手描きするときに使う。
-     */
+    /** モードに関係なく実際の中身を覗く（DECORATION 手描き用）。 */
     public @NotNull ItemStack peekRealItem() {
         IItemHandler h = handlerSupplier.get();
         return h.getStackInSlot(mapIndex(h));
@@ -108,13 +134,11 @@ public class DialSlot extends Slot {
 
     // ---- Slot overrides (input) ----
 
-    /** ヒットボックスを消すため、INTERACTIVE のときだけ true */
     @Override
     public boolean isActive() {
         return visibleFlag && mode == Mode.INTERACTIVE && fullyInsideClip();
     }
 
-    /** 枠ハイライトも INTERACTIVE のみ */
     @Override
     public boolean isHighlightable() {
         return visibleFlag && mode == Mode.INTERACTIVE && intersectsClip();
@@ -132,10 +156,6 @@ public class DialSlot extends Slot {
 
     // ---- Slot overrides (data) ----
 
-    /**
-     * バニラ描画や shift-click 判定に使われるので、
-     * INTERACTIVE 以外は EMPTY を返し「スロットとして存在しない」扱いにする。
-     */
     @Override
     public @NotNull ItemStack getItem() {
         if (!visibleFlag || mode != Mode.INTERACTIVE) return ItemStack.EMPTY;
@@ -179,24 +199,20 @@ public class DialSlot extends Slot {
         return m;
     }
 
+    // クリップ判定は this.x/y（moveTo 後は回転済み位置）を参照する
     private boolean intersectsClip() {
         if (!hasClip) return true;
-        int x0 = this.x, y0 = this.y, x1 = x0 + 16, y1 = y0 + 16;
-        return (x1 > clipX0) && (x0 < clipX1) && (y1 > clipY0) && (y0 < clipY1);
+        int x1 = this.x + 16, y1 = this.y + 16;
+        return (x1 > clipX0) && (this.x < clipX1) && (y1 > clipY0) && (this.y < clipY1);
     }
 
     private boolean fullyInsideClip() {
         if (!hasClip) return true;
-        int x0 = this.x, y0 = this.y, x1 = x0 + 16, y1 = y0 + 16;
-        return (x0 >= clipX0) && (y0 >= clipY0) && (x1 <= clipX1) && (y1 <= clipY1);
+        int x1 = this.x + 16, y1 = this.y + 16;
+        return (this.x >= clipX0) && (this.y >= clipY0) && (x1 <= clipX1) && (y1 <= clipY1);
     }
 
-    // ---- optional: circle hover helper ----
-
-    /**
-     * 四角の代わりに「円」としてのヒット判定が欲しい場合の補助。
-     * ※ Screen 側で mouseX/mouseY は"画面座標"、guiLeft/guiTop を渡すこと。
-     */
+    /** 円ヒット判定補助（Screen 座標で渡すこと）。 */
     public boolean isMouseOverCircle(double mouseX, double mouseY, int guiLeft, int guiTop) {
         double cx = guiLeft + this.x + 8.0;
         double cy = guiTop  + this.y + 8.0;

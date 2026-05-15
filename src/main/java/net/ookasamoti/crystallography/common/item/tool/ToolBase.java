@@ -65,23 +65,24 @@ public abstract class ToolBase extends Item {
     }
 
     public static @Nullable ToolLoadout getActiveLoadout(ItemStack stack) {
-        var list = getLoadout(stack).entries();
-        int idx = Math.min(Math.max(0, getActiveIndex(stack)), Math.max(0, list.size() - 1));
-        return list.isEmpty() ? null : list.get(idx);
+        int slotIdx = getActiveIndex(stack);
+        return getLoadout(stack).getAtSlot(slotIdx).orElse(null);
     }
 
     /**
      * ツールにロードアウトを追加する。
-     * Tier に応じた上限（8/12/16）を超える場合は追加せず false を返す。
+     * スロット重複または Tier 上限（8/12/16）に達した場合は追加せず false を返す。
      */
     public static boolean addLoadout(ItemStack stack, ToolLoadout add) {
         int max = maxLoadouts(getRodTier(stack));
         var list = getLoadout(stack);
         if (list.full(max)) return false;
+        if (list.getAtSlot(add.slotIndex()).isPresent()) return false;
         var mod = new java.util.ArrayList<>(list.entries());
         mod.add(add);
         stack.set(ToolComponentsRegistry.TOOL_LOADOUTS.get(), new ToolLoadoutList(java.util.List.copyOf(mod)));
-        if (stack.get(ToolComponentsRegistry.TOOL_ACTIVE_INDEX.get()) == null) setActiveIndex(stack, 0);
+        if (stack.get(ToolComponentsRegistry.TOOL_ACTIVE_INDEX.get()) == null)
+            setActiveIndex(stack, add.slotIndex());
         return true;
     }
 

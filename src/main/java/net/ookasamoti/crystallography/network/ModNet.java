@@ -19,24 +19,6 @@ public final class ModNet {
         CrystallographyMod.LOGGER.info("[Net] Register payloads");
 
         reg.playToServer(
-                RotateRingC2S.TYPE,
-                RotateRingC2S.STREAM_CODEC,
-                (msg, ctx) -> ctx.enqueueWork(() -> {
-                    if (!(ctx.player() instanceof ServerPlayer sp)) return;
-                    if (!(sp.containerMenu instanceof JewelryTableMenu menu)) return;
-                    if (menu.containerId != msg.containerId()) return;
-
-                    if (msg.ring() == RotateRingC2S.RING_TOOLS) {
-                        menu.rotateToolsViewServer(msg.steps());
-                    } else if (msg.ring() == RotateRingC2S.RING_CRYSTALS) {
-                        menu.rotateCrystalsViewServer(msg.steps());
-                    } else if (msg.ring() == RotateRingC2S.RING_REGISTRIES) {
-                        menu.rotateRegistriesViewServer(msg.steps());
-                    }
-                })
-        );
-
-        reg.playToServer(
                 JewelryActionC2S.TYPE,
                 JewelryActionC2S.STREAM_CODEC,
                 (msg, ctx) -> ctx.enqueueWork(() -> {

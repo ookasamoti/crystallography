@@ -13,6 +13,10 @@ public record ToolLoadoutList(java.util.List<ToolLoadout> entries) {
             ToolLoadout.STREAM_CODEC.apply(ByteBufCodecs.list())
                     .map(ToolLoadoutList::new, ToolLoadoutList::entries);
 
-    public int clampActive(int idx){ return entries.isEmpty() ? 0 : Math.floorMod(idx, entries.size()); }
+    /** slotIndex が一致するエントリを返す。 */
+    public java.util.Optional<ToolLoadout> getAtSlot(int slotIndex) {
+        return entries.stream().filter(e -> e.slotIndex() == slotIndex).findFirst();
+    }
+
     public boolean full(int maxLoadouts){ return entries.size() >= maxLoadouts; }
 }
