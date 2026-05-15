@@ -6,21 +6,19 @@ import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.network.codec.ByteBufCodecs;
 import net.minecraft.network.codec.StreamCodec;
 
-public record CrystalStats(int hardness, float weight, float purity) {
-    public static final CrystalStats DEFAULT = new CrystalStats(0, 1f, 1f);
+public record CrystalStats(int hardness, float carat, float clarity) {
 
     public static final Codec<CrystalStats> CODEC = RecordCodecBuilder.create(i -> i.group(
             Codec.INT.fieldOf("hardness").forGetter(CrystalStats::hardness),
-            Codec.FLOAT.fieldOf("weight").forGetter(CrystalStats::weight),
-            Codec.FLOAT.fieldOf("purity").forGetter(CrystalStats::purity)
+            Codec.FLOAT.fieldOf("carat").forGetter(CrystalStats::carat),
+            Codec.FLOAT.fieldOf("clarity").forGetter(CrystalStats::clarity)
     ).apply(i, CrystalStats::new));
 
     public static final StreamCodec<FriendlyByteBuf, CrystalStats> STREAM_CODEC =
             StreamCodec.composite(
                     ByteBufCodecs.VAR_INT, CrystalStats::hardness,
-                    ByteBufCodecs.FLOAT,   CrystalStats::weight,
-                    ByteBufCodecs.FLOAT,   CrystalStats::purity,
+                    ByteBufCodecs.FLOAT,   CrystalStats::carat,
+                    ByteBufCodecs.FLOAT,   CrystalStats::clarity,
                     CrystalStats::new
             );
 }
-

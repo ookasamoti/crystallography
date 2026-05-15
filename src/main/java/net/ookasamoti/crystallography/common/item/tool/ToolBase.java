@@ -86,6 +86,24 @@ public abstract class ToolBase extends Item {
         return true;
     }
 
+    /**
+     * 指定 slotIndex にロードアウトを登録する。既存エントリがあれば上書きする。
+     * slotIndex が Tier 上限外、または新規追加で上限に達している場合は false を返す。
+     */
+    public static boolean setLoadout(ItemStack stack, ToolLoadout add) {
+        int max = maxLoadouts(getRodTier(stack));
+        if (add.slotIndex() < 0 || add.slotIndex() >= max) return false;
+        var list = getLoadout(stack);
+        var mod = new java.util.ArrayList<>(list.entries());
+        boolean replaced = mod.removeIf(e -> e.slotIndex() == add.slotIndex());
+        if (!replaced && mod.size() >= max) return false;
+        mod.add(add);
+        stack.set(ToolComponentsRegistry.TOOL_LOADOUTS.get(), new ToolLoadoutList(java.util.List.copyOf(mod)));
+        if (stack.get(ToolComponentsRegistry.TOOL_ACTIVE_INDEX.get()) == null)
+            setActiveIndex(stack, add.slotIndex());
+        return true;
+    }
+
     // ---- 性能計算（登録時のみ呼ぶ） ----
 
     /**
@@ -109,8 +127,8 @@ public abstract class ToolBase extends Item {
             var cs = crystal.get(statsType);
             if (cs != null) {
                 hardnessSum += cs.hardness();
-                caratSum    += cs.weight();
-                claritySum  += cs.purity();
+                caratSum    += cs.carat();
+                claritySum  += cs.clarity();
             }
 
             var rangeOpt = CrystalStatsRegistry.get(crystal);
@@ -204,10 +222,6 @@ public abstract class ToolBase extends Item {
     }
 
     // ---- helpers ----
-
-    public static boolean isCrystal(ItemStack s) {
-        return s.getItem() instanceof net.ookasamoti.crystallography.common.item.crystal.Crystal;
-    }
 
     private static int getRodTier(ItemStack stack) {
         return (stack.getItem() instanceof ToolBase tb) ? tb.getTier() : 1;

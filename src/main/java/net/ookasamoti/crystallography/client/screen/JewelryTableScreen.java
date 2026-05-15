@@ -13,9 +13,9 @@ import net.minecraft.world.item.ItemStack;
 import net.neoforged.neoforge.network.PacketDistributor;
 import net.ookasamoti.crystallography.CrystallographyMod;
 import net.ookasamoti.crystallography.client.gui.dial.DialDrawer;
-import net.ookasamoti.crystallography.common.menu.JewelryTableMenu;
 import net.ookasamoti.crystallography.client.gui.dial.DialLayout;
-import net.ookasamoti.crystallography.client.gui.dial.DialSlot;
+import net.ookasamoti.crystallography.common.menu.DialSlot;
+import net.ookasamoti.crystallography.common.menu.JewelryTableMenu;
 import net.ookasamoti.crystallography.common.item.crystal.CrystalStatsRange;
 import net.ookasamoti.crystallography.common.item.tool.ToolBase;
 import net.ookasamoti.crystallography.common.item.tool.ToolWand;
@@ -61,7 +61,7 @@ public class JewelryTableScreen extends AbstractContainerScreen<JewelryTableMenu
     private static final int TOOL_SLOT_X = JewelryTableMenu.TOOL_SLOT_X;
     private static final int TOOL_SLOT_Y = JewelryTableMenu.TOOL_SLOT_Y;
 
-    private DialLayout layTools, layCrystals, layRegistries, layCenter;
+    private DialLayout layTools;
 
     private ItemStack lastKnownCenter = ItemStack.EMPTY;
 
@@ -87,25 +87,10 @@ public class JewelryTableScreen extends AbstractContainerScreen<JewelryTableMenu
         int cx = left + TOOL_SLOT_X;
         int cy = top  + TOOL_SLOT_Y;
 
-        layCenter     = new DialLayout().center(cx, cy)
-                .radius(JewelryTableMenu.radiusOf(JewelryTableMenu.Ring.CENTER))
-                .count (JewelryTableMenu.countOf (JewelryTableMenu.Ring.CENTER))
-                .iconDiameter(16).angularOffsetDeg(JewelryTableMenu.baseDegOf(JewelryTableMenu.Ring.CENTER));
-
-        layTools      = new DialLayout().center(cx, cy)
+        layTools = new DialLayout().center(cx, cy)
                 .radius(JewelryTableMenu.radiusOf(JewelryTableMenu.Ring.TOOLS))
                 .count (JewelryTableMenu.countOf (JewelryTableMenu.Ring.TOOLS))
                 .iconDiameter(16).angularOffsetDeg(JewelryTableMenu.baseDegOf(JewelryTableMenu.Ring.TOOLS));
-
-        layCrystals   = new DialLayout().center(cx, cy)
-                .radius(JewelryTableMenu.radiusOf(JewelryTableMenu.Ring.CRYSTALS))
-                .count (JewelryTableMenu.countOf (JewelryTableMenu.Ring.CRYSTALS))
-                .iconDiameter(16).angularOffsetDeg(JewelryTableMenu.baseDegOf(JewelryTableMenu.Ring.CRYSTALS));
-
-        layRegistries = new DialLayout().center(cx, cy)
-                .radius(JewelryTableMenu.radiusOf(JewelryTableMenu.Ring.REGISTRIES))
-                .count (JewelryTableMenu.countOf (JewelryTableMenu.Ring.REGISTRIES))
-                .iconDiameter(16).angularOffsetDeg(JewelryTableMenu.baseDegOf(JewelryTableMenu.Ring.REGISTRIES));
 
         int[] cc = scissorRectContainer();
         menu.applyClipBoxToAllRings(cc[0], cc[1], cc[2], cc[3]);
@@ -218,17 +203,17 @@ public class JewelryTableScreen extends AbstractContainerScreen<JewelryTableMenu
                 }
             }
 
-            // REGISTRIESボタン: 次の空き枠に登録
-            DialSlot[] regSlots = menu.getRingSlots(JewelryTableMenu.Ring.REGISTRIES);
-            for (int vi = 0; vi < regSlots.length; vi++) {
-                DialSlot s = regSlots[vi];
-                if (!s.getVisibleFlag() || s.mode() != DialSlot.Mode.BUTTON) continue;
-                int sx = leftPos + s.x;
-                int sy = topPos  + s.y;
-                if (mx >= sx && mx < sx + 16 && my >= sy && my < sy + 16) {
-                    handleRegistryClick(vi);
-                    return true;
-                }
+        }
+        // REGISTRIESボタン: リングがscissor外に回転する場合もあるためscissor判定の外で処理
+        DialSlot[] regSlots = menu.getRingSlots(JewelryTableMenu.Ring.REGISTRIES);
+        for (int vi = 0; vi < regSlots.length; vi++) {
+            DialSlot s = regSlots[vi];
+            if (!s.getVisibleFlag() || s.mode() != DialSlot.Mode.BUTTON) continue;
+            int sx = leftPos + s.x;
+            int sy = topPos  + s.y;
+            if (mx >= sx && mx < sx + 16 && my >= sy && my < sy + 16) {
+                handleRegistryClick(vi);
+                return true;
             }
         }
         // フォーム選択中はプレイヤーインベントリへのクリックを無効化
@@ -241,10 +226,8 @@ public class JewelryTableScreen extends AbstractContainerScreen<JewelryTableMenu
     private void handleRegistryClick(int slotIndex) {
         if (menu.pendingFormIndex < 0 || menu.pendingCrystals.size() != ToolLoadout.CRYSTAL_SLOTS) return;
         ItemStack tool = menu.getRingSlots(JewelryTableMenu.Ring.CENTER)[0].peekRealItem();
-        // そのスロットが既に埋まっているか、tier上限を超えていれば何もしない
         int tier = (tool.getItem() instanceof ToolBase tb) ? tb.getTier() : 1;
         if (slotIndex >= ToolBase.maxLoadouts(tier)) return;
-        if (ToolBase.getLoadout(tool).getAtSlot(slotIndex).isPresent()) return;
         menu.applySelectForm(-1);
         PacketDistributor.sendToServer(new JewelryActionC2S(
                 menu.containerId, JewelryActionC2S.ACTION_REGISTER, slotIndex));

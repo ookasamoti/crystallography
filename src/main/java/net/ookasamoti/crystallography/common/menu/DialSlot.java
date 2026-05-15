@@ -1,4 +1,4 @@
-package net.ookasamoti.crystallography.client.gui.dial;
+package net.ookasamoti.crystallography.common.menu;
 
 import net.minecraft.world.SimpleContainer;
 import net.minecraft.world.entity.player.Player;
@@ -11,6 +11,7 @@ import org.jetbrains.annotations.NotNull;
 import java.lang.reflect.Field;
 import java.util.Objects;
 import java.util.function.IntUnaryOperator;
+import java.util.function.Predicate;
 import java.util.function.Supplier;
 
 /**
@@ -45,6 +46,7 @@ public class DialSlot extends Slot {
     private final IntUnaryOperator mapper;
     private final int ringOrdinal;
     private final int visualIndex;
+    private final Predicate<ItemStack> placePredicate;
 
     /** コンストラクタで設定した元のコンテナ座標（reset 用） */
     public final int origX, origY;
@@ -67,16 +69,28 @@ public class DialSlot extends Slot {
                     int visualIndex,
                     int x, int y,
                     Mode initialMode,
-                    int diameterPx) {
+                    int diameterPx,
+                    Predicate<ItemStack> placePredicate) {
         super(new SimpleContainer(1), 0, x, y);
-        this.handlerSupplier = Objects.requireNonNull(handlerSupplier);
-        this.mapper          = Objects.requireNonNull(mapper);
-        this.ringOrdinal     = ringOrdinal;
-        this.visualIndex     = visualIndex;
-        this.mode            = Objects.requireNonNull(initialMode);
-        this.diameter        = Math.max(1, diameterPx);
-        this.origX           = x;
-        this.origY           = y;
+        this.handlerSupplier  = Objects.requireNonNull(handlerSupplier);
+        this.mapper           = Objects.requireNonNull(mapper);
+        this.ringOrdinal      = ringOrdinal;
+        this.visualIndex      = visualIndex;
+        this.mode             = Objects.requireNonNull(initialMode);
+        this.diameter         = Math.max(1, diameterPx);
+        this.origX            = x;
+        this.origY            = y;
+        this.placePredicate   = Objects.requireNonNull(placePredicate);
+    }
+
+    public DialSlot(Supplier<? extends IItemHandler> handlerSupplier,
+                    IntUnaryOperator mapper,
+                    int ringOrdinal,
+                    int visualIndex,
+                    int x, int y,
+                    Mode initialMode,
+                    int diameterPx) {
+        this(handlerSupplier, mapper, ringOrdinal, visualIndex, x, y, initialMode, diameterPx, stack -> true);
     }
 
     // ---- 位置移動 ----
@@ -146,7 +160,7 @@ public class DialSlot extends Slot {
 
     @Override
     public boolean mayPlace(@NotNull ItemStack stack) {
-        return isActive() && super.mayPlace(stack);
+        return isActive() && placePredicate.test(stack) && super.mayPlace(stack);
     }
 
     @Override

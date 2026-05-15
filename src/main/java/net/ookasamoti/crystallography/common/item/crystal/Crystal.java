@@ -1,6 +1,5 @@
 package net.ookasamoti.crystallography.common.item.crystal;
 
-import net.minecraft.world.entity.Entity;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.Level;
@@ -21,7 +20,7 @@ public class Crystal extends Item {
         if (rangeOpt.isEmpty()) return;
         var range = rangeOpt.get();
 
-        if (range.allFixed()) return; // 固定値は保存しない
+        if (range.allFixed()) return;
 
         var rng = (level != null) ? level.getRandom() : net.minecraft.util.RandomSource.create();
         stack.set(type, range.resolveToStats(rng));
@@ -31,10 +30,4 @@ public class Crystal extends Item {
     public void onCraftedBy(@NotNull ItemStack s, Level l, net.minecraft.world.entity.player.@NotNull Player p){
         if(!l.isClientSide) getOrCreateStats(s,l);
     }
-
-//    @Override
-//    public void inventoryTick(@NotNull ItemStack s, Level l, @NotNull Entity e, int slot, boolean sel){
-//        if(!l.isClientSide) getOrCreateStats(s,l);
-//    }
 }
-

@@ -17,8 +17,6 @@ public record ToolStats(
         float attackSpeed,
         float miningSpeed
 ) {
-    public static final ToolStats DEFAULT = new ToolStats(1, 1, 1f, 1f, 1f);
-
     public static final Codec<ToolStats> CODEC = RecordCodecBuilder.create(i -> i.group(
             Codec.INT.fieldOf("tier").forGetter(ToolStats::tier),
             Codec.INT.fieldOf("durability").forGetter(ToolStats::durability),

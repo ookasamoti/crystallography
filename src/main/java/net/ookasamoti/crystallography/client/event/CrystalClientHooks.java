@@ -45,10 +45,10 @@ public final class CrystalClientHooks {
                 stats, range, CrystalStats::hardness, CrystalStatsRange::hardness, true);
 
         addStatLine(e.getToolTip(), "tooltip.crystallography.carat_label",
-                stats, range, CrystalStats::weight,   CrystalStatsRange::carat,    false);
+                stats, range, CrystalStats::carat,    CrystalStatsRange::carat,    false);
 
         addStatLine(e.getToolTip(), "tooltip.crystallography.clarity_label",
-                stats, range, CrystalStats::purity,   CrystalStatsRange::clarity,  false);
+                stats, range, CrystalStats::clarity,  CrystalStatsRange::clarity,  false);
 
         if (!Screen.hasShiftDown()) {
             e.getToolTip().add(Component.translatable("tooltip.crystallography.press_shift")
