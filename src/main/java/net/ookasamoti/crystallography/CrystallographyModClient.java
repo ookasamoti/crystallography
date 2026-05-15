@@ -48,7 +48,8 @@ public class CrystallographyModClient {
         // tintIndex 0=center crystal, 1=left crystal, 2=right crystal (matches layer0/1/2 in item/generated model)
         event.register((stack, tintIndex) -> {
             if (tintIndex < 0 || tintIndex > 2) return -1;
-            var lo = ToolBase.getActiveLoadout(stack);
+            var draft = ToolBase.getDraftLoadout(stack);
+            var lo = draft != null ? draft : ToolBase.getActiveLoadout(stack);
             if (lo == null) return -1;
             int[] indices = lo.crystalIndices();
             if (tintIndex >= indices.length) return -1;
@@ -77,7 +78,8 @@ public class CrystallographyModClient {
             // Returns (formIndex + 1) / 10 for active loadout form, 0 if none
             var propFn = (net.minecraft.client.renderer.item.ClampedItemPropertyFunction)
                 (stack, level, entity, seed) -> {
-                    var lo = ToolBase.getActiveLoadout(stack);
+                    var draft = ToolBase.getDraftLoadout(stack);
+                    var lo = draft != null ? draft : ToolBase.getActiveLoadout(stack);
                     if (lo == null) return 0f;
                     boolean isWand = stack.getItem() instanceof ToolWand;
                     ToolForm[] forms = isWand ? JewelryTableMenu.WAND_FORMS : JewelryTableMenu.ROD_FORMS;

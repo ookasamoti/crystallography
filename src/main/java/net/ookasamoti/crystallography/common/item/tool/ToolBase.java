@@ -104,6 +104,23 @@ public abstract class ToolBase extends Item {
         return true;
     }
 
+    // ---- ドラフトロードアウト操作 ----
+
+    /** 仮登録中の ToolLoadout を返す。なければ null。 */
+    public static @Nullable ToolLoadout getDraftLoadout(ItemStack stack) {
+        return stack.get(ToolComponentsRegistry.TOOL_DRAFT_LOADOUT.get());
+    }
+
+    /** 仮登録ロードアウトを書き込む。 */
+    public static void setDraftLoadout(ItemStack stack, ToolLoadout draft) {
+        stack.set(ToolComponentsRegistry.TOOL_DRAFT_LOADOUT.get(), draft);
+    }
+
+    /** 仮登録ロードアウトを削除する（取り消し・本登録完了時）。 */
+    public static void clearDraftLoadout(ItemStack stack) {
+        stack.remove(ToolComponentsRegistry.TOOL_DRAFT_LOADOUT.get());
+    }
+
     // ---- 性能計算（登録時のみ呼ぶ） ----
 
     /**
@@ -200,6 +217,27 @@ public abstract class ToolBase extends Item {
                                 @NotNull TooltipContext ctx,
                                 @NotNull List<Component> out,
                                 @NotNull TooltipFlag flag) {
+        // 仮登録中（FORM_SELECTED）: 組み立て中のステータスを表示
+        var draft = getDraftLoadout(stack);
+        if (draft != null) {
+            int selected = (int) java.util.Arrays.stream(draft.crystalIndices()).filter(i -> i >= 0).count();
+            out.add(Component.literal("[一時登録中: " + draft.form().name() + "]")
+                    .withStyle(ChatFormatting.YELLOW));
+            out.add(Component.literal("結晶: " + selected + " / " + ToolLoadout.CRYSTAL_SLOTS)
+                    .withStyle(ChatFormatting.GRAY));
+            if (selected > 0) {
+                var s = draft.stats();
+                out.add(Component.literal("Durability " + s.durability())
+                        .withStyle(ChatFormatting.DARK_GREEN));
+                out.add(Component.literal(
+                        "Atk " + String.format(java.util.Locale.ROOT, "%.2f", s.attackDamage()) +
+                        "  Spd " + String.format(java.util.Locale.ROOT, "%.2f", s.attackSpeed()))
+                        .withStyle(ChatFormatting.DARK_GREEN));
+            }
+            super.appendHoverText(stack, ctx, out, flag);
+            return;
+        }
+
         var list = getLoadout(stack).entries();
         int idx  = getActiveIndex(stack);
         out.add(Component.literal("Loadout: " + list.size() + "  [Active " + idx + "]")

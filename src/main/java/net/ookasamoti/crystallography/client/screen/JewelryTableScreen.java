@@ -286,7 +286,12 @@ public class JewelryTableScreen extends AbstractContainerScreen<JewelryTableMenu
         RenderSystem.disableBlend();
 
         if (menu.pendingFormIndex >= 0) {
-            g.fill(left, top + 82, left + imageWidth, top + imageHeight, 0x88000000);
+            for (Slot slot : this.menu.slots) {
+                if (slot instanceof DialSlot) continue;
+                int sx = this.leftPos + slot.x;
+                int sy = this.topPos  + slot.y;
+                g.fill(sx, sy, sx + 16, sy + 16, 0x88000000);
+            }
         }
 
         renderDialIcons(g);
@@ -459,6 +464,21 @@ public class JewelryTableScreen extends AbstractContainerScreen<JewelryTableMenu
         super.renderSlot(g, slot);
     }
 
+    // ダイヤルスロットのホバーハイライトを滑らかな円形に置き換える。
+    // guiOverlay バッファに直接書き込むため描画順が正しく保証される。
+    // INTERACTIVE のみ円を表示し、BUTTON は何も表示しない。
+    @Override
+    protected void renderSlotHighlight(@NotNull GuiGraphics g, @NotNull Slot slot, int mouseX, int mouseY, float partialTick) {
+        if (slot instanceof DialSlot ds) {
+            if (ds.mode() == DialSlot.Mode.INTERACTIVE) {
+                DialDrawer.filledCircleGui(g, ds.x + 8f, ds.y + 8f, 10f, 0x80FFFFFF);
+            }
+            // BUTTON モードはハイライト無し（バニラの白四角も抑制）
+        } else {
+            super.renderSlotHighlight(g, slot, mouseX, mouseY, partialTick);
+        }
+    }
+
     @Override
     public void render(@NotNull GuiGraphics g, int mouseX, int mouseY, float pt) {
         updateSlotPositions(); // 毎フレーム slot.x/y を回転位置に更新（ヒットボックスも移動）
@@ -469,30 +489,7 @@ public class JewelryTableScreen extends AbstractContainerScreen<JewelryTableMenu
         }
         renderBackground(g, mouseX, mouseY, pt);
         super.render(g, mouseX, mouseY, pt);
-        if (menu.getUiState() == JewelryTableMenu.UiState.FORM_SELECTED) {
-            renderCenterPreview(g);
-        }
         renderTooltip(g, mouseX, mouseY);
-    }
-
-    // ---- CENTERプレビュー（FORM_SELECTED: 組み立て中のプレビュー） ----
-    private void renderCenterPreview(GuiGraphics g) {
-        if (menu.pendingFormIndex < 0) return;
-        DialSlot centerSlot = menu.getRingSlots(JewelryTableMenu.Ring.CENTER)[0];
-        ItemStack center = centerSlot.peekRealItem();
-        boolean isWand = center.getItem() instanceof ToolWand;
-        ToolForm[] forms = isWand ? JewelryTableMenu.WAND_FORMS : JewelryTableMenu.ROD_FORMS;
-        if (menu.pendingFormIndex >= forms.length) return;
-
-        int tier = (center.getItem() instanceof ToolBase tb) ? tb.getTier() : 1;
-        int[] crystalIndices = menu.pendingCrystals.stream().mapToInt(i -> i).toArray();
-
-        RenderSystem.enableBlend();
-        RenderSystem.defaultBlendFunc();
-        renderToolLayers(g, leftPos + centerSlot.x, topPos + centerSlot.y,
-                isWand, tier, forms[menu.pendingFormIndex], crystalIndices);
-        RenderSystem.setShaderColor(1f, 1f, 1f, 1f);
-        RenderSystem.disableBlend();
     }
 
     // ---- scissor 補助 ----

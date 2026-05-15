@@ -171,10 +171,8 @@ public class JewelryTableMenu extends AbstractContainerMenu {
     public UiState getUiState() { return uiState; }
     public IItemHandler getBackingCrystals() { return backingCrystals; }
 
-    /** クライアント専用: CENTER スロットの変化を検知したときに呼ぶ */
+    /** クライアント専用: CENTER スロットの変化を検知したときに呼ぶ。draft DataComponent から状態を復元する。 */
     public void clientSyncState() {
-        pendingFormIndex = -1;
-        pendingCrystals.clear();
         bindCrystalsBacking();
         refreshUiState();
         layoutSlots();
@@ -191,7 +189,27 @@ public class JewelryTableMenu extends AbstractContainerMenu {
         ItemStack tool = rings.get(Ring.CENTER)[0].peekRealItem();
         pendingFormIndex = -1;
         pendingCrystals.clear();
-        uiState = isTool(tool) ? UiState.EDIT_CRYSTALS : UiState.EMPTY;
+
+        if (!isTool(tool)) {
+            uiState = UiState.EMPTY;
+            return;
+        }
+
+        // draft DataComponent があれば状態を復元（サーバー書き込み後のクライアント sync 時に使用）
+        ToolLoadout draft = ToolBase.getDraftLoadout(tool);
+        if (draft != null) {
+            boolean isWand = tool.getItem() instanceof ToolWand;
+            ToolForm[] forms = isWand ? WAND_FORMS : ROD_FORMS;
+            for (int i = 0; i < forms.length; i++) {
+                if (forms[i] == draft.form()) { pendingFormIndex = i; break; }
+            }
+            for (int ci : draft.crystalIndices()) {
+                if (ci >= 0) pendingCrystals.add(ci);
+            }
+            uiState = pendingFormIndex >= 0 ? UiState.FORM_SELECTED : UiState.EDIT_CRYSTALS;
+        } else {
+            uiState = UiState.EDIT_CRYSTALS;
+        }
     }
 
     private void layoutSlots() {
@@ -254,11 +272,13 @@ public class JewelryTableMenu extends AbstractContainerMenu {
     /* ---------- サーバー専用アクション ---------- */
     public void serverSelectForm(int formIndex) {
         applySelectForm(formIndex);
+        if (formIndex >= 0) writeDraft(); else clearDraftFromItem();
         broadcastChanges();
     }
 
     public void serverToggleCrystal(int crystalBacking) {
         applyToggleCrystal(crystalBacking);
+        writeDraft();
         broadcastChanges();
     }
 
@@ -281,6 +301,7 @@ public class JewelryTableMenu extends AbstractContainerMenu {
         ToolLoadout loadout = new ToolLoadout(slotIndex, form, crystalIndices, stats);
 
         ItemStack modified = toolStack.copy();
+        ToolBase.clearDraftLoadout(modified); // 仮登録を削除してから本登録
         if (!ToolBase.setLoadout(modified, loadout)) return;
         ToolBase.setActiveIndex(modified, slotIndex);
         ToolBase.applyComputedStats(modified);
@@ -288,6 +309,49 @@ public class JewelryTableMenu extends AbstractContainerMenu {
         writeToCenter(modified);
         applySelectForm(-1);
         broadcastChanges();
+    }
+
+    /* ---------- インベントリを閉じたときのクリーンアップ ---------- */
+    @Override
+    public void removed(@NotNull Player player) {
+        clearDraftFromItem();
+        super.removed(player);
+    }
+
+    /* ---------- draft 書き込み / 削除ヘルパー ---------- */
+
+    /** 現在の pendingFormIndex + pendingCrystals で draft ToolLoadout を構築してツールに書き込む。 */
+    private void writeDraft() {
+        if (pendingFormIndex < 0) return;
+        ItemStack tool = rings.get(Ring.CENTER)[0].peekRealItem();
+        if (!isTool(tool)) return;
+
+        boolean isWand = tool.getItem() instanceof ToolWand;
+        ToolForm[] forms = isWand ? WAND_FORMS : ROD_FORMS;
+        if (pendingFormIndex >= forms.length) return;
+        ToolForm form = forms[pendingFormIndex];
+
+        int tier = getToolTier();
+        int[] crystalIndices = new int[ToolLoadout.CRYSTAL_SLOTS];
+        for (int i = 0; i < ToolLoadout.CRYSTAL_SLOTS; i++) {
+            crystalIndices[i] = i < pendingCrystals.size() ? pendingCrystals.get(i) : -1;
+        }
+
+        ToolStats stats = ToolBase.buildStats(form, tier, crystalIndices, backingCrystals);
+        ToolLoadout draft = new ToolLoadout(ToolLoadout.DRAFT_SLOT, form, crystalIndices, stats);
+
+        ItemStack modified = tool.copy();
+        ToolBase.setDraftLoadout(modified, draft);
+        writeToCenter(modified);
+    }
+
+    /** ツールの draft DataComponent を削除してツールに書き戻す。draft がなければ何もしない。 */
+    private void clearDraftFromItem() {
+        ItemStack tool = rings.get(Ring.CENTER)[0].peekRealItem();
+        if (!isTool(tool) || ToolBase.getDraftLoadout(tool) == null) return;
+        ItemStack modified = tool.copy();
+        ToolBase.clearDraftLoadout(modified);
+        writeToCenter(modified);
     }
 
     private void writeToCenter(ItemStack stack) {
@@ -330,7 +394,6 @@ public class JewelryTableMenu extends AbstractContainerMenu {
 
     @Override
     public void broadcastChanges() {
-        super.broadcastChanges();
         bindCrystalsBacking();
 
         ItemStack now = rings.get(Ring.CENTER)[0].peekRealItem();
@@ -338,8 +401,9 @@ public class JewelryTableMenu extends AbstractContainerMenu {
             lastCenterTool = now.copy();
             refreshUiState();
             layoutSlots();
-            super.broadcastChanges();
         }
+
+        super.broadcastChanges();
     }
 
     /* ---------- ボタン処理 ---------- */

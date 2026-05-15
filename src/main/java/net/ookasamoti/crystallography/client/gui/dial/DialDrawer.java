@@ -6,9 +6,11 @@ import com.mojang.blaze3d.vertex.BufferUploader;
 import com.mojang.blaze3d.vertex.DefaultVertexFormat;
 import com.mojang.blaze3d.vertex.MeshData;
 import com.mojang.blaze3d.vertex.Tesselator;
+import com.mojang.blaze3d.vertex.VertexConsumer;
 import com.mojang.blaze3d.vertex.VertexFormat;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.renderer.GameRenderer;
+import net.minecraft.client.renderer.RenderType;
 import net.minecraft.util.Mth;
 import org.joml.Matrix4f;
 
@@ -20,6 +22,32 @@ import java.util.Random;
 public final class DialDrawer {
     private DialDrawer(){}
 
+
+    /**
+     * GuiGraphics のバッファ（guiOverlay）を直接使って滑らかな塗りつぶし円を描く。
+     * fillGradient と同一パイプラインを通るため描画順（アイテムより前面）が正しく保証される。
+     * QUADS モードで扇形を縮退クワッドとして emit する。
+     */
+    public static void filledCircleGui(GuiGraphics g, float cx, float cy, float radius, int argb) {
+        if (radius <= 0f) return;
+        int segments = segForRadius(radius);
+        VertexConsumer vc = g.bufferSource().getBuffer(RenderType.guiOverlay());
+        Matrix4f pose = g.pose().last().pose();
+        for (int i = 0; i < segments; i++) {
+            double a0 = Math.PI * 2.0 * i       / segments;
+            double a1 = Math.PI * 2.0 * (i + 1) / segments;
+            float x0 = cx + (float)Math.cos(a0) * radius;
+            float y0 = cy + (float)Math.sin(a0) * radius;
+            float x1 = cx + (float)Math.cos(a1) * radius;
+            float y1 = cy + (float)Math.sin(a1) * radius;
+            // GUI プロジェクション（Y 反転）後に CCW = 正面向きになるよう
+            // GUI ピクセル空間では CW 順（p1 → p0）で emit する
+            vc.addVertex(pose, cx, cy, 0).setColor(argb);
+            vc.addVertex(pose, x1, y1, 0).setColor(argb);
+            vc.addVertex(pose, x0, y0, 0).setColor(argb);
+            vc.addVertex(pose, cx, cy, 0).setColor(argb);
+        }
+    }
 
     /** 塗りつぶし円（中心/半径/ARGB） */
     public static void filledCircle(GuiGraphics g, float cx, float cy, float radius, int argb) {

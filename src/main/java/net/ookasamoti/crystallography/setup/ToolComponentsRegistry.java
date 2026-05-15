@@ -9,6 +9,7 @@ import net.neoforged.bus.api.IEventBus;
 import net.neoforged.neoforge.registries.DeferredRegister;
 import net.neoforged.neoforge.registries.DeferredHolder;
 import net.ookasamoti.crystallography.CrystallographyMod;
+import net.ookasamoti.crystallography.common.item.tool.component.ToolLoadout;
 import net.ookasamoti.crystallography.common.item.tool.component.ToolLoadoutList;
 
 public final class ToolComponentsRegistry {
@@ -29,6 +30,14 @@ public final class ToolComponentsRegistry {
                     DataComponentType.<Integer>builder()
                             .persistent(net.minecraft.util.ExtraCodecs.NON_NEGATIVE_INT)
                             .networkSynchronized(ByteBufCodecs.VAR_INT)
+                            .build());
+
+    /** 仮登録中の ToolLoadout（REGISTRIES 選択前のドラフト）。本登録時または取り消し時に削除する。 */
+    public static final DeferredHolder<DataComponentType<?>, DataComponentType<ToolLoadout>> TOOL_DRAFT_LOADOUT =
+            COMPONENTS.register("tool_draft_loadout", () ->
+                    DataComponentType.<ToolLoadout>builder()
+                            .persistent(ToolLoadout.CODEC)
+                            .networkSynchronized(ToolLoadout.STREAM_CODEC)
                             .build());
 
     public static final DeferredHolder<DataComponentType<?>, DataComponentType<ResourceLocation>> TOOL_ACTIVE_MODEL =

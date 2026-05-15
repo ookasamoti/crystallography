@@ -13,9 +13,31 @@ public record ToolLoadout(int slotIndex, ToolForm form, int[] crystalIndices, To
     /** 1つのツール登録に使う結晶スロット数（固定）。 */
     public static final int CRYSTAL_SLOTS = 3;
 
+    /** 仮登録スロットインデックスのセンチネル（本登録前の draft 状態）。 */
+    public static final int DRAFT_SLOT = -1;
+
     public ToolLoadout {
         if (crystalIndices.length != CRYSTAL_SLOTS)
             throw new IllegalArgumentException("crystalIndices must have exactly " + CRYSTAL_SLOTS + " elements");
+    }
+
+    // int[] はレコードのデフォルト equals/hashCode だと参照比較になるため明示的に定義する
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (!(o instanceof ToolLoadout lo)) return false;
+        return slotIndex == lo.slotIndex && form == lo.form
+                && Arrays.equals(crystalIndices, lo.crystalIndices)
+                && stats.equals(lo.stats);
+    }
+
+    @Override
+    public int hashCode() {
+        int h = Integer.hashCode(slotIndex);
+        h = 31 * h + form.hashCode();
+        h = 31 * h + Arrays.hashCode(crystalIndices);
+        h = 31 * h + stats.hashCode();
+        return h;
     }
 
     // ---- JSON Codec ----

@@ -150,7 +150,11 @@ public class DialSlot extends Slot {
 
     @Override
     public boolean isActive() {
-        return visibleFlag && mode == Mode.INTERACTIVE && fullyInsideClip();
+        // INTERACTIVE: アイテム操作を許可する（完全にクリップ内に入っている場合のみ）
+        // BUTTON: ホバー検知のみ有効にする（クリップと交差していれば可）
+        return visibleFlag && (
+                (mode == Mode.INTERACTIVE && fullyInsideClip()) ||
+                (mode == Mode.BUTTON     && intersectsClip()));
     }
 
     @Override
@@ -172,13 +176,18 @@ public class DialSlot extends Slot {
 
     @Override
     public @NotNull ItemStack getItem() {
-        if (!visibleFlag || mode != Mode.INTERACTIVE) return ItemStack.EMPTY;
+        if (!visibleFlag || mode == Mode.HIDDEN || mode == Mode.DECORATION) return ItemStack.EMPTY;
+        // INTERACTIVE / BUTTON ともに backing の実アイテムを返す
+        // BUTTON は mayPickup/mayPlace が false かつ menu.clicked() でブロック済みのため操作は発生しない
         return peekRealItem();
     }
 
     @Override
     public void set(@NotNull ItemStack stack) {
-        if (mode != Mode.INTERACTIVE) return;
+        // モードに関わらず backing handler を更新する。
+        // バニラのスロット同期（ClientboundContainerSetSlotPacket → slot.set()）もここを通るため
+        // モードチェックすると BUTTON/DECORATION モード中のネットワーク同期が失敗する。
+        // プレイヤー操作のガードは mayPlace() / mayPickup() が担当する。
         IItemHandler h = handlerSupplier.get();
         if (h instanceof IItemHandlerModifiable hm) {
             hm.setStackInSlot(mapIndex(hm), stack);
