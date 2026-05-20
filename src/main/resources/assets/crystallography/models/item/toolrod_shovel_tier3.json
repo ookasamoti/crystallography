@@ -1,9 +1,9 @@
 {
   "parent": "minecraft:item/generated",
   "textures": {
-    "layer0": "crystallography:item/toolrod_shovel_center",
-    "layer1": "crystallography:item/toolrod_shovel_left",
-    "layer2": "crystallography:item/toolrod_shovel_right",
-    "layer3": "crystallography:item/toolrod_shovel_tier3"
+    "layer0": "crystallography:item/toolrod_shovel_tier3",
+    "layer1": "crystallography:item/toolrod_shovel_center",
+    "layer2": "crystallography:item/toolrod_shovel_left",
+    "layer3": "crystallography:item/toolrod_shovel_right"
   }
 }

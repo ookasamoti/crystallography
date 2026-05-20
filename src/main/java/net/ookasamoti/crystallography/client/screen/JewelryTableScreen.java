@@ -16,12 +16,9 @@ import net.ookasamoti.crystallography.client.gui.dial.DialDrawer;
 import net.ookasamoti.crystallography.client.gui.dial.DialLayout;
 import net.ookasamoti.crystallography.common.menu.DialSlot;
 import net.ookasamoti.crystallography.common.menu.JewelryTableMenu;
-import net.ookasamoti.crystallography.common.item.crystal.CrystalStatsRange;
 import net.ookasamoti.crystallography.common.item.tool.ToolBase;
 import net.ookasamoti.crystallography.common.item.tool.ToolWand;
-import net.ookasamoti.crystallography.common.item.tool.component.ToolForm;
 import net.ookasamoti.crystallography.common.item.tool.component.ToolLoadout;
-import net.ookasamoti.crystallography.data.CrystalStatsRegistry;
 import net.ookasamoti.crystallography.network.JewelryActionC2S;
 import org.jetbrains.annotations.NotNull;
 
@@ -31,9 +28,6 @@ public class JewelryTableScreen extends AbstractContainerScreen<JewelryTableMenu
             ResourceLocation.parse(CrystallographyMod.MOD_ID + ":textures/gui/jewelry_table_gui.png");
     private static final ResourceLocation GRADIENT =
             ResourceLocation.parse(CrystallographyMod.MOD_ID + ":textures/gui/jewelry_table_gradient.png");
-
-    private static final String[] ROD_FORM_NAMES  = {"pickaxe", "shovel", "hoe", "sword", "axe", "spear"};
-    private static final String[] WAND_FORM_NAMES = {"bow", "crossbow", "knife", "wrench", "fishing_rod", "shield"};
 
     private static final ResourceLocation[] ROD_ICONS = {
             ResourceLocation.parse("minecraft:textures/item/empty_slot_pickaxe.png"),
@@ -110,7 +104,7 @@ public class JewelryTableScreen extends AbstractContainerScreen<JewelryTableMenu
 
     /** dir (+1/-1) をスロット数単位のステップに変換。DEG_PER_SCROLL 度 / スクロール。 */
     private float scrollStep(JewelryTableMenu.Ring ring, int dir) {
-        return dir * DEG_PER_SCROLL * JewelryTableMenu.countOf(ring) / 360f;
+        return dir * DEG_PER_SCROLL * menu.effectiveCountOf(ring) / 360f;
     }
 
     /** ホイール1ステップ分の回転をトリガー（サーバー通知なし）。step はスロット数単位。 */
@@ -129,7 +123,7 @@ public class JewelryTableScreen extends AbstractContainerScreen<JewelryTableMenu
         for (JewelryTableMenu.Ring ring : JewelryTableMenu.Ring.values()) {
             if (ring == JewelryTableMenu.Ring.CENTER) continue;
             float rot = getVisualRot(ring);
-            int count  = JewelryTableMenu.countOf(ring);
+            int count  = menu.effectiveCountOf(ring);
             if (count <= 0) continue;
             int   radius  = JewelryTableMenu.radiusOf(ring);
             float baseDeg = JewelryTableMenu.baseDegOf(ring);
@@ -138,22 +132,14 @@ public class JewelryTableScreen extends AbstractContainerScreen<JewelryTableMenu
             DialSlot[] slots = menu.getRingSlots(ring);
             for (int vi = 0; vi < slots.length; vi++) {
                 DialSlot s = slots[vi];
-                if (rot == 0f) {
-                    s.resetPosition();
-                    s.renderFracX = 0f;
-                    s.renderFracY = 0f;
-                } else {
-                    // JewelryTableMenu.polar と同じ角度計算＋rot*step 度の回転を加算
-                    double rotRad = Math.toRadians(-90.0 + baseDeg + step * vi + rot * step);
-                    double exactX = JewelryTableMenu.TOOL_SLOT_X + radius * Math.cos(rotRad) - 8;
-                    double exactY = JewelryTableMenu.TOOL_SLOT_Y + radius * Math.sin(rotRad) - 8;
-                    int intX = (int) Math.round(exactX);
-                    int intY = (int) Math.round(exactY);
-                    s.moveTo(intX, intY);
-                    // サブピクセル補正：整数化した誤差を描画時に float で補う
-                    s.renderFracX = (float)(exactX - intX);
-                    s.renderFracY = (float)(exactY - intY);
-                }
+                double rotRad = Math.toRadians(-90.0 + baseDeg + step * vi + rot * step);
+                double exactX = JewelryTableMenu.TOOL_SLOT_X + radius * Math.cos(rotRad) - 8;
+                double exactY = JewelryTableMenu.TOOL_SLOT_Y + radius * Math.sin(rotRad) - 8;
+                int intX = (int) Math.round(exactX);
+                int intY = (int) Math.round(exactY);
+                s.moveTo(intX, intY);
+                s.renderFracX = (float)(exactX - intX);
+                s.renderFracY = (float)(exactY - intY);
             }
         }
     }
@@ -344,11 +330,11 @@ public class JewelryTableScreen extends AbstractContainerScreen<JewelryTableMenu
                 g.pose().popPose();
             }
 
-            // REGISTRIES: ロードアウト枠表示（登録済み=着彩ツールテクスチャ、空=empty_slot_stick）
+            // REGISTRIES: ロードアウト枠表示（登録済み=実アイテム描画、空=empty_slot_stick）
             DialSlot[] registrySlots = menu.getRingSlots(JewelryTableMenu.Ring.REGISTRIES);
             var loadoutList = ToolBase.getLoadout(center);
-            boolean centerIsWand = center.getItem() instanceof ToolWand;
-            int centerTier = (center.getItem() instanceof ToolBase ctb) ? ctb.getTier() : 1;
+            ItemStack displayBase = center.isEmpty() ? null : center.copy();
+            if (displayBase != null) ToolBase.clearDraftLoadout(displayBase);
             for (int vi = 0; vi < registrySlots.length; vi++) {
                 DialSlot s = registrySlots[vi];
                 if (!s.getVisibleFlag() || s.mode() != DialSlot.Mode.BUTTON) continue;
@@ -356,10 +342,9 @@ public class JewelryTableScreen extends AbstractContainerScreen<JewelryTableMenu
                 g.pose().translate(s.renderFracX, s.renderFracY, 0f);
                 int dx = leftPos + s.x;
                 int dy = topPos  + s.y;
-                var entry = loadoutList.getAtSlot(vi);
-                if (entry.isPresent()) {
-                    var lo = entry.get();
-                    renderToolLayers(g, dx, dy, centerIsWand, centerTier, lo.form(), lo.crystalIndices());
+                if (displayBase != null && loadoutList.getAtSlot(vi).isPresent()) {
+                    ToolBase.setActiveIndex(displayBase, vi);
+                    g.renderItem(displayBase, dx, dy);
                 } else {
                     g.blit(EMPTY_SLOT_STICK, dx, dy, 0, 0, 16, 16, 16, 16);
                 }
@@ -391,54 +376,6 @@ public class JewelryTableScreen extends AbstractContainerScreen<JewelryTableMenu
             RenderSystem.disableBlend();
             RenderSystem.disableScissor();
         }
-    }
-
-    /**
-     * center/left/right を結晶色で着彩し、tierレイヤーを白で重ねる。
-     * crystalIndices は backingCrystals のスロットインデックス。未選択分は白。
-     */
-    private void renderToolLayers(GuiGraphics g, int px, int py,
-                                  boolean isWand, int tier, ToolForm form, int[] crystalIndices) {
-        ToolForm[] forms   = isWand ? JewelryTableMenu.WAND_FORMS : JewelryTableMenu.ROD_FORMS;
-        String[]   fNames  = isWand ? WAND_FORM_NAMES : ROD_FORM_NAMES;
-        String prefix = isWand ? "toolwand_" : "toolrod_";
-
-        String formName = null;
-        for (int i = 0; i < forms.length; i++) {
-            if (forms[i] == form) { formName = fNames[i]; break; }
-        }
-        if (formName == null) return;
-
-        var inv = menu.getBackingCrystals();
-        String[] suffixes = {"center", "left", "right"};
-        for (int i = 0; i < suffixes.length; i++) {
-            int tint = CrystalStatsRange.NO_TINT;
-            if (i < crystalIndices.length) {
-                int bi = crystalIndices[i];
-                if (bi >= 0 && bi < inv.getSlots()) {
-                    ItemStack cr = inv.getStackInSlot(bi);
-                    if (!cr.isEmpty())
-                        tint = CrystalStatsRegistry.get(cr).map(CrystalStatsRange::tint)
-                                .orElse(CrystalStatsRange.NO_TINT);
-                }
-            }
-            float r, gr, b;
-            if (tint == CrystalStatsRange.NO_TINT) { r = gr = b = 1f; }
-            else {
-                r  = ((tint >> 16) & 0xFF) / 255f;
-                gr = ((tint >>  8) & 0xFF) / 255f;
-                b  = ( tint        & 0xFF) / 255f;
-            }
-            RenderSystem.setShaderColor(r, gr, b, 1f);
-            g.blit(ResourceLocation.parse(CrystallographyMod.MOD_ID + ":textures/item/"
-                    + prefix + formName + "_" + suffixes[i] + ".png"),
-                    px, py, 0, 0, 16, 16, 16, 16);
-        }
-
-        RenderSystem.setShaderColor(1f, 1f, 1f, 1f);
-        g.blit(ResourceLocation.parse(CrystallographyMod.MOD_ID + ":textures/item/"
-                + prefix + formName + "_tier" + tier + ".png"),
-                px, py, 0, 0, 16, 16, 16, 16);
     }
 
     // ---- スロット描画（サブピクセル補正を pose.translate で加算） ----

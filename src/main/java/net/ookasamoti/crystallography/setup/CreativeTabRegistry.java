@@ -22,12 +22,12 @@ public class CreativeTabRegistry {
                         output.accept(BlockRegistry.WEDGE.get());
                         output.accept(BlockRegistry.JEWELRY_TABLE.get().asItem());
                         output.accept(BlockRegistry.LAPIDARY_ANVIL.get().asItem());
-                        output.accept(ItemRegistry.TOOL_ROD_TIER1.get());
-                        output.accept(ItemRegistry.TOOL_ROD_TIER2.get());
-                        output.accept(ItemRegistry.TOOL_ROD_TIER3.get());
-                        output.accept(ItemRegistry.TOOL_WAND_TIER1.get());
-                        output.accept(ItemRegistry.TOOL_WAND_TIER2.get());
-                        output.accept(ItemRegistry.TOOL_WAND_TIER3.get());
+                        output.accept(ItemRegistry.TOOLROD_TIER1.get());
+                        output.accept(ItemRegistry.TOOLROD_TIER2.get());
+                        output.accept(ItemRegistry.TOOLROD_TIER3.get());
+                        output.accept(ItemRegistry.TOOLWAND_TIER1.get());
+                        output.accept(ItemRegistry.TOOLWAND_TIER2.get());
+                        output.accept(ItemRegistry.TOOLWAND_TIER3.get());
                         output.accept(ItemRegistry.DIAMOND_CRYSTAL.get());
                         output.accept(ItemRegistry.PINK_DIAMOND_CRYSTAL.get());
                     }).build()

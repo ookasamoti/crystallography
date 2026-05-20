@@ -3,12 +3,12 @@
   "block.crystallography.jewelry_table": "Jewelry Table",
   "block.crystallography.wedge": "Wedge",
 
-  "item.crystallography.tool_rod_tier1": "Tool Rod tier1",
-  "item.crystallography.tool_rod_tier2": "Tool Rod tier2",
-  "item.crystallography.tool_rod_tier3": "Tool Rod tier3",
-  "item.crystallography.tool_wand_tier1": "Tool Wand tier1",
-  "item.crystallography.tool_wand_tier2": "Tool Wand tier2",
-  "item.crystallography.tool_wand_tier3": "Tool Wand tier3",
+  "item.crystallography.toolrod_tier1": "Tool Rod tier1",
+  "item.crystallography.toolrod_tier2": "Tool Rod tier2",
+  "item.crystallography.toolrod_tier3": "Tool Rod tier3",
+  "item.crystallography.toolwand_tier1": "Tool Wand tier1",
+  "item.crystallography.toolwand_tier2": "Tool Wand tier2",
+  "item.crystallography.toolwand_tier3": "Tool Wand tier3",
 
   "item.crystallography.diamond_crystal": "Diamond Crystal",
   "item.crystallography.pink_diamond_crystal": "Pink Diamond Crystal",
@@ -29,5 +29,9 @@
   "tooltip.crystallography.category.gem.name": "Gem",
   "tooltip.crystallography.category.gem.desc": "Gem desc",
   "tooltip.crystallography.category.diamond.name": "Diamond",
-  "tooltip.crystallography.category.diamond.desc": "Diamond desc"
+  "tooltip.crystallography.category.diamond.desc": "Diamond desc",
+
+  "key.categories.crystallography": "Crystallography",
+  "key.crystallography.cycle_rod": "Cycle Rod Loadout",
+  "key.crystallography.cycle_wand": "Cycle Wand Loadout"
 }

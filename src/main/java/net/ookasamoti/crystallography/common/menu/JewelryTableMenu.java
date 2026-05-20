@@ -43,13 +43,39 @@ public class JewelryTableMenu extends AbstractContainerMenu {
     private static final EnumMap<Ring, RingDef> DEF = new EnumMap<>(Map.of(
             Ring.CENTER,     new RingDef( 1,  0,  0f),
             Ring.TOOLS,      new RingDef( 6, 32, 60f),
-            Ring.CRYSTALS,   new RingDef(20, 64, 78f),
-            Ring.REGISTRIES, new RingDef(26, 96, 78f)
+            Ring.CRYSTALS,   new RingDef(24, 64, 78f),
+            Ring.REGISTRIES, new RingDef(32, 96, 78f)
     ));
 
     public static int   countOf (Ring r){ return Objects.requireNonNull(DEF.get(r)).count(); }
     public static int   radiusOf(Ring r){ return Objects.requireNonNull(DEF.get(r)).radius(); }
     public static float baseDegOf(Ring r){ return Objects.requireNonNull(DEF.get(r)).baseDeg(); }
+
+    /**
+     * max を超えない tierCount の最大倍数を返す（二つが等距離の場合は小さい方）。
+     * 例: tierCount=12, max=32 → floor(32/12)*12=24
+     */
+    public static int nearestMultiple(int tierCount, int max) {
+        if (tierCount <= 0) return 0;
+        return (max / tierCount) * tierCount;
+    }
+
+    public static int crystalCountForTier(int tier) {
+        return nearestMultiple(ToolBase.crystalSlotCount(tier), countOf(Ring.CRYSTALS));
+    }
+
+    public static int registryCountForTier(int tier) {
+        return nearestMultiple(ToolBase.maxLoadouts(tier), countOf(Ring.REGISTRIES));
+    }
+
+    /** tier に応じた実効スロット数（CRYSTALS/REGISTRIES は動的、その他は物理数）。 */
+    public int effectiveCountOf(Ring r) {
+        return switch (r) {
+            case CRYSTALS   -> crystalCountForTier(getToolTier());
+            case REGISTRIES -> registryCountForTier(getToolTier());
+            default         -> countOf(r);
+        };
+    }
 
     /* ===== フォームマッピング ===== */
     public static final ToolForm[] ROD_FORMS  = {
@@ -223,14 +249,14 @@ public class JewelryTableMenu extends AbstractContainerMenu {
             case EDIT_CRYSTALS -> {
                 showFirstN(Ring.CENTER, 1, DialSlot.Mode.INTERACTIVE);
                 showFirstN(Ring.TOOLS, countOf(Ring.TOOLS), DialSlot.Mode.BUTTON);
-                showFirstN(Ring.REGISTRIES, countOf(Ring.REGISTRIES), DialSlot.Mode.BUTTON);
-                showFirstN(Ring.CRYSTALS, countOf(Ring.CRYSTALS), DialSlot.Mode.INTERACTIVE);
+                showFirstN(Ring.REGISTRIES, effectiveCountOf(Ring.REGISTRIES), DialSlot.Mode.BUTTON);
+                showFirstN(Ring.CRYSTALS, effectiveCountOf(Ring.CRYSTALS), DialSlot.Mode.INTERACTIVE);
             }
             case FORM_SELECTED -> {
                 showFirstN(Ring.CENTER, 1, DialSlot.Mode.BUTTON);
                 showFirstN(Ring.TOOLS, countOf(Ring.TOOLS), DialSlot.Mode.BUTTON);
-                showFirstN(Ring.REGISTRIES, countOf(Ring.REGISTRIES), DialSlot.Mode.BUTTON);
-                showFirstN(Ring.CRYSTALS, countOf(Ring.CRYSTALS), DialSlot.Mode.BUTTON);
+                showFirstN(Ring.REGISTRIES, effectiveCountOf(Ring.REGISTRIES), DialSlot.Mode.BUTTON);
+                showFirstN(Ring.CRYSTALS, effectiveCountOf(Ring.CRYSTALS), DialSlot.Mode.BUTTON);
             }
         }
     }
@@ -374,7 +400,7 @@ public class JewelryTableMenu extends AbstractContainerMenu {
     private void bindCrystalsBacking() {
         ItemStack tool = rings.get(Ring.CENTER)[0].peekRealItem();
         if (isTool(tool)) {
-            backingCrystals = ToolInventory.get(tool, countOf(Ring.CRYSTALS), level.registryAccess());
+            backingCrystals = ToolInventory.get(tool, crystalCountForTier(getToolTier()), level.registryAccess());
         } else {
             backingCrystals = fallbackEmpty;
         }
@@ -429,7 +455,7 @@ public class JewelryTableMenu extends AbstractContainerMenu {
 
         final int centerFirst   = firstIndex.get(Ring.CENTER);
         final int crystalsFirst = firstIndex.get(Ring.CRYSTALS);
-        final int crystalsEnd   = crystalsFirst + countOf(Ring.CRYSTALS);
+        final int crystalsEnd   = crystalsFirst + effectiveCountOf(Ring.CRYSTALS);
 
         boolean fromCenter   = (index == centerFirst);
         boolean fromCrystals = (index >= crystalsFirst && index < crystalsEnd);
