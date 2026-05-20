@@ -3,7 +3,7 @@ package net.ookasamoti.crystallography.common.item.tool;
 import net.minecraft.ChatFormatting;
 import net.minecraft.core.component.DataComponents;
 import net.minecraft.network.chat.Component;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 import net.minecraft.world.entity.EquipmentSlotGroup;
 import net.minecraft.world.entity.ai.attributes.AttributeModifier;
 import net.minecraft.world.entity.ai.attributes.Attributes;
@@ -182,8 +182,8 @@ public abstract class ToolBase extends Item {
 
         stack.set(DataComponents.MAX_DAMAGE, s.durability());
 
-        var idAtk = ResourceLocation.fromNamespaceAndPath(CrystallographyMod.MOD_ID, "atk");
-        var idSpd = ResourceLocation.fromNamespaceAndPath(CrystallographyMod.MOD_ID, "atk_speed");
+        var idAtk = Identifier.fromNamespaceAndPath(CrystallographyMod.MOD_ID, "atk");
+        var idSpd = Identifier.fromNamespaceAndPath(CrystallographyMod.MOD_ID, "atk_speed");
 
         ItemAttributeModifiers.Builder b = ItemAttributeModifiers.builder();
         b.add(Attributes.ATTACK_DAMAGE,
@@ -194,7 +194,7 @@ public abstract class ToolBase extends Item {
                 EquipmentSlotGroup.MAINHAND);
         stack.set(DataComponents.ATTRIBUTE_MODIFIERS, b.build());
 
-        var hint = ResourceLocation.parse(CrystallographyMod.MOD_ID + ":form/" + lo.form().name().toLowerCase());
+        var hint = Identifier.parse(CrystallographyMod.MOD_ID + ":form/" + lo.form().name().toLowerCase());
         stack.set(ToolComponentsRegistry.TOOL_ACTIVE_MODEL.get(), hint);
     }
 

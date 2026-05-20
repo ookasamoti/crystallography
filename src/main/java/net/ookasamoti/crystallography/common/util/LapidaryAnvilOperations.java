@@ -3,7 +3,7 @@ package net.ookasamoti.crystallography.common.util;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Holder;
 import net.minecraft.core.registries.Registries;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.Containers;
@@ -21,7 +21,7 @@ public final class LapidaryAnvilOperations {
 
     private LapidaryAnvilOperations() {}
 
-    public record CrackResult(ResourceLocation item, int count) {}
+    public record CrackResult(Identifier item, int count) {}
 
     public static void crackOre(LapidaryAnvilBlockEntity be, ServerPlayer sp) {
         var level = sp.serverLevel();

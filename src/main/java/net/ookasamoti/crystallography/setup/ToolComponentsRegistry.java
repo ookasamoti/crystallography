@@ -4,7 +4,7 @@ package net.ookasamoti.crystallography.setup;
 import net.minecraft.core.component.DataComponentType;
 import net.minecraft.core.registries.Registries;
 import net.minecraft.network.codec.ByteBufCodecs;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 import net.neoforged.bus.api.IEventBus;
 import net.neoforged.neoforge.registries.DeferredRegister;
 import net.neoforged.neoforge.registries.DeferredHolder;
@@ -40,11 +40,11 @@ public final class ToolComponentsRegistry {
                             .networkSynchronized(ToolLoadout.STREAM_CODEC)
                             .build());
 
-    public static final DeferredHolder<DataComponentType<?>, DataComponentType<ResourceLocation>> TOOL_ACTIVE_MODEL =
+    public static final DeferredHolder<DataComponentType<?>, DataComponentType<Identifier>> TOOL_ACTIVE_MODEL =
             COMPONENTS.register("tool_active_model", () ->
-                    DataComponentType.<ResourceLocation>builder()
-                            .persistent(ResourceLocation.CODEC)
-                            .networkSynchronized(ResourceLocation.STREAM_CODEC)
+                    DataComponentType.<Identifier>builder()
+                            .persistent(Identifier.CODEC)
+                            .networkSynchronized(Identifier.STREAM_CODEC)
                             .build());
 
     public static void register(IEventBus modEventBus) {

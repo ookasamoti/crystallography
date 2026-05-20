@@ -4,7 +4,7 @@ import net.minecraft.network.RegistryFriendlyByteBuf;
 import net.minecraft.network.codec.ByteBufCodecs;
 import net.minecraft.network.codec.StreamCodec;
 import net.minecraft.network.protocol.common.custom.CustomPacketPayload;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 import org.jetbrains.annotations.NotNull;
 
 public record JewelryActionC2S(int containerId, int action, int param) implements CustomPacketPayload {
@@ -17,7 +17,7 @@ public record JewelryActionC2S(int containerId, int action, int param) implement
     public static final int ACTION_REGISTER       = 2;
 
     public static final Type<JewelryActionC2S> TYPE =
-            new Type<>(ResourceLocation.fromNamespaceAndPath("crystallography", "jewelry_action"));
+            new Type<>(Identifier.fromNamespaceAndPath("crystallography", "jewelry_action"));
 
     public static final StreamCodec<RegistryFriendlyByteBuf, JewelryActionC2S> STREAM_CODEC =
             StreamCodec.composite(

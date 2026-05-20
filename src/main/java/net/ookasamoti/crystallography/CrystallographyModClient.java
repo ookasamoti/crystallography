@@ -1,7 +1,7 @@
 package net.ookasamoti.crystallography;
 
 import net.minecraft.client.renderer.item.ItemProperties;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 import net.neoforged.api.distmarker.Dist;
 import net.neoforged.bus.api.SubscribeEvent;
 import net.neoforged.fml.ModContainer;
@@ -104,7 +104,7 @@ public class CrystallographyModClient {
     @SubscribeEvent
     static void onClientSetup(FMLClientSetupEvent event) {
         event.enqueueWork(() -> {
-            var propId = ResourceLocation.parse(CrystallographyMod.MOD_ID + ":form");
+            var propId = Identifier.parse(CrystallographyMod.MOD_ID + ":form");
             // Returns (formIndex + 1) / 10 for active loadout form, 0 if none
             var propFn = (net.minecraft.client.renderer.item.ClampedItemPropertyFunction)
                 (stack, level, entity, seed) -> {

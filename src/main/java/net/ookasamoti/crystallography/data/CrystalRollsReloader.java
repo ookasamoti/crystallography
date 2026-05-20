@@ -3,7 +3,7 @@ package net.ookasamoti.crystallography.data;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.google.gson.JsonElement;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 import net.minecraft.server.packs.resources.ResourceManager;
 import net.minecraft.server.packs.resources.SimpleJsonResourceReloadListener;
 import net.minecraft.util.profiling.ProfilerFiller;
@@ -24,7 +24,7 @@ public final class CrystalRollsReloader extends SimpleJsonResourceReloadListener
     public CrystalRollsReloader() { super(G, FOLDER); }
 
     @Override
-    protected void apply(Map<ResourceLocation, JsonElement> jsons,
+    protected void apply(Map<Identifier, JsonElement> jsons,
                          ResourceManager rm,
                          ProfilerFiller profiler) {
         CrystalRollsRegistry.clear();
@@ -32,7 +32,7 @@ public final class CrystalRollsReloader extends SimpleJsonResourceReloadListener
             var id = e.getKey(); // 例: crystallography:diamond_ore
             var o = e.getValue().getAsJsonObject();
 
-            var input = ResourceLocation.tryParse(o.get("input").getAsString());
+            var input = Identifier.tryParse(o.get("input").getAsString());
             if (input == null) {
                 CrystallographyMod.LOGGER.warn("[Rolls] {} has no valid 'input'", id);
                 continue;
@@ -41,7 +41,7 @@ public final class CrystalRollsReloader extends SimpleJsonResourceReloadListener
             var results = new ArrayList<CrystalRollsRegistry.Entry>();
             for (var rEl : o.getAsJsonArray("results")) {
                 var r = rEl.getAsJsonObject();
-                var item = ResourceLocation.tryParse(r.get("item").getAsString());
+                var item = Identifier.tryParse(r.get("item").getAsString());
                 int weight = r.get("weight").getAsInt();
                 String type = r.has("type") ? r.get("type").getAsString() : "vanilla";
                 results.add(new CrystalRollsRegistry.Entry(item, weight, type));
@@ -49,6 +49,6 @@ public final class CrystalRollsReloader extends SimpleJsonResourceReloadListener
             CrystalRollsRegistry.put(input, results);
             CrystallographyMod.LOGGER.debug("[Rolls] put {} -> {} entries", input, results.size());
         }
-        CrystallographyMod.LOGGER.debug("[Rolls] loaded {} inputs: {}", BY_INPUT.size(), BY_INPUT.keySet().stream().map(ResourceLocation::toString).toList());
+        CrystallographyMod.LOGGER.debug("[Rolls] loaded {} inputs: {}", BY_INPUT.size(), BY_INPUT.keySet().stream().map(Identifier::toString).toList());
     }
 }

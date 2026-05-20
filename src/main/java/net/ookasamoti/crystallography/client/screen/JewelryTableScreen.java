@@ -1,12 +1,12 @@
 package net.ookasamoti.crystallography.client.screen;
 
 import com.mojang.blaze3d.systems.RenderSystem;
-import net.minecraft.client.gui.GuiGraphics;
+import net.minecraft.client.gui.GuiGraphicsExtractor;
 import net.minecraft.client.gui.screens.inventory.AbstractContainerScreen;
 import net.minecraft.client.renderer.GameRenderer;
-import net.minecraft.Util;
+import net.minecraft.util.Util;
 import net.minecraft.network.chat.Component;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 import net.minecraft.world.entity.player.Inventory;
 import net.minecraft.world.inventory.Slot;
 import net.minecraft.world.item.ItemStack;
@@ -24,33 +24,33 @@ import org.jetbrains.annotations.NotNull;
 
 public class JewelryTableScreen extends AbstractContainerScreen<JewelryTableMenu> {
 
-    private static final ResourceLocation TEXTURE =
-            ResourceLocation.parse(CrystallographyMod.MOD_ID + ":textures/gui/jewelry_table_gui.png");
-    private static final ResourceLocation GRADIENT =
-            ResourceLocation.parse(CrystallographyMod.MOD_ID + ":textures/gui/jewelry_table_gradient.png");
+    private static final Identifier TEXTURE =
+            Identifier.parse(CrystallographyMod.MOD_ID + ":textures/gui/jewelry_table_gui.png");
+    private static final Identifier GRADIENT =
+            Identifier.parse(CrystallographyMod.MOD_ID + ":textures/gui/jewelry_table_gradient.png");
 
-    private static final ResourceLocation[] ROD_ICONS = {
-            ResourceLocation.parse("minecraft:textures/item/empty_slot_pickaxe.png"),
-            ResourceLocation.parse("minecraft:textures/item/empty_slot_shovel.png"),
-            ResourceLocation.parse("minecraft:textures/item/empty_slot_hoe.png"),
-            ResourceLocation.parse("minecraft:textures/item/empty_slot_sword.png"),
-            ResourceLocation.parse("minecraft:textures/item/empty_slot_axe.png"),
-            ResourceLocation.parse("crystallography:textures/item/empty_slot_trident.png"),
+    private static final Identifier[] ROD_ICONS = {
+            Identifier.parse("minecraft:textures/item/empty_slot_pickaxe.png"),
+            Identifier.parse("minecraft:textures/item/empty_slot_shovel.png"),
+            Identifier.parse("minecraft:textures/item/empty_slot_hoe.png"),
+            Identifier.parse("minecraft:textures/item/empty_slot_sword.png"),
+            Identifier.parse("minecraft:textures/item/empty_slot_axe.png"),
+            Identifier.parse("crystallography:textures/item/empty_slot_trident.png"),
     };
 
-    private static final ResourceLocation[] WAND_ICONS = {
-            ResourceLocation.parse("crystallography:textures/item/empty_slot_bow.png"),
-            ResourceLocation.parse("crystallography:textures/item/empty_slot_crossbow.png"),
-            ResourceLocation.parse("crystallography:textures/item/empty_slot_knife.png"),
-            ResourceLocation.parse("crystallography:textures/item/empty_slot_wrench.png"),
-            ResourceLocation.parse("crystallography:textures/item/empty_slot_fishing_rod.png"),
-            ResourceLocation.parse("minecraft:textures/item/empty_armor_slot_shield.png"),
+    private static final Identifier[] WAND_ICONS = {
+            Identifier.parse("crystallography:textures/item/empty_slot_bow.png"),
+            Identifier.parse("crystallography:textures/item/empty_slot_crossbow.png"),
+            Identifier.parse("crystallography:textures/item/empty_slot_knife.png"),
+            Identifier.parse("crystallography:textures/item/empty_slot_wrench.png"),
+            Identifier.parse("crystallography:textures/item/empty_slot_fishing_rod.png"),
+            Identifier.parse("minecraft:textures/item/empty_armor_slot_shield.png"),
     };
 
-    private static final ResourceLocation CRYSTAL_ICON =
-            ResourceLocation.parse("minecraft:textures/item/empty_slot_quartz.png");
-    private static final ResourceLocation EMPTY_SLOT_STICK =
-            ResourceLocation.parse("crystallography:textures/item/empty_slot_stick.png");
+    private static final Identifier CRYSTAL_ICON =
+            Identifier.parse("minecraft:textures/item/empty_slot_quartz.png");
+    private static final Identifier EMPTY_SLOT_STICK =
+            Identifier.parse("crystallography:textures/item/empty_slot_stick.png");
 
     private static final int TOOL_SLOT_X = JewelryTableMenu.TOOL_SLOT_X;
     private static final int TOOL_SLOT_Y = JewelryTableMenu.TOOL_SLOT_Y;
@@ -250,14 +250,14 @@ public class JewelryTableScreen extends AbstractContainerScreen<JewelryTableMenu
 
     // ---- ラベル ----
     @Override
-    protected void renderLabels(@NotNull GuiGraphics g, int mouseX, int mouseY) {
+    protected void renderLabels(@NotNull GuiGraphicsExtractor g, int mouseX, int mouseY) {
         g.drawString(this.font, this.title, 8, 6, 0x404040, false);
         g.drawString(this.font, this.playerInventoryTitle, 8, this.imageHeight - 94, 0x404040, false);
     }
 
     // ---- 背景 ----
     @Override
-    protected void renderBg(GuiGraphics g, float pt, int mouseX, int mouseY) {
+    protected void renderBg(GuiGraphicsExtractor g, float pt, int mouseX, int mouseY) {
         RenderSystem.setShader(GameRenderer::getPositionTexShader);
         RenderSystem.setShaderColor(1F, 1F, 1F, 1F);
         RenderSystem.setShaderTexture(0, TEXTURE);
@@ -284,14 +284,14 @@ public class JewelryTableScreen extends AbstractContainerScreen<JewelryTableMenu
     }
 
     // ---- ダイヤルアイコン描画 ----
-    private void renderDialIcons(GuiGraphics g) {
+    private void renderDialIcons(GuiGraphicsExtractor g) {
         int[] sc = scissorRectPixels();
         enableGuiScissor(sc[0], sc[1], sc[2], sc[3]);
         RenderSystem.enableBlend();
         RenderSystem.defaultBlendFunc();
         try {
             ItemStack center = menu.getRingSlots(JewelryTableMenu.Ring.CENTER)[0].peekRealItem();
-            ResourceLocation[] toolIcons = (center.getItem() instanceof ToolWand) ? WAND_ICONS : ROD_ICONS;
+            Identifier[] toolIcons = (center.getItem() instanceof ToolWand) ? WAND_ICONS : ROD_ICONS;
 
             // TOOLSボタン: slot[vi] のアイコンは vi % length で固定、選択中は pendingFormIndex でハイライト
             DialSlot[] toolSlots = menu.getRingSlots(JewelryTableMenu.Ring.TOOLS);
@@ -380,7 +380,7 @@ public class JewelryTableScreen extends AbstractContainerScreen<JewelryTableMenu
 
     // ---- スロット描画（サブピクセル補正を pose.translate で加算） ----
     @Override
-    protected void renderSlot(@NotNull GuiGraphics g, @NotNull Slot slot) {
+    protected void renderSlot(@NotNull GuiGraphicsExtractor g, @NotNull Slot slot) {
         if (slot instanceof DialSlot ds) {
             int[] sc = scissorRectPixels();
             enableGuiScissor(sc[0], sc[1], sc[2], sc[3]);
@@ -405,7 +405,7 @@ public class JewelryTableScreen extends AbstractContainerScreen<JewelryTableMenu
     // guiOverlay バッファに直接書き込むため描画順が正しく保証される。
     // INTERACTIVE のみ円を表示し、BUTTON は何も表示しない。
     @Override
-    protected void renderSlotHighlight(@NotNull GuiGraphics g, @NotNull Slot slot, int mouseX, int mouseY, float partialTick) {
+    protected void renderSlotHighlight(@NotNull GuiGraphicsExtractor g, @NotNull Slot slot, int mouseX, int mouseY, float partialTick) {
         if (slot instanceof DialSlot ds) {
             if (ds.mode() == DialSlot.Mode.INTERACTIVE) {
                 DialDrawer.filledCircleGui(g, ds.x + 8f, ds.y + 8f, 10f, 0x80FFFFFF);
@@ -417,7 +417,7 @@ public class JewelryTableScreen extends AbstractContainerScreen<JewelryTableMenu
     }
 
     @Override
-    public void render(@NotNull GuiGraphics g, int mouseX, int mouseY, float pt) {
+    public void render(@NotNull GuiGraphicsExtractor g, int mouseX, int mouseY, float pt) {
         updateSlotPositions(); // 毎フレーム slot.x/y を回転位置に更新（ヒットボックスも移動）
         ItemStack current = menu.getRingSlots(JewelryTableMenu.Ring.CENTER)[0].peekRealItem();
         if (!ItemStack.matches(current, lastKnownCenter)) {

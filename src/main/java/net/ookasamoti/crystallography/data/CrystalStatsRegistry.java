@@ -1,6 +1,6 @@
 package net.ookasamoti.crystallography.data;
 
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.ookasamoti.crystallography.common.item.crystal.CrystalStatsRange;
@@ -10,9 +10,9 @@ import java.util.Map;
 import java.util.Optional;
 
 public final class CrystalStatsRegistry {
-    private static final Map<ResourceLocation, CrystalStatsRange> BY_ITEM = new HashMap<>();
-    private static final java.util.Set<net.minecraft.resources.ResourceLocation> FIXED = new java.util.HashSet<>();
-    private static final java.util.Set<net.minecraft.resources.ResourceLocation> VARIABLE = new java.util.HashSet<>();
+    private static final Map<Identifier, CrystalStatsRange> BY_ITEM = new HashMap<>();
+    private static final java.util.Set<net.minecraft.resources.Identifier> FIXED = new java.util.HashSet<>();
+    private static final java.util.Set<net.minecraft.resources.Identifier> VARIABLE = new java.util.HashSet<>();
 
     public static void clear() {
         BY_ITEM.clear();
@@ -20,7 +20,7 @@ public final class CrystalStatsRegistry {
         VARIABLE.clear();
     }
 
-    public static void put(net.minecraft.resources.ResourceLocation itemId, CrystalStatsRange spec) {
+    public static void put(net.minecraft.resources.Identifier itemId, CrystalStatsRange spec) {
         BY_ITEM.put(itemId, spec);
         if (spec.allFixed()) {
             FIXED.add(itemId);
@@ -40,7 +40,7 @@ public final class CrystalStatsRegistry {
         return VARIABLE.contains(key);
     }
 
-    public static Optional<CrystalStatsRange> get(ResourceLocation itemId) {
+    public static Optional<CrystalStatsRange> get(Identifier itemId) {
         return Optional.ofNullable(BY_ITEM.get(itemId));
     }
 
@@ -51,7 +51,7 @@ public final class CrystalStatsRegistry {
     public static int size() {
         return BY_ITEM.size();
     }
-    public static java.util.Set<ResourceLocation> keys() {
+    public static java.util.Set<Identifier> keys() {
         return java.util.Set.copyOf(BY_ITEM.keySet());
     }
 }

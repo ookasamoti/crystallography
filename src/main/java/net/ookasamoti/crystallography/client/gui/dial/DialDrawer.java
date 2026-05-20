@@ -8,9 +8,9 @@ import com.mojang.blaze3d.vertex.MeshData;
 import com.mojang.blaze3d.vertex.Tesselator;
 import com.mojang.blaze3d.vertex.VertexConsumer;
 import com.mojang.blaze3d.vertex.VertexFormat;
-import net.minecraft.client.gui.GuiGraphics;
+import net.minecraft.client.gui.GuiGraphicsExtractor;
 import net.minecraft.client.renderer.GameRenderer;
-import net.minecraft.client.renderer.RenderType;
+import net.minecraft.client.renderer.rendertype.RenderType;
 import net.minecraft.util.Mth;
 import org.joml.Matrix4f;
 
@@ -24,11 +24,11 @@ public final class DialDrawer {
 
 
     /**
-     * GuiGraphics のバッファ（guiOverlay）を直接使って滑らかな塗りつぶし円を描く。
+     * GuiGraphicsExtractor のバッファ（guiOverlay）を直接使って滑らかな塗りつぶし円を描く。
      * fillGradient と同一パイプラインを通るため描画順（アイテムより前面）が正しく保証される。
      * QUADS モードで扇形を縮退クワッドとして emit する。
      */
-    public static void filledCircleGui(GuiGraphics g, float cx, float cy, float radius, int argb) {
+    public static void filledCircleGui(GuiGraphicsExtractor g, float cx, float cy, float radius, int argb) {
         if (radius <= 0f) return;
         int segments = segForRadius(radius);
         VertexConsumer vc = g.bufferSource().getBuffer(RenderType.guiOverlay());
@@ -50,7 +50,7 @@ public final class DialDrawer {
     }
 
     /** 塗りつぶし円（中心/半径/ARGB） */
-    public static void filledCircle(GuiGraphics g, float cx, float cy, float radius, int argb) {
+    public static void filledCircle(GuiGraphicsExtractor g, float cx, float cy, float radius, int argb) {
         if (radius <= 0f) return;
 
         int segments = segForRadius(radius);
@@ -74,12 +74,12 @@ public final class DialDrawer {
     }
 
     /** リング（ドーナツ） */
-    public static void filledRing(GuiGraphics g, float cx, float cy, float innerR, float outerR, int argb) {
+    public static void filledRing(GuiGraphicsExtractor g, float cx, float cy, float innerR, float outerR, int argb) {
         arc(g, cx, cy, innerR, outerR, 0f, (float)(Math.PI * 2.0), argb);
     }
 
     /** 弧（start～end はラジアン） */
-    public static void arc(GuiGraphics g, float cx, float cy, float innerR, float outerR,
+    public static void arc(GuiGraphicsExtractor g, float cx, float cy, float innerR, float outerR,
                            float startRad, float endRad, int argb) {
         float sweep = normalizeSweep(startRad, endRad);
         int segments = Math.max(12, (int)(sweep * 24));
@@ -112,7 +112,7 @@ public final class DialDrawer {
      * 線は thickness の 20% の細さ、30% の箇所にランダム分散したギャップ、
      * かつ全体が時間とともにゆっくり回転する。
      */
-    public static void circleOutline(GuiGraphics g, float cx, float cy, float radius, float thickness, int argb) {
+    public static void circleOutline(GuiGraphicsExtractor g, float cx, float cy, float radius, float thickness, int argb) {
         float t     = thickness * 0.2f;
         float outer = radius + t * 0.5f;
         float inner = Math.max(0f, radius - t * 0.5f);

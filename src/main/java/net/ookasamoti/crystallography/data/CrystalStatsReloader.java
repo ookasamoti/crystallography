@@ -3,7 +3,7 @@ package net.ookasamoti.crystallography.data;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.google.gson.JsonElement;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 import net.minecraft.server.packs.resources.ResourceManager;
 import net.minecraft.server.packs.resources.SimpleJsonResourceReloadListener;
 import net.minecraft.util.profiling.ProfilerFiller;
@@ -21,7 +21,7 @@ public final class CrystalStatsReloader extends SimpleJsonResourceReloadListener
     public CrystalStatsReloader() { super(G, FOLDER); }
 
     @Override
-    protected void apply(Map<ResourceLocation, JsonElement> jsons,
+    protected void apply(Map<Identifier, JsonElement> jsons,
                          @NotNull ResourceManager rm,
                          @NotNull ProfilerFiller profiler) {
         CrystalStatsRegistry.clear();
@@ -72,9 +72,9 @@ public final class CrystalStatsReloader extends SimpleJsonResourceReloadListener
                 CrystalStatsRegistry.keys());
     }
 
-    private static ResourceLocation rlOrNull(JsonElement el) {
+    private static Identifier rlOrNull(JsonElement el) {
         if (el == null) return null;
-        try { return ResourceLocation.tryParse(el.getAsString()); }
+        try { return Identifier.tryParse(el.getAsString()); }
         catch (Exception ignored) { return null; }
     }
 
