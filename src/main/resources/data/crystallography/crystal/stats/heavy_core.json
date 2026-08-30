@@ -1,0 +1,11 @@
+{
+  "item": "crystallography:heavy_core",
+  "tier": 4,
+  "hardness": 1024,
+  "cut":     { "min": 1.33, "max": 1.6 },
+  "carat":   { "min": 10, "max": 14 },
+  "clarity": { "min": 8.0, "max": 9.6 },
+  "category": "pearl",
+  "traits": [ "mace" ],
+  "color": "#B8BBC4"
+}

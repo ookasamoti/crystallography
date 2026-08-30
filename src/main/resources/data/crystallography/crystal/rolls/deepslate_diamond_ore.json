@@ -1,0 +1,10 @@
+{
+  "input": "minecraft:deepslate_diamond_ore",
+  "picks": ["#minecraft:pickaxes"],
+  "results": [
+    { "item": "crystallography:diamond", "weight": 55, "type": "crystal" },
+    { "item": "crystallography:pink_diamond", "weight": 10, "type": "crystal" },
+    { "item": "crystallography:black_diamond", "weight": 10, "type": "crystal" },
+    { "item": "minecraft:diamond", "weight": 25, "type": "vanilla" }
+  ]
+}

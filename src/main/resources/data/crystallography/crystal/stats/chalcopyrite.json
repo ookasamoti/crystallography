@@ -1,0 +1,12 @@
+{
+  "item": "crystallography:chalcopyrite",
+  "tier": 1,
+  "hardness": 64,
+  "cut":     { "min": 0.33, "max": 0.4 },
+  "carat":   { "min": 4, "max": 8 },
+  "clarity": { "min": 5.0, "max": 6.0 },
+  "category": "metal",
+  "traits": [ "conduction", "fire" ],
+  "crack_result": { "item": "minecraft:raw_copper", "count": 1 },
+  "color": "#C7A24A"
+}

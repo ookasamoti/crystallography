@@ -1,0 +1,12 @@
+{
+  "item": "crystallography:nether_quartz",
+  "tier": 2,
+  "hardness": 128,
+  "cut":     { "min": 1.0, "max": 1.2 },
+  "carat":   { "min": 6, "max": 10 },
+  "clarity": { "min": 6.0, "max": 7.2 },
+  "category": "quartz",
+  "traits": [ "sharp" ],
+  "crack_result": { "item": "minecraft:quartz", "count": 1 },
+  "color": "#E8DCCB"
+}

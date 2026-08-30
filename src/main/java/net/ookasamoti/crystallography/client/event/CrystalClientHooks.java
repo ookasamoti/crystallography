@@ -1,7 +1,7 @@
 package net.ookasamoti.crystallography.client.event;
 
 import net.minecraft.ChatFormatting;
-import net.minecraft.client.gui.screens.Screen;
+import net.minecraft.client.Minecraft;
 import net.minecraft.network.chat.Component;
 import net.minecraft.world.item.ItemStack;
 import net.neoforged.neoforge.event.entity.player.ItemTooltipEvent;
@@ -44,13 +44,16 @@ public final class CrystalClientHooks {
         addStatLine(e.getToolTip(), "tooltip.crystallography.hardness_label",
                 stats, range, CrystalStats::hardness, CrystalStatsRange::hardness, true);
 
+        addStatLine(e.getToolTip(), "tooltip.crystallography.cut_label",
+                stats, range, CrystalStats::cut,      CrystalStatsRange::cut,      false);
+
         addStatLine(e.getToolTip(), "tooltip.crystallography.carat_label",
-                stats, range, CrystalStats::carat,    CrystalStatsRange::carat,    false);
+                stats, range, CrystalStats::carat,    CrystalStatsRange::carat,    true);
 
         addStatLine(e.getToolTip(), "tooltip.crystallography.clarity_label",
                 stats, range, CrystalStats::clarity,  CrystalStatsRange::clarity,  false);
 
-        if (!Screen.hasShiftDown()) {
+        if (!Minecraft.getInstance().hasShiftDown()) {
             e.getToolTip().add(Component.translatable("tooltip.crystallography.press_shift")
                     .withStyle(ChatFormatting.DARK_GRAY));
         } else if (range.categories() != null && !range.categories().isEmpty()) {

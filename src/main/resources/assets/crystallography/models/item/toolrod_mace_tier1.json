@@ -1,0 +1,9 @@
+{
+  "parent": "minecraft:item/generated",
+  "textures": {
+    "layer0": "crystallography:item/toolrod_tier1",
+    "layer1": "crystallography:item/toolrod_mace_center",
+    "layer2": "crystallography:item/toolrod_mace_left",
+    "layer3": "crystallography:item/toolrod_mace_right"
+  }
+}

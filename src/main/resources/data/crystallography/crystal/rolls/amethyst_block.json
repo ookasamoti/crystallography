@@ -1,0 +1,8 @@
+{
+  "input": "minecraft:amethyst_block",
+  "picks": ["#minecraft:pickaxes"],
+  "results": [
+    { "item": "crystallography:amethyst", "weight": 70, "type": "crystal" },
+    { "item": "minecraft:amethyst_shard", "weight": 30, "type": "vanilla" }
+  ]
+}

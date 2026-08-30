@@ -1,0 +1,9 @@
+{
+  "input": "minecraft:deepslate_emerald_ore",
+  "picks": ["#minecraft:pickaxes"],
+  "results": [
+    { "item": "crystallography:emerald", "weight": 45, "type": "crystal" },
+    { "item": "crystallography:trapiche_emerald", "weight": 20, "type": "crystal" },
+    { "item": "minecraft:emerald", "weight": 35, "type": "vanilla" }
+  ]
+}

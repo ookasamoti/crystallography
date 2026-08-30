@@ -1,11 +1,11 @@
 package net.ookasamoti.crystallography.data;
 
-import com.google.gson.Gson;
-import com.google.gson.GsonBuilder;
 import com.google.gson.JsonElement;
+import net.minecraft.resources.FileToIdConverter;
 import net.minecraft.resources.Identifier;
 import net.minecraft.server.packs.resources.ResourceManager;
 import net.minecraft.server.packs.resources.SimpleJsonResourceReloadListener;
+import net.minecraft.util.ExtraCodecs;
 import net.minecraft.util.profiling.ProfilerFiller;
 import net.ookasamoti.crystallography.CrystallographyMod;
 import net.ookasamoti.crystallography.common.item.crystal.CrystalStatsRange;
@@ -14,11 +14,10 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.Map;
 
-public final class CrystalStatsReloader extends SimpleJsonResourceReloadListener {
-    private static final Gson G = new GsonBuilder().create();
+public final class CrystalStatsReloader extends SimpleJsonResourceReloadListener<JsonElement> {
     private static final String FOLDER = "crystal/stats";
 
-    public CrystalStatsReloader() { super(G, FOLDER); }
+    public CrystalStatsReloader() { super(ExtraCodecs.JSON, FileToIdConverter.json(FOLDER)); }
 
     @Override
     protected void apply(Map<Identifier, JsonElement> jsons,
@@ -40,10 +39,12 @@ public final class CrystalStatsReloader extends SimpleJsonResourceReloadListener
                 int tier = getIntOrDefault(root.get("tier"), 0);
 
                 var hardness = parseRangeF(root.get("hardness"));
+                var cut      = parseRangeF(root.get("cut"));
                 var carat    = parseRangeF(root.get("carat"));
                 var clarity  = parseRangeF(root.get("clarity"));
 
                 var categories = parseStringSet(root.get("category"));
+                var traits     = parseStringSet(root.get("traits"));
 
                 LapidaryAnvilOperations.CrackResult crack = null;
                 if (root.has("crack_result")) {
@@ -56,10 +57,12 @@ public final class CrystalStatsReloader extends SimpleJsonResourceReloadListener
                     }
                 }
 
-                int tint = parseHexColor(root.get("tint"), CrystalStatsRange.NO_TINT);
+                // "color"（新キー）優先、後方互換で "tint" も受け付ける
+                JsonElement colorEl = root.has("color") ? root.get("color") : root.get("tint");
+                int color = parseHexColor(colorEl, CrystalStatsRange.NO_COLOR);
 
                 CrystalStatsRegistry.put(itemRL, new CrystalStatsRange(
-                        tier, hardness, carat, clarity, categories, crack, tint
+                        tier, hardness, cut, carat, clarity, categories, traits, crack, color
                 ));
 
             } catch (Exception ex) {

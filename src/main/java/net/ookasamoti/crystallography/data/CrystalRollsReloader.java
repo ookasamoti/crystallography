@@ -1,12 +1,13 @@
 package net.ookasamoti.crystallography.data;
 
-import com.google.gson.Gson;
-import com.google.gson.GsonBuilder;
 import com.google.gson.JsonElement;
+import net.minecraft.resources.FileToIdConverter;
 import net.minecraft.resources.Identifier;
 import net.minecraft.server.packs.resources.ResourceManager;
 import net.minecraft.server.packs.resources.SimpleJsonResourceReloadListener;
+import net.minecraft.util.ExtraCodecs;
 import net.minecraft.util.profiling.ProfilerFiller;
+import net.neoforged.neoforge.common.advancements.critereon.ItemAbilityPredicate;
 import net.ookasamoti.crystallography.CrystallographyMod;
 import org.jetbrains.annotations.NotNull;
 
@@ -17,11 +18,9 @@ import static net.ookasamoti.crystallography.data.CrystalRollsRegistry.BY_INPUT;
 
 // CrystalRollsReloader.java
 
-public final class CrystalRollsReloader extends SimpleJsonResourceReloadListener {
-    private static final Gson G = new GsonBuilder().create();
+public final class CrystalRollsReloader extends SimpleJsonResourceReloadListener<JsonElement> {
     private static final String FOLDER = "crystal/rolls";
-
-    public CrystalRollsReloader() { super(G, FOLDER); }
+    public CrystalRollsReloader() { super(ExtraCodecs.JSON, FileToIdConverter.json(FOLDER)); }
 
     @Override
     protected void apply(Map<Identifier, JsonElement> jsons,

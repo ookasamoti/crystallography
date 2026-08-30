@@ -1,0 +1,11 @@
+{
+  "item": "crystallography:sonar_shard",
+  "tier": 4,
+  "hardness": 1024,
+  "cut":     { "min": 1.33, "max": 1.6 },
+  "carat":   { "min": 9, "max": 13 },
+  "clarity": { "min": 11.0, "max": 13.2 },
+  "category": "stone",
+  "traits": [ "resonance", "sonic" ],
+  "color": "#18BBC4"
+}

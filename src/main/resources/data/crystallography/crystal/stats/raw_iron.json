@@ -5,5 +5,8 @@
   "carat": { "min": 3.2, "max": 3.2 },
   "clarity": { "min": 1.8, "max": 1.8 },
   "category": [
+    "metal",
+    "iron",
+    "raw_ore"
   ]
 }

@@ -15,18 +15,18 @@ public class BlockEntitiesRegistry {
 
     public static final DeferredHolder<BlockEntityType<?>, BlockEntityType<JewelryTableBlockEntity>> JEWELRY_TABLE_BE =
             BLOCK_ENTITIES.register("jewelry_table_be",
-                    () -> BlockEntityType.Builder.of(
+                    () -> new BlockEntityType<>(
                             JewelryTableBlockEntity::new,
                             BlockRegistry.JEWELRY_TABLE.get()
-                    ).build(null)
+                    )
             );
 
     public static final DeferredHolder<BlockEntityType<?>, BlockEntityType<LapidaryAnvilBlockEntity>> LAPIDARY_ANVIL_BE =
             BLOCK_ENTITIES.register("lapidary_anvil_be",
-                    () -> BlockEntityType.Builder.of(
+                    () -> new BlockEntityType<>(
                             LapidaryAnvilBlockEntity::new,
                             BlockRegistry.LAPIDARY_ANVIL.get()
-                    ).build(null)
+                    )
             );
 
     public static void register(IEventBus eventBus) {

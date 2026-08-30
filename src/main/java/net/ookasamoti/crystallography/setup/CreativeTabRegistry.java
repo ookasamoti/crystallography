@@ -28,8 +28,35 @@ public class CreativeTabRegistry {
                         output.accept(ItemRegistry.TOOLWAND_TIER1.get());
                         output.accept(ItemRegistry.TOOLWAND_TIER2.get());
                         output.accept(ItemRegistry.TOOLWAND_TIER3.get());
-                        output.accept(ItemRegistry.DIAMOND_CRYSTAL.get());
-                        output.accept(ItemRegistry.PINK_DIAMOND_CRYSTAL.get());
+                        output.accept(ItemRegistry.CHALCOPYRITE.get());
+                        output.accept(ItemRegistry.MAGNETITE.get());
+                        output.accept(ItemRegistry.PYRITE.get());
+                        output.accept(ItemRegistry.ANTHRACITE.get());
+                        output.accept(ItemRegistry.GOLD.get());
+                        output.accept(ItemRegistry.BRUTE_GOLD.get());
+                        output.accept(ItemRegistry.BLUE_ICE_CRYSTAL.get());
+                        output.accept(ItemRegistry.PRISMARINE_CRYSTAL.get());
+                        output.accept(ItemRegistry.REDSTONE.get());
+                        output.accept(ItemRegistry.LAPIS_LAZULI.get());
+                        output.accept(ItemRegistry.AMETHYST.get());
+                        output.accept(ItemRegistry.DIAMOND.get());
+                        output.accept(ItemRegistry.PINK_DIAMOND.get());
+                        output.accept(ItemRegistry.BLACK_DIAMOND.get());
+                        output.accept(ItemRegistry.EMERALD.get());
+                        output.accept(ItemRegistry.TRAPICHE_EMERALD.get());
+                        output.accept(ItemRegistry.NETHER_QUARTZ.get());
+                        output.accept(ItemRegistry.GLOWSTONE.get());
+                        output.accept(ItemRegistry.WITHER_ROSE_QUARTZ.get());
+                        output.accept(ItemRegistry.BLAZE_CRYSTAL.get());
+                        output.accept(ItemRegistry.BREEZE_CRYSTAL.get());
+                        output.accept(ItemRegistry.END_CRYSTAL.get());
+                        output.accept(ItemRegistry.ENDER_PEARL.get());
+                        output.accept(ItemRegistry.SHULKER_PEARL.get());
+                        output.accept(ItemRegistry.OBSIDIAN.get());
+                        output.accept(ItemRegistry.OBSIDIAN_TEAR.get());
+                        output.accept(ItemRegistry.SONAR_SHARD.get());
+                        output.accept(ItemRegistry.TRIDENT_CORE.get());
+                        output.accept(ItemRegistry.HEAVY_CORE.get());
                     }).build()
     );
 

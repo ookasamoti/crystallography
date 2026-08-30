@@ -1,0 +1,9 @@
+{
+  "input": "minecraft:iron_ore",
+  "picks": ["#minecraft:pickaxes"],
+  "results": [
+    { "item": "crystallography:magnetite", "weight": 45, "type": "crystal" },
+    { "item": "crystallography:pyrite", "weight": 20, "type": "crystal" },
+    { "item": "minecraft:raw_iron", "weight": 35, "type": "vanilla" }
+  ]
+}

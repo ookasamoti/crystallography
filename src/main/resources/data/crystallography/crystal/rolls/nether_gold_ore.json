@@ -1,0 +1,8 @@
+{
+  "input": "minecraft:nether_gold_ore",
+  "picks": ["#minecraft:pickaxes"],
+  "results": [
+    { "item": "crystallography:gold", "weight": 50, "type": "crystal" },
+    { "item": "minecraft:gold_nugget", "weight": 50, "type": "vanilla" }
+  ]
+}

@@ -4,7 +4,6 @@ import net.minecraft.core.BlockPos;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.InteractionResult;
-import net.minecraft.world.ItemInteractionResult;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.BlockGetter;
@@ -49,44 +48,29 @@ public class JewelryTableBlock extends BaseEntityBlock {
     }
 
     @Override
-    protected void onRemove(BlockState state,
-                            @NotNull Level level,
-                            @NotNull BlockPos pos,
-                            BlockState newState,
-                            boolean movedByPiston ) {
-        if (!state.is(newState.getBlock())) {
-            BlockEntity be = level.getBlockEntity(pos);
-            if (be instanceof JewelryTableBlockEntity tableBE) {
-                tableBE.drops();
-            }
-        }
-        super.onRemove(state, level, pos, newState, movedByPiston);
-    }
-
-    @Override
     protected @NotNull InteractionResult useWithoutItem(@NotNull BlockState state,
                                                         @NotNull Level level,
                                                         @NotNull BlockPos pos,
                                                         @NotNull Player player,
                                                         @NotNull BlockHitResult hit ) {
         openMenu(level, pos, player);
-        return InteractionResult.sidedSuccess(level.isClientSide);
+        return InteractionResult.SUCCESS;
     }
 
     @Override
-    protected @NotNull ItemInteractionResult useItemOn(@NotNull ItemStack stack,
-                                                       @NotNull BlockState state,
-                                                       @NotNull Level level,
-                                                       @NotNull BlockPos pos,
-                                                       @NotNull Player player,
-                                                       @NotNull InteractionHand hand,
-                                                       @NotNull BlockHitResult hit ) {
+    protected @NotNull InteractionResult useItemOn(@NotNull ItemStack stack,
+                                                   @NotNull BlockState state,
+                                                   @NotNull Level level,
+                                                   @NotNull BlockPos pos,
+                                                   @NotNull Player player,
+                                                   @NotNull InteractionHand hand,
+                                                   @NotNull BlockHitResult hit ) {
         openMenu(level, pos, player);
-        return ItemInteractionResult.sidedSuccess(level.isClientSide);
+        return InteractionResult.SUCCESS;
     }
 
     private void openMenu(Level level, BlockPos pos, Player player) {
-        if (!level.isClientSide && player instanceof ServerPlayer sp) {
+        if (!level.isClientSide() && player instanceof ServerPlayer sp) {
             BlockEntity be = level.getBlockEntity(pos);
             if (be instanceof JewelryTableBlockEntity tableBE) {
                 sp.openMenu(tableBE, buf -> buf.writeBlockPos(pos));

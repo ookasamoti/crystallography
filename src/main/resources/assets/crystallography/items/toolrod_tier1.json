@@ -1,0 +1,94 @@
+{
+  "model": {
+    "type": "minecraft:select",
+    "property": "crystallography:form",
+    "fallback": {
+      "type": "minecraft:model",
+      "model": "crystallography:item/toolrod_tier1"
+    },
+    "cases": [
+      {
+        "when": "pickaxe",
+        "model": {
+          "type": "minecraft:model",
+          "model": "crystallography:item/toolrod_pickaxe_tier1",
+          "tints": [
+            {
+              "type": "minecraft:constant",
+              "value": -1
+            },
+            {
+              "type": "crystallography:crystal",
+              "crystal_slot": 0
+            },
+            {
+              "type": "crystallography:crystal",
+              "crystal_slot": 1
+            },
+            {
+              "type": "crystallography:crystal",
+              "crystal_slot": 2
+            }
+          ]
+        }
+      },
+      {
+        "when": "axe",
+        "model": {
+          "type": "minecraft:model",
+          "model": "crystallography:item/toolrod_axe_tier1",
+          "tints": [
+            {
+              "type": "minecraft:constant",
+              "value": -1
+            },
+            {
+              "type": "crystallography:crystal",
+              "crystal_slot": 0
+            },
+            {
+              "type": "crystallography:crystal",
+              "crystal_slot": 1
+            },
+            {
+              "type": "crystallography:crystal",
+              "crystal_slot": 2
+            }
+          ]
+        }
+      },
+      {
+        "when": "sword",
+        "model": {
+          "type": "minecraft:model",
+          "model": "crystallography:item/toolrod_sword_tier1",
+          "tints": [
+            {
+              "type": "minecraft:constant",
+              "value": -1
+            },
+            {
+              "type": "crystallography:crystal",
+              "crystal_slot": 0
+            },
+            {
+              "type": "crystallography:crystal",
+              "crystal_slot": 1
+            },
+            {
+              "type": "crystallography:crystal",
+              "crystal_slot": 2
+            }
+          ]
+        }
+      },
+      {
+        "when": "crashed",
+        "model": {
+          "type": "minecraft:model",
+          "model": "crystallography:item/toolrod_crashed_tier1"
+        }
+      }
+    ]
+  }
+}

@@ -1,14 +1,6 @@
 {
-	"parent": "minecraft:item/generated",
-	"textures": {
-		"layer0": "crystallography:item/toolrod_tier3"
-	},
-	"overrides": [
-		{ "predicate": { "crystallography:form": 0.1 }, "model": "crystallography:item/toolrod_pickaxe_tier3" },
-		{ "predicate": { "crystallography:form": 0.2 }, "model": "crystallography:item/toolrod_shovel_tier3" },
-		{ "predicate": { "crystallography:form": 0.3 }, "model": "crystallography:item/toolrod_hoe_tier3" },
-		{ "predicate": { "crystallography:form": 0.4 }, "model": "crystallography:item/toolrod_sword_tier3" },
-		{ "predicate": { "crystallography:form": 0.5 }, "model": "crystallography:item/toolrod_axe_tier3" },
-		{ "predicate": { "crystallography:form": 0.6 }, "model": "crystallography:item/toolrod_spear_tier3" }
-	]
+  "parent": "minecraft:item/generated",
+  "textures": {
+    "layer0": "crystallography:item/toolrod_tier3"
+  }
 }

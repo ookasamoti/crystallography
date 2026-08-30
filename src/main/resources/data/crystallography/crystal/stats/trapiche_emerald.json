@@ -1,0 +1,11 @@
+{
+  "item": "crystallography:trapiche_emerald",
+  "tier": 3,
+  "hardness": 512,
+  "cut":     { "min": 1.0, "max": 1.2 },
+  "carat":   { "min": 8, "max": 12 },
+  "clarity": { "min": 8.0, "max": 9.6 },
+  "category": "jewel",
+  "traits": [ "turtle" ],
+  "color": "#1C8A4E"
+}

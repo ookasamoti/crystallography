@@ -1,8 +1,6 @@
 package net.ookasamoti.crystallography.common.block.entity;
 
 import net.minecraft.core.BlockPos;
-import net.minecraft.core.HolderLookup;
-import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.chat.Component;
 import net.minecraft.world.Containers;
 import net.minecraft.world.MenuProvider;
@@ -11,10 +9,12 @@ import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.inventory.AbstractContainerMenu;
 import net.minecraft.world.inventory.ContainerData;
 import net.minecraft.world.inventory.SimpleContainerData;
+import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.state.BlockState;
-import net.neoforged.neoforge.items.IItemHandler;
-import net.neoforged.neoforge.items.ItemStackHandler;
+import net.minecraft.world.level.storage.ValueInput;
+import net.minecraft.world.level.storage.ValueOutput;
+import net.neoforged.neoforge.transfer.item.ItemStacksResourceHandler;
 import net.ookasamoti.crystallography.common.menu.JewelryTableMenu;
 import net.ookasamoti.crystallography.setup.BlockEntitiesRegistry;
 import org.jetbrains.annotations.NotNull;
@@ -22,9 +22,9 @@ import org.jetbrains.annotations.Nullable;
 
 public class JewelryTableBlockEntity extends BlockEntity implements MenuProvider {
 
-    private final ItemStackHandler itemHandler = new ItemStackHandler(1) {
+    private final ItemStacksResourceHandler itemHandler = new ItemStacksResourceHandler(1) {
         @Override
-        protected void onContentsChanged(int slot) {
+        protected void onContentsChanged(int index, ItemStack previousContents) {
             setChanged();
             if (level != null) {
                 level.invalidateCapabilities(getBlockPos());
@@ -42,28 +42,32 @@ public class JewelryTableBlockEntity extends BlockEntity implements MenuProvider
 
     public void drops() {
         assert level != null;
-        if (!level.isClientSide) {
-            for (int i = 0; i < itemHandler.getSlots(); i++) {
+        if (!level.isClientSide()) {
+            for (int i = 0; i < itemHandler.size(); i++) {
                 Containers.dropItemStack(level, worldPosition.getX(), worldPosition.getY(), worldPosition.getZ(),
-                        itemHandler.getStackInSlot(i));
+                        itemHandler.getResource(i).toStack(itemHandler.getAmountAsInt(i)));
             }
         }
     }
 
-    public IItemHandler getItemHandler() { return itemHandler; }
+    public ItemStacksResourceHandler getItemHandler() { return itemHandler; }
 
     @Override
-    protected void saveAdditional(@NotNull CompoundTag tag, @NotNull HolderLookup.Provider registries) {
-        super.saveAdditional(tag, registries);
-        tag.put("inventory", itemHandler.serializeNBT(registries));
+    public void preRemoveSideEffects(@NotNull BlockPos pos, @NotNull BlockState state) {
+        drops();
+        super.preRemoveSideEffects(pos, state);
     }
 
     @Override
-    protected void loadAdditional(@NotNull CompoundTag tag, @NotNull HolderLookup.Provider registries) {
-        super.loadAdditional(tag, registries);
-        if (tag.contains("inventory")) {
-            itemHandler.deserializeNBT(registries, tag.getCompound("inventory"));
-        }
+    protected void saveAdditional(@NotNull ValueOutput output) {
+        super.saveAdditional(output);
+        itemHandler.serialize(output.child("inventory"));
+    }
+
+    @Override
+    protected void loadAdditional(@NotNull ValueInput input) {
+        super.loadAdditional(input);
+        input.child("inventory").ifPresent(itemHandler::deserialize);
     }
 
     @Override

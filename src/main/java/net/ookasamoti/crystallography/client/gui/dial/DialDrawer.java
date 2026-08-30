@@ -1,38 +1,29 @@
 package net.ookasamoti.crystallography.client.gui.dial;
 
-import com.mojang.blaze3d.systems.RenderSystem;
-import com.mojang.blaze3d.vertex.BufferBuilder;
-import com.mojang.blaze3d.vertex.BufferUploader;
-import com.mojang.blaze3d.vertex.DefaultVertexFormat;
-import com.mojang.blaze3d.vertex.MeshData;
-import com.mojang.blaze3d.vertex.Tesselator;
-import com.mojang.blaze3d.vertex.VertexConsumer;
-import com.mojang.blaze3d.vertex.VertexFormat;
 import net.minecraft.client.gui.GuiGraphicsExtractor;
-import net.minecraft.client.renderer.GameRenderer;
-import net.minecraft.client.renderer.rendertype.RenderType;
+import net.minecraft.client.gui.navigation.ScreenRectangle;
 import net.minecraft.util.Mth;
-import org.joml.Matrix4f;
+import org.joml.Matrix3x2f;
 
 import java.util.Random;
 
 /**
- * 円/リング/弧 などの図形描画（1.21系 MeshData API 対応）。
+ * 円/リング/弧 などの図形描画。
+ *
+ * <p>1.21.5 の GUI 描画刷新で即時モード(Tesselator/BufferUploader/シェーダー)が廃止されたため、
+ * 各図形を QUAD 列に変換し {@link DialShapeRenderState} として
+ * {@link GuiGraphicsExtractor#submitGuiElementRenderState} に投入する方式へ移行。
+ * 塗りつぶし円は扇形を縮退クワッド、リング/弧は外周↔内周のクワッド帯として emit する。
  */
 public final class DialDrawer {
     private DialDrawer(){}
 
-
-    /**
-     * GuiGraphicsExtractor のバッファ（guiOverlay）を直接使って滑らかな塗りつぶし円を描く。
-     * fillGradient と同一パイプラインを通るため描画順（アイテムより前面）が正しく保証される。
-     * QUADS モードで扇形を縮退クワッドとして emit する。
-     */
-    public static void filledCircleGui(GuiGraphicsExtractor g, float cx, float cy, float radius, int argb) {
+    /** 塗りつぶし円(中心/半径/ARGB)。 */
+    public static void filledCircle(GuiGraphicsExtractor g, float cx, float cy, float radius, int argb) {
         if (radius <= 0f) return;
         int segments = segForRadius(radius);
-        VertexConsumer vc = g.bufferSource().getBuffer(RenderType.guiOverlay());
-        Matrix4f pose = g.pose().last().pose();
+        float[] verts = new float[segments * 8]; // 4 頂点 × 2 成分 × segments
+        int p = 0;
         for (int i = 0; i < segments; i++) {
             double a0 = Math.PI * 2.0 * i       / segments;
             double a1 = Math.PI * 2.0 * (i + 1) / segments;
@@ -40,71 +31,44 @@ public final class DialDrawer {
             float y0 = cy + (float)Math.sin(a0) * radius;
             float x1 = cx + (float)Math.cos(a1) * radius;
             float y1 = cy + (float)Math.sin(a1) * radius;
-            // GUI プロジェクション（Y 反転）後に CCW = 正面向きになるよう
-            // GUI ピクセル空間では CW 順（p1 → p0）で emit する
-            vc.addVertex(pose, cx, cy, 0).setColor(argb);
-            vc.addVertex(pose, x1, y1, 0).setColor(argb);
-            vc.addVertex(pose, x0, y0, 0).setColor(argb);
-            vc.addVertex(pose, cx, cy, 0).setColor(argb);
+            // 内半径0のリング扱い: (outer0, center, center, outer1)。
+            // arc()/filledRing()(描画実績あり)と同じ頂点順=同じ巻き順にすることで、
+            // GUI パイプラインのカリングで裏面除去されないようにする。
+            p = quad(verts, p, x0, y0, cx, cy, cx, cy, x1, y1);
         }
+        submit(g, verts, argb, cx, cy, radius);
     }
 
-    /** 塗りつぶし円（中心/半径/ARGB） */
-    public static void filledCircle(GuiGraphicsExtractor g, float cx, float cy, float radius, int argb) {
-        if (radius <= 0f) return;
-
-        int segments = segForRadius(radius);
-        float[] c = argbToRGBA01(argb);
-        setupColorShader();
-
-        Matrix4f pose = g.pose().last().pose();
-        BufferBuilder buf = Tesselator.getInstance()
-                .begin(VertexFormat.Mode.TRIANGLE_FAN, DefaultVertexFormat.POSITION_COLOR);
-
-        buf.addVertex(pose, cx, cy, 0).setColor(c[0], c[1], c[2], c[3]);
-        for (int i = 0; i <= segments; i++) {
-            double ang = Math.PI * 2.0 * i / segments;
-            float x = cx + (float)Math.cos(ang) * radius;
-            float y = cy + (float)Math.sin(ang) * radius;
-            buf.addVertex(pose, x, y, 0).setColor(c[0], c[1], c[2], c[3]);
-        }
-
-        MeshData mesh = buf.build();
-        if (mesh != null) BufferUploader.drawWithShader(mesh);
+    /** {@link #filledCircle} の別名(従来 API 互換)。 */
+    public static void filledCircleGui(GuiGraphicsExtractor g, float cx, float cy, float radius, int argb) {
+        filledCircle(g, cx, cy, radius, argb);
     }
 
-    /** リング（ドーナツ） */
+    /** リング(ドーナツ)。 */
     public static void filledRing(GuiGraphicsExtractor g, float cx, float cy, float innerR, float outerR, int argb) {
         arc(g, cx, cy, innerR, outerR, 0f, (float)(Math.PI * 2.0), argb);
     }
 
-    /** 弧（start～end はラジアン） */
+    /** 弧(start～end はラジアン)。 */
     public static void arc(GuiGraphicsExtractor g, float cx, float cy, float innerR, float outerR,
                            float startRad, float endRad, int argb) {
         float sweep = normalizeSweep(startRad, endRad);
         int segments = Math.max(12, (int)(sweep * 24));
-        float[] c = argbToRGBA01(argb);
-        setupColorShader();
+        float[] verts = new float[segments * 8];
+        int p = 0;
+        for (int i = 0; i < segments; i++) {
+            float a = startRad + sweep * ((float) i / segments);
+            float b = startRad + sweep * ((float) (i + 1) / segments);
 
-        Matrix4f pose = g.pose().last().pose();
-        BufferBuilder buf = Tesselator.getInstance()
-                .begin(VertexFormat.Mode.TRIANGLE_STRIP, DefaultVertexFormat.POSITION_COLOR);
+            float xoa = cx + (float)Math.cos(a) * outerR, yoa = cy + (float)Math.sin(a) * outerR;
+            float xia = cx + (float)Math.cos(a) * innerR, yia = cy + (float)Math.sin(a) * innerR;
+            float xob = cx + (float)Math.cos(b) * outerR, yob = cy + (float)Math.sin(b) * outerR;
+            float xib = cx + (float)Math.cos(b) * innerR, yib = cy + (float)Math.sin(b) * innerR;
 
-        for (int i = 0; i <= segments; i++) {
-            float t = (float)i / (float)segments;
-            float a = startRad + sweep * t;
-
-            float xo = cx + (float)Math.cos(a) * outerR;
-            float yo = cy + (float)Math.sin(a) * outerR;
-            float xi = cx + (float)Math.cos(a) * innerR;
-            float yi = cy + (float)Math.sin(a) * innerR;
-
-            buf.addVertex(pose, xo, yo, 0).setColor(c[0], c[1], c[2], c[3]);
-            buf.addVertex(pose, xi, yi, 0).setColor(c[0], c[1], c[2], c[3]);
+            // QUAD = 外周a → 内周a → 内周b → 外周b
+            p = quad(verts, p, xoa, yoa, xia, yia, xib, yib, xob, yob);
         }
-
-        MeshData mesh = buf.build();
-        if (mesh != null) BufferUploader.drawWithShader(mesh);
+        submit(g, verts, argb, cx, cy, outerR);
     }
 
     /**
@@ -145,22 +109,31 @@ public final class DialDrawer {
 
     // ---- helpers ----
 
+    /** 8 成分(頂点4つ分の x,y)を verts[p..] に書き込み、次の書き込み位置を返す。 */
+    private static int quad(float[] verts, int p,
+                            float x0, float y0, float x1, float y1,
+                            float x2, float y2, float x3, float y3) {
+        verts[p++] = x0; verts[p++] = y0;
+        verts[p++] = x1; verts[p++] = y1;
+        verts[p++] = x2; verts[p++] = y2;
+        verts[p++] = x3; verts[p++] = y3;
+        return p;
+    }
+
+    private static void submit(GuiGraphicsExtractor g, float[] verts, int argb, float cx, float cy, float maxR) {
+        if (verts.length == 0) return;
+        Matrix3x2f pose = new Matrix3x2f(g.pose());
+        ScreenRectangle bounds = new ScreenRectangle(
+                Mth.floor(cx - maxR), Mth.floor(cy - maxR),
+                Mth.ceil(maxR * 2f) + 1, Mth.ceil(maxR * 2f) + 1
+        ).transformMaxBounds(pose);
+        // 現在のシザースタックを反映：これが無いと enableScissor の効果がカスタム RenderState に伝わらず、
+        // 円アウトラインなどがクリップボックスの外にも描画されてしまう。
+        g.submitGuiElementRenderState(new DialShapeRenderState(pose, verts, argb, g.peekScissorStack(), bounds));
+    }
+
     private static int segForRadius(float r) {
         return Mth.clamp((int)Math.ceil(r * 2.5f), 12, 64);
-    }
-
-    private static float[] argbToRGBA01(int argb) {
-        float a = ((argb >>> 24) & 0xFF) / 255f;
-        float r = ((argb >>> 16) & 0xFF) / 255f;
-        float g = ((argb >>> 8)  & 0xFF) / 255f;
-        float b = ( argb         & 0xFF) / 255f;
-        return new float[]{ r, g, b, a };
-    }
-
-    private static void setupColorShader() {
-        RenderSystem.enableBlend();
-        RenderSystem.defaultBlendFunc();
-        RenderSystem.setShader(GameRenderer::getPositionColorShader);
     }
 
     private static float normalizeSweep(float startRad, float endRad) {

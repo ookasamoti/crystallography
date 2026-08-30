@@ -1,0 +1,12 @@
+{
+  "item": "crystallography:magnetite",
+  "tier": 2,
+  "hardness": 128,
+  "cut":     { "min": 0.67, "max": 0.8 },
+  "carat":   { "min": 5, "max": 9 },
+  "clarity": { "min": 6.0, "max": 7.2 },
+  "category": "metal",
+  "traits": [ "magnetism" ],
+  "crack_result": { "item": "minecraft:raw_iron", "count": 1 },
+  "color": "#4C4C55"
+}

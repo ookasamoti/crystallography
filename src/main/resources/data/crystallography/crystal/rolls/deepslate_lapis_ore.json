@@ -1,0 +1,8 @@
+{
+  "input": "minecraft:deepslate_lapis_ore",
+  "picks": ["#minecraft:pickaxes"],
+  "results": [
+    { "item": "crystallography:lapis_lazuli", "weight": 65, "type": "crystal" },
+    { "item": "minecraft:lapis_lazuli", "weight": 35, "type": "vanilla" }
+  ]
+}

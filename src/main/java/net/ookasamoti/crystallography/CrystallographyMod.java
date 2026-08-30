@@ -1,7 +1,8 @@
 package net.ookasamoti.crystallography;
 
+import net.minecraft.resources.Identifier;
 import net.neoforged.fml.ModContainer;
-import net.neoforged.neoforge.event.AddReloadListenerEvent;
+import net.neoforged.neoforge.event.AddServerReloadListenersEvent;
 import net.ookasamoti.crystallography.data.CrystalRollsReloader;
 import net.ookasamoti.crystallography.data.CrystalStatsReloader;
 import net.ookasamoti.crystallography.network.ModNet;
@@ -30,11 +31,12 @@ public class CrystallographyMod {
         CreativeTabRegistry.register(modEventBus);
         MenuTypesRegistry.register(modEventBus);
         ToolComponentsRegistry.register(modEventBus);
+        RecipeSerializersRegistry.register(modEventBus);
         ModNet.register(modEventBus);
     }
 
-    private static void onAddReloadListeners(AddReloadListenerEvent e) {
-        e.addListener(new CrystalStatsReloader());
-        e.addListener(new CrystalRollsReloader());
+    private static void onAddReloadListeners(AddServerReloadListenersEvent e) {
+        e.addListener(Identifier.fromNamespaceAndPath(MOD_ID, "crystal_stats"), new CrystalStatsReloader());
+        e.addListener(Identifier.fromNamespaceAndPath(MOD_ID, "crystal_rolls"), new CrystalRollsReloader());
     }
 }

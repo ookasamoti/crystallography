@@ -9,7 +9,7 @@ import net.minecraft.world.inventory.Slot;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.core.BlockPos;
 import net.minecraft.server.level.ServerPlayer;
-import net.neoforged.neoforge.items.SlotItemHandler;
+import net.neoforged.neoforge.transfer.item.ResourceHandlerSlot;
 import net.ookasamoti.crystallography.common.block.entity.LapidaryAnvilBlockEntity;
 import net.ookasamoti.crystallography.common.util.LapidaryAnvilOperations;
 import net.ookasamoti.crystallography.setup.MenuTypesRegistry;
@@ -36,14 +36,15 @@ public class LapidaryAnvilMenu extends AbstractContainerMenu {
         final int rightX = 80;
         final int rightY = 20;
 
-        addSlot(new SlotItemHandler(blockEntity.getItems(), LapidaryAnvilBlockEntity.SLOT_PICK,  20, rightY));
-        addSlot(new SlotItemHandler(blockEntity.getItems(), LapidaryAnvilBlockEntity.SLOT_WEDGE, 20, rightY + 18));
-        addSlot(new SlotItemHandler(blockEntity.getItems(), LapidaryAnvilBlockEntity.SLOT_ORE,  20, rightY + 36));
+        var items = blockEntity.getItems();
+        addSlot(new ResourceHandlerSlot(items, items::set, LapidaryAnvilBlockEntity.SLOT_PICK,  20, rightY));
+        addSlot(new ResourceHandlerSlot(items, items::set, LapidaryAnvilBlockEntity.SLOT_WEDGE, 20, rightY + 18));
+        addSlot(new ResourceHandlerSlot(items, items::set, LapidaryAnvilBlockEntity.SLOT_ORE,  20, rightY + 36));
 
         int index = LapidaryAnvilBlockEntity.SLOT_RIGHT_START;
         for (int y = 0; y < 3; y++) {
             for (int x = 0; x < 5; x++) {
-                addSlot(new SlotItemHandler(blockEntity.getItems(), index++,
+                addSlot(new ResourceHandlerSlot(items, items::set, index++,
                         rightX + x * 18, rightY + y * 18));
             }
         }

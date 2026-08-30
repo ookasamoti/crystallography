@@ -39,7 +39,7 @@ public class LapidaryAnvilBlock extends BaseEntityBlock {
                                                         @NotNull BlockPos pos,
                                                         @NotNull Player player,
                                                         @NotNull BlockHitResult hit) {
-        if (level.isClientSide) return InteractionResult.SUCCESS;
+        if (level.isClientSide()) return InteractionResult.SUCCESS;
 
         var be = level.getBlockEntity(pos);
         if (be instanceof LapidaryAnvilBlockEntity anvil) {
@@ -56,28 +56,16 @@ public class LapidaryAnvilBlock extends BaseEntityBlock {
     }
 
     @Override
-    protected @NotNull ItemInteractionResult useItemOn(@NotNull ItemStack heldStack,
-                                                       @NotNull BlockState state,
-                                                       @NotNull Level level,
-                                                       @NotNull BlockPos pos,
-                                                       @NotNull Player player,
-                                                       @NotNull InteractionHand hand,
-                                                       @NotNull BlockHitResult hit) {
+    protected @NotNull InteractionResult useItemOn(@NotNull ItemStack heldStack,
+                                                   @NotNull BlockState state,
+                                                   @NotNull Level level,
+                                                   @NotNull BlockPos pos,
+                                                   @NotNull Player player,
+                                                   @NotNull InteractionHand hand,
+                                                   @NotNull BlockHitResult hit) {
         var r = useWithoutItem(state, level, pos, player, hit);
-        if (r.consumesAction()) return ItemInteractionResult.SUCCESS;
-        if (r == InteractionResult.PASS) return ItemInteractionResult.PASS_TO_DEFAULT_BLOCK_INTERACTION;
-        return ItemInteractionResult.sidedSuccess(level.isClientSide);
-    }
-
-    @Override
-    public void onRemove(BlockState state, @NotNull Level level, @NotNull BlockPos pos, BlockState newState, boolean isMoving) {
-        if (!state.is(newState.getBlock())) {
-            BlockEntity be = level.getBlockEntity(pos);
-            if (be instanceof LapidaryAnvilBlockEntity anvil) {
-                anvil.dropAllContents(level, pos);
-            }
-        }
-        super.onRemove(state, level, pos, newState, isMoving);
+        // PASS means this wasn't our block entity; let vanilla try the empty-hand interaction.
+        return r == InteractionResult.PASS ? InteractionResult.TRY_WITH_EMPTY_HAND : r;
     }
 
     @Nullable

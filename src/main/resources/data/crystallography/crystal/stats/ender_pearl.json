@@ -1,0 +1,11 @@
+{
+  "item": "crystallography:ender_pearl",
+  "tier": 1,
+  "hardness": 128,
+  "cut":     { "min": 0.67, "max": 0.8 },
+  "carat":   { "min": 6, "max": 10 },
+  "clarity": { "min": 5.0, "max": 6.0 },
+  "category": "pearl",
+  "traits": [ "swap" ],
+  "color": "#19A38C"
+}

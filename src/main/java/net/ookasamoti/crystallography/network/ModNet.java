@@ -30,9 +30,13 @@ public final class ModNet {
                     if (menu.containerId != msg.containerId()) return;
 
                     switch (msg.action()) {
-                        case JewelryActionC2S.ACTION_SELECT_FORM    -> menu.serverSelectForm(msg.param());
-                        case JewelryActionC2S.ACTION_TOGGLE_CRYSTAL -> menu.serverToggleCrystal(msg.param());
-                        case JewelryActionC2S.ACTION_REGISTER       -> menu.serverRegister(msg.param());
+                        case JewelryActionC2S.ACTION_SELECT_FORM      -> menu.serverSelectForm(msg.param());
+                        case JewelryActionC2S.ACTION_TOGGLE_CRYSTAL   -> menu.serverToggleCrystal(msg.param());
+                        case JewelryActionC2S.ACTION_REGISTER         -> menu.serverRegister(msg.param());
+                        case JewelryActionC2S.ACTION_EDIT_REGISTRY    -> menu.serverStartEditRegistry(msg.param());
+                        case JewelryActionC2S.ACTION_CANCEL           -> menu.serverCancelEdit();
+                        case JewelryActionC2S.ACTION_DELETE_REGISTRY  -> menu.serverDeleteRegistry();
+                        case JewelryActionC2S.ACTION_SWAP_REGISTRY    -> menu.serverSwapRegistry(msg.param());
                     }
                 })
         );

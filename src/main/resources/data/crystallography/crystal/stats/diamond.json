@@ -1,0 +1,12 @@
+{
+  "item": "crystallography:diamond",
+  "tier": 3,
+  "hardness": 512,
+  "cut":     { "min": 1.0, "max": 1.2 },
+  "carat":   { "min": 8, "max": 12 },
+  "clarity": { "min": 8.0, "max": 9.6 },
+  "category": "jewel",
+  "traits": [ "diamond", "pure" ],
+  "crack_result": { "item": "minecraft:diamond", "count": 1 },
+  "color": "#B9F2FF"
+}

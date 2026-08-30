@@ -1,0 +1,8 @@
+{
+  "input": "minecraft:coal_ore",
+  "picks": ["#minecraft:pickaxes"],
+  "results": [
+    { "item": "crystallography:anthracite", "weight": 65, "type": "crystal" },
+    { "item": "minecraft:coal", "weight": 35, "type": "vanilla" }
+  ]
+}

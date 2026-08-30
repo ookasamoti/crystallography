@@ -1,0 +1,12 @@
+{
+  "item": "crystallography:blaze_crystal",
+  "tier": 2,
+  "hardness": 128,
+  "cut":     { "min": 0.67, "max": 0.8 },
+  "carat":   { "min": 5, "max": 9 },
+  "clarity": { "min": 7.0, "max": 8.4 },
+  "category": "crystal",
+  "traits": [ "blazing" ],
+  "crack_result": { "item": "minecraft:blaze_powder", "count": 5 },
+  "color": "#FF9A1F"
+}

@@ -1,0 +1,11 @@
+{
+  "item": "crystallography:obsidian",
+  "tier": 4,
+  "hardness": 1024,
+  "cut":     { "min": 1.0, "max": 1.2 },
+  "carat":   { "min": 5, "max": 9 },
+  "clarity": { "min": 8.0, "max": 9.6 },
+  "category": "stone",
+  "traits": [ "sharp" ],
+  "color": "#1E1726"
+}

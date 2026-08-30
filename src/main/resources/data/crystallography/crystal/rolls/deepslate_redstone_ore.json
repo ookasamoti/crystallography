@@ -1,0 +1,8 @@
+{
+  "input": "minecraft:deepslate_redstone_ore",
+  "picks": ["#minecraft:pickaxes"],
+  "results": [
+    { "item": "crystallography:redstone", "weight": 65, "type": "crystal" },
+    { "item": "minecraft:redstone", "weight": 35, "type": "vanilla" }
+  ]
+}

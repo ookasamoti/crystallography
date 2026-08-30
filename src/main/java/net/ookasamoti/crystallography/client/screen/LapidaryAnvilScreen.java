@@ -1,17 +1,15 @@
 package net.ookasamoti.crystallography.client.screen;
 
-import com.mojang.blaze3d.systems.RenderSystem;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiGraphicsExtractor;
 import net.minecraft.client.gui.components.Button;
 import net.minecraft.client.gui.screens.inventory.AbstractContainerScreen;
-import net.minecraft.client.renderer.GameRenderer;
+import net.minecraft.client.renderer.RenderPipelines;
 import net.minecraft.network.chat.Component;
 import net.minecraft.resources.Identifier;
 import net.minecraft.world.entity.player.Inventory;
 import net.ookasamoti.crystallography.CrystallographyMod;
 import net.ookasamoti.crystallography.common.menu.LapidaryAnvilMenu;
-import org.jetbrains.annotations.NotNull;
 
 // LapidaryAnvilScreen.java
 
@@ -23,9 +21,8 @@ public class LapidaryAnvilScreen extends AbstractContainerScreen<LapidaryAnvilMe
     private Button btnCrackGems;
 
     public LapidaryAnvilScreen(LapidaryAnvilMenu menu, Inventory inv, Component title) {
-        super(menu, inv, title);
-        this.imageWidth = 176;
-        this.imageHeight = 198;
+        // imageWidth/imageHeight are now final and must be supplied to the super constructor.
+        super(menu, inv, title, 176, 198);
     }
 
     @Override
@@ -64,16 +61,11 @@ public class LapidaryAnvilScreen extends AbstractContainerScreen<LapidaryAnvilMe
     }
 
     @Override
-    protected void renderBg(GuiGraphicsExtractor guiGraphics, float partialTick, int mouseX, int mouseY) {
+    public void extractBackground(GuiGraphicsExtractor guiGraphics, int mouseX, int mouseY, float partialTick) {
+        // Dims the world behind the panel (super) then blits our GUI panel texture.
+        super.extractBackground(guiGraphics, mouseX, mouseY, partialTick);
         assert TEXTURE != null;
-        guiGraphics.blit(TEXTURE, leftPos, topPos, 0, 0, imageWidth, imageHeight);
-    }
-
-    @Override
-    public void render(GuiGraphicsExtractor guiGraphics, int mouseX, int mouseY, float partialTick) {
-        this.renderBackground(guiGraphics, mouseX, mouseY, partialTick);
-        super.render(guiGraphics, mouseX, mouseY, partialTick);
-        this.renderTooltip(guiGraphics, mouseX, mouseY);
+        guiGraphics.blit(RenderPipelines.GUI_TEXTURED, TEXTURE, leftPos, topPos,
+                0.0F, 0.0F, imageWidth, imageHeight, 256, 256);
     }
 }
-

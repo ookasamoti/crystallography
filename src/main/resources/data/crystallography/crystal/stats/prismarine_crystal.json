@@ -1,0 +1,12 @@
+{
+  "item": "crystallography:prismarine_crystal",
+  "tier": 2,
+  "hardness": 256,
+  "cut":     { "min": 0.67, "max": 0.8 },
+  "carat":   { "min": 7, "max": 11 },
+  "clarity": { "min": 5.0, "max": 6.0 },
+  "category": "crystal",
+  "traits": [ "aquatic" ],
+  "crack_result": { "item": "minecraft:prismarine_crystals", "count": 1 },
+  "color": "#57C7B8"
+}

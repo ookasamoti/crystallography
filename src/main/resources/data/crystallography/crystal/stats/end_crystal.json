@@ -1,0 +1,12 @@
+{
+  "item": "crystallography:end_crystal",
+  "tier": 3,
+  "hardness": 256,
+  "cut":     { "min": 0.67, "max": 0.8 },
+  "carat":   { "min": 6, "max": 10 },
+  "clarity": { "min": 9.0, "max": 10.8 },
+  "category": "crystal",
+  "traits": [ "lifesteal" ],
+  "crack_result": { "item": "minecraft:end_crystal", "count": 1 },
+  "color": "#E173C9"
+}

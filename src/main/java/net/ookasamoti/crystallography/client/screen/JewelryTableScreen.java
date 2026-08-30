@@ -1,16 +1,16 @@
 package net.ookasamoti.crystallography.client.screen;
 
-import com.mojang.blaze3d.systems.RenderSystem;
 import net.minecraft.client.gui.GuiGraphicsExtractor;
 import net.minecraft.client.gui.screens.inventory.AbstractContainerScreen;
-import net.minecraft.client.renderer.GameRenderer;
+import net.minecraft.client.input.MouseButtonEvent;
+import net.minecraft.client.renderer.RenderPipelines;
 import net.minecraft.util.Util;
 import net.minecraft.network.chat.Component;
 import net.minecraft.resources.Identifier;
 import net.minecraft.world.entity.player.Inventory;
 import net.minecraft.world.inventory.Slot;
 import net.minecraft.world.item.ItemStack;
-import net.neoforged.neoforge.network.PacketDistributor;
+import net.neoforged.neoforge.client.network.ClientPacketDistributor;
 import net.ookasamoti.crystallography.CrystallographyMod;
 import net.ookasamoti.crystallography.client.gui.dial.DialDrawer;
 import net.ookasamoti.crystallography.client.gui.dial.DialLayout;
@@ -29,28 +29,41 @@ public class JewelryTableScreen extends AbstractContainerScreen<JewelryTableMenu
     private static final Identifier GRADIENT =
             Identifier.parse(CrystallographyMod.MOD_ID + ":textures/gui/jewelry_table_gradient.png");
 
-    private static final Identifier[] ROD_ICONS = {
-            Identifier.parse("minecraft:textures/item/empty_slot_pickaxe.png"),
-            Identifier.parse("minecraft:textures/item/empty_slot_shovel.png"),
-            Identifier.parse("minecraft:textures/item/empty_slot_hoe.png"),
-            Identifier.parse("minecraft:textures/item/empty_slot_sword.png"),
-            Identifier.parse("minecraft:textures/item/empty_slot_axe.png"),
-            Identifier.parse("crystallography:textures/item/empty_slot_trident.png"),
+    // Dial placeholder icons. In 1.21.4+ vanilla's empty-slot tool icons are GUI *sprites*
+    // (minecraft:container/slot/*), drawn via blitSprite; the mod's own icons are still item
+    // *textures* (textures/item/*.png), drawn via blit. Icon.sprite() picks the right call.
+    private record Icon(Identifier id, boolean sprite) {}
+    private static Icon spr(String spriteId)   { return new Icon(Identifier.parse(spriteId), true); }
+    private static Icon tex(String texturePath){ return new Icon(Identifier.parse(texturePath), false); }
+
+    private static final Icon[] ROD_ICONS = {
+            spr("minecraft:container/slot/pickaxe"),
+            spr("minecraft:container/slot/shovel"),
+            spr("minecraft:container/slot/hoe"),
+            spr("minecraft:container/slot/sword"),
+            spr("minecraft:container/slot/axe"),
+            tex("crystallography:textures/item/empty_slot_trident.png"),
     };
 
-    private static final Identifier[] WAND_ICONS = {
-            Identifier.parse("crystallography:textures/item/empty_slot_bow.png"),
-            Identifier.parse("crystallography:textures/item/empty_slot_crossbow.png"),
-            Identifier.parse("crystallography:textures/item/empty_slot_knife.png"),
-            Identifier.parse("crystallography:textures/item/empty_slot_wrench.png"),
-            Identifier.parse("crystallography:textures/item/empty_slot_fishing_rod.png"),
-            Identifier.parse("minecraft:textures/item/empty_armor_slot_shield.png"),
+    private static final Icon[] WAND_ICONS = {
+            tex("crystallography:textures/item/empty_slot_bow.png"),
+            tex("crystallography:textures/item/empty_slot_crossbow.png"),
+            tex("crystallography:textures/item/empty_slot_knife.png"),
+            tex("crystallography:textures/item/empty_slot_wrench.png"),
+            tex("crystallography:textures/item/empty_slot_fishing_rod.png"),
+            spr("minecraft:container/slot/shield"),
     };
 
-    private static final Identifier CRYSTAL_ICON =
-            Identifier.parse("minecraft:textures/item/empty_slot_quartz.png");
-    private static final Identifier EMPTY_SLOT_STICK =
-            Identifier.parse("crystallography:textures/item/empty_slot_stick.png");
+    private static final Icon CRYSTAL_ICON   = spr("minecraft:container/slot/quartz");
+    private static final Icon EMPTY_SLOT_STICK = tex("crystallography:textures/item/empty_slot_stick.png");
+
+    private static void drawIcon(GuiGraphicsExtractor g, Icon ic, int dx, int dy) {
+        if (ic.sprite()) {
+            g.blitSprite(RenderPipelines.GUI_TEXTURED, ic.id(), dx, dy, 16, 16);
+        } else {
+            g.blit(RenderPipelines.GUI_TEXTURED, ic.id(), dx, dy, 0F, 0F, 16, 16, 16, 16);
+        }
+    }
 
     private static final int TOOL_SLOT_X = JewelryTableMenu.TOOL_SLOT_X;
     private static final int TOOL_SLOT_Y = JewelryTableMenu.TOOL_SLOT_Y;
@@ -63,18 +76,18 @@ public class JewelryTableScreen extends AbstractContainerScreen<JewelryTableMenu
     private final float[] ringTargetRot = new float[JewelryTableMenu.Ring.values().length];
     private final float[] ringAnimFrom  = new float[JewelryTableMenu.Ring.values().length];
     private final long[]  ringAnimStart = new long [JewelryTableMenu.Ring.values().length];
-    private static final long  RING_ANIM_MS    = 60L;
-    private static final float DEG_PER_SCROLL  = 5f;
+    private static final long  RING_ANIM_MS     = 60L;
+    /** ホイール1ノッチで回す量（スロット単位 = 1 コマ）。 */
+    private static final float SLOTS_PER_SCROLL = 1f;
 
     public JewelryTableScreen(JewelryTableMenu menu, Inventory inv, Component title) {
-        super(menu, inv, title);
+        // imageWidth/imageHeight are now final and supplied to the super constructor.
+        super(menu, inv, title, 176, 166);
     }
 
     @Override
     protected void init() {
         super.init();
-        this.imageWidth  = 176;
-        this.imageHeight = 166;
 
         int left = (width - imageWidth) / 2;
         int top  = (height - imageHeight) / 2;
@@ -102,12 +115,7 @@ public class JewelryTableScreen extends AbstractContainerScreen<JewelryTableMenu
         return ringAnimFrom[ri] + (ringTargetRot[ri] - ringAnimFrom[ri]) * eased;
     }
 
-    /** dir (+1/-1) をスロット数単位のステップに変換。DEG_PER_SCROLL 度 / スクロール。 */
-    private float scrollStep(JewelryTableMenu.Ring ring, int dir) {
-        return dir * DEG_PER_SCROLL * menu.effectiveCountOf(ring) / 360f;
-    }
-
-    /** ホイール1ステップ分の回転をトリガー（サーバー通知なし）。step はスロット数単位。 */
+    /** ホイール1ステップ分の回転をトリガー（サーバー通知なし）。step はスロット数単位。無限回転。 */
     private void rotateRing(JewelryTableMenu.Ring ring, float step) {
         int ri = ring.ordinal();
         ringAnimFrom[ri]  = getVisualRot(ring);
@@ -122,17 +130,16 @@ public class JewelryTableScreen extends AbstractContainerScreen<JewelryTableMenu
     private void updateSlotPositions() {
         for (JewelryTableMenu.Ring ring : JewelryTableMenu.Ring.values()) {
             if (ring == JewelryTableMenu.Ring.CENTER) continue;
-            float rot = getVisualRot(ring);
-            int count  = menu.effectiveCountOf(ring);
-            if (count <= 0) continue;
+            // 間隔は物理数(位置数)で固定 = tier 非依存。無限回転。
+            float step    = 360f / JewelryTableMenu.countOf(ring);
+            float rot     = getVisualRot(ring);
             int   radius  = JewelryTableMenu.radiusOf(ring);
             float baseDeg = JewelryTableMenu.baseDegOf(ring);
-            float step    = 360f / count;
 
             DialSlot[] slots = menu.getRingSlots(ring);
             for (int vi = 0; vi < slots.length; vi++) {
                 DialSlot s = slots[vi];
-                double rotRad = Math.toRadians(-90.0 + baseDeg + step * vi + rot * step);
+                double rotRad = Math.toRadians(-90.0 + baseDeg + step * (vi + rot));
                 double exactX = JewelryTableMenu.TOOL_SLOT_X + radius * Math.cos(rotRad) - 8;
                 double exactY = JewelryTableMenu.TOOL_SLOT_Y + radius * Math.sin(rotRad) - 8;
                 int intX = (int) Math.round(exactX);
@@ -149,7 +156,10 @@ public class JewelryTableScreen extends AbstractContainerScreen<JewelryTableMenu
     // INTERACTIVE スロット（CRYSTALS/CENTER）はバニラの isHovering が slot.x/y を参照するため自動的に正しく動作する。
 
     @Override
-    public boolean mouseClicked(double mx, double my, int button) {
+    public boolean mouseClicked(@NotNull MouseButtonEvent event, boolean doubleClick) {
+        double mx = event.x();
+        double my = event.y();
+
         int[] sc = scissorRectPixels();
         if (pointInRect((int)mx, (int)my, sc[0], sc[1], sc[2], sc[3])) {
 
@@ -163,7 +173,7 @@ public class JewelryTableScreen extends AbstractContainerScreen<JewelryTableMenu
                 if (mx >= sx && mx < sx + 16 && my >= sy && my < sy + 16) {
                     int newForm = (menu.pendingFormIndex == vi) ? -1 : vi;
                     menu.applySelectForm(newForm);
-                    PacketDistributor.sendToServer(new JewelryActionC2S(
+                    ClientPacketDistributor.sendToServer(new JewelryActionC2S(
                             menu.containerId, JewelryActionC2S.ACTION_SELECT_FORM, newForm));
                     return true;
                 }
@@ -181,7 +191,7 @@ public class JewelryTableScreen extends AbstractContainerScreen<JewelryTableMenu
                         if (!s.peekRealItem().isEmpty()) {
                             int backing = menu.crystalBackingOf(vi);
                             menu.applyToggleCrystal(backing);
-                            PacketDistributor.sendToServer(new JewelryActionC2S(
+                            ClientPacketDistributor.sendToServer(new JewelryActionC2S(
                                     menu.containerId, JewelryActionC2S.ACTION_TOGGLE_CRYSTAL, backing));
                         }
                         return true;
@@ -190,11 +200,13 @@ public class JewelryTableScreen extends AbstractContainerScreen<JewelryTableMenu
             }
 
         }
-        // REGISTRIESボタン: リングがscissor外に回転する場合もあるためscissor判定の外で処理
+        // REGISTRIESボタン: リングがscissor外に回転する場合もあるためscissor判定の外で処理。
+        // ただし判定は isActive()(クリップ考慮)で行う。クリップ外へ回転したボタンが、その下の
+        // プレイヤーインベントリへのクリックを奪わないようにするため(getVisibleFlag だと奪ってしまう)。
         DialSlot[] regSlots = menu.getRingSlots(JewelryTableMenu.Ring.REGISTRIES);
         for (int vi = 0; vi < regSlots.length; vi++) {
             DialSlot s = regSlots[vi];
-            if (!s.getVisibleFlag() || s.mode() != DialSlot.Mode.BUTTON) continue;
+            if (!s.isActive() || s.mode() != DialSlot.Mode.BUTTON) continue;
             int sx = leftPos + s.x;
             int sy = topPos  + s.y;
             if (mx >= sx && mx < sx + 16 && my >= sy && my < sy + 16) {
@@ -206,17 +218,55 @@ public class JewelryTableScreen extends AbstractContainerScreen<JewelryTableMenu
         if (menu.pendingFormIndex >= 0 && my > topPos + 82) {
             return true;
         }
-        return super.mouseClicked(mx, my, button);
+        return super.mouseClicked(event, doubleClick);
     }
 
-    private void handleRegistryClick(int slotIndex) {
-        if (menu.pendingFormIndex < 0 || menu.pendingCrystals.size() != ToolLoadout.CRYSTAL_SLOTS) return;
+    private void handleRegistryClick(int vi) {
         ItemStack tool = menu.getRingSlots(JewelryTableMenu.Ring.CENTER)[0].peekRealItem();
         int tier = (tool.getItem() instanceof ToolBase tb) ? tb.getTier() : 1;
-        if (slotIndex >= ToolBase.maxLoadouts(tier)) return;
+        int slotIndex = vi % Math.max(1, ToolBase.maxLoadouts(tier)); // 24 位置 → 登録枠を繰り返しマップ
+
+        if (menu.pendingFormIndex < 0) {
+            // 初期状態: 登録済み枠を選ぶと編集モード（TOOLS選択+CRYSTALS3枠選択 相当）に入る
+            if (ToolBase.getLoadout(tool).getAtSlot(slotIndex).isEmpty()) return;
+            menu.applyStartEditRegistry(slotIndex);
+            ClientPacketDistributor.sendToServer(new JewelryActionC2S(
+                    menu.containerId, JewelryActionC2S.ACTION_EDIT_REGISTRY, slotIndex));
+            return;
+        }
+
+        if (menu.editingRegistrySlot >= 0 && slotIndex != menu.editingRegistrySlot) {
+            // REGISTRIES 編集中に別枠を選択 → 登録内容をスワップ（並べ替え）して初期状態化
+            menu.applySelectForm(-1);
+            ClientPacketDistributor.sendToServer(new JewelryActionC2S(
+                    menu.containerId, JewelryActionC2S.ACTION_SWAP_REGISTRY, slotIndex));
+            return;
+        }
+
+        // 通常登録（新規登録、または編集中の同一枠への上書き保存）
+        if (menu.pendingCrystals.size() != ToolLoadout.CRYSTAL_SLOTS) return;
         menu.applySelectForm(-1);
-        PacketDistributor.sendToServer(new JewelryActionC2S(
+        ClientPacketDistributor.sendToServer(new JewelryActionC2S(
                 menu.containerId, JewelryActionC2S.ACTION_REGISTER, slotIndex));
+    }
+
+    // ---- キー操作（Esc=編集キャンセル、Space=編集中のREGISTRIES枠を削除） ----
+    @Override
+    public boolean keyPressed(@NotNull net.minecraft.client.input.KeyEvent event) {
+        if (event.isEscape() && menu.pendingFormIndex >= 0) {
+            menu.applySelectForm(-1);
+            ClientPacketDistributor.sendToServer(new JewelryActionC2S(
+                    menu.containerId, JewelryActionC2S.ACTION_CANCEL, 0));
+            return true;
+        }
+        if (event.key() == org.lwjgl.glfw.GLFW.GLFW_KEY_SPACE && menu.editingRegistrySlot >= 0) {
+            int slot = menu.editingRegistrySlot;
+            menu.applySelectForm(-1);
+            ClientPacketDistributor.sendToServer(new JewelryActionC2S(
+                    menu.containerId, JewelryActionC2S.ACTION_DELETE_REGISTRY, slot));
+            return true;
+        }
+        return super.keyPressed(event);
     }
 
     // ---- ホイール（TOOLS・CRYSTALS のみ回転、サーバー通知なし） ----
@@ -239,37 +289,41 @@ public class JewelryTableScreen extends AbstractContainerScreen<JewelryTableMenu
                       + JewelryTableMenu.radiusOf(JewelryTableMenu.Ring.REGISTRIES)) / 2.0;
 
         if (dist < midTC) {
-            rotateRing(JewelryTableMenu.Ring.TOOLS, scrollStep(JewelryTableMenu.Ring.TOOLS, dir));
+            rotateRing(JewelryTableMenu.Ring.TOOLS, dir * SLOTS_PER_SCROLL);
         } else if (dist < midCR) {
-            rotateRing(JewelryTableMenu.Ring.CRYSTALS, scrollStep(JewelryTableMenu.Ring.CRYSTALS, dir));
+            rotateRing(JewelryTableMenu.Ring.CRYSTALS, dir * SLOTS_PER_SCROLL);
         } else {
-            rotateRing(JewelryTableMenu.Ring.REGISTRIES, scrollStep(JewelryTableMenu.Ring.REGISTRIES, dir));
+            rotateRing(JewelryTableMenu.Ring.REGISTRIES, dir * SLOTS_PER_SCROLL);
         }
         return true;
     }
 
     // ---- ラベル ----
     @Override
-    protected void renderLabels(@NotNull GuiGraphicsExtractor g, int mouseX, int mouseY) {
-        g.drawString(this.font, this.title, 8, 6, 0x404040, false);
-        g.drawString(this.font, this.playerInventoryTitle, 8, this.imageHeight - 94, 0x404040, false);
+    protected void extractLabels(@NotNull GuiGraphicsExtractor g, int mouseX, int mouseY) {
+        g.text(this.font, this.title, 8, 6, 0x404040, false);
+        g.text(this.font, this.playerInventoryTitle, 8, this.imageHeight - 94, 0x404040, false);
     }
 
-    // ---- 背景 ----
+    // ---- 背景（旧 renderBg + renderBackground）----
+    // 1.21.5 では描画メソッドが render*→extract* にリネームされ、背景パネルは extractBackground で描く。
+    // extractBackground は extractRenderState より前に毎フレーム呼ばれるため、回転位置の更新もここで行う。
     @Override
-    protected void renderBg(GuiGraphicsExtractor g, float pt, int mouseX, int mouseY) {
-        RenderSystem.setShader(GameRenderer::getPositionTexShader);
-        RenderSystem.setShaderColor(1F, 1F, 1F, 1F);
-        RenderSystem.setShaderTexture(0, TEXTURE);
+    public void extractBackground(@NotNull GuiGraphicsExtractor g, int mouseX, int mouseY, float partialTick) {
+        updateSlotPositions(); // 毎フレーム slot.x/y を回転位置に更新（ヒットボックスも移動）
+
+        ItemStack current = menu.getRingSlots(JewelryTableMenu.Ring.CENTER)[0].peekRealItem();
+        if (!ItemStack.matches(current, lastKnownCenter)) {
+            lastKnownCenter = current.copy();
+            menu.clientSyncState();
+        }
+
+        super.extractBackground(g, mouseX, mouseY, partialTick); // 背後の暗転
 
         int left = (width - imageWidth) / 2;
         int top  = (height - imageHeight) / 2;
-        g.blit(TEXTURE, left, top, 0, 0, imageWidth, imageHeight);
-
-        RenderSystem.enableBlend();
-        RenderSystem.setShaderTexture(0, GRADIENT);
-        g.blit(GRADIENT, left, top, 0, 0, imageWidth, imageHeight);
-        RenderSystem.disableBlend();
+        g.blit(RenderPipelines.GUI_TEXTURED, TEXTURE,  left, top, 0F, 0F, imageWidth, imageHeight, 256, 256);
+        g.blit(RenderPipelines.GUI_TEXTURED, GRADIENT, left, top, 0F, 0F, imageWidth, imageHeight, 256, 256);
 
         if (menu.pendingFormIndex >= 0) {
             for (Slot slot : this.menu.slots) {
@@ -286,28 +340,26 @@ public class JewelryTableScreen extends AbstractContainerScreen<JewelryTableMenu
     // ---- ダイヤルアイコン描画 ----
     private void renderDialIcons(GuiGraphicsExtractor g) {
         int[] sc = scissorRectPixels();
-        enableGuiScissor(sc[0], sc[1], sc[2], sc[3]);
-        RenderSystem.enableBlend();
-        RenderSystem.defaultBlendFunc();
+        g.enableScissor(sc[0], sc[1], sc[2], sc[3]);
         try {
             ItemStack center = menu.getRingSlots(JewelryTableMenu.Ring.CENTER)[0].peekRealItem();
-            Identifier[] toolIcons = (center.getItem() instanceof ToolWand) ? WAND_ICONS : ROD_ICONS;
+            Icon[] toolIcons = (center.getItem() instanceof ToolWand) ? WAND_ICONS : ROD_ICONS;
 
             // TOOLSボタン: slot[vi] のアイコンは vi % length で固定、選択中は pendingFormIndex でハイライト
             DialSlot[] toolSlots = menu.getRingSlots(JewelryTableMenu.Ring.TOOLS);
             for (int vi = 0; vi < toolSlots.length; vi++) {
                 DialSlot s = toolSlots[vi];
                 if (!s.getVisibleFlag() || s.mode() != DialSlot.Mode.BUTTON) continue;
-                g.pose().pushPose();
-                g.pose().translate(s.renderFracX, s.renderFracY, 0f);
+                g.pose().pushMatrix();
+                g.pose().translate(s.renderFracX, s.renderFracY);
                 int dx = leftPos + s.x;
                 int dy = topPos  + s.y;
-                g.blit(toolIcons[vi % toolIcons.length], dx, dy, 0, 0, 16, 16, 16, 16);
+                drawIcon(g, toolIcons[vi % toolIcons.length], dx, dy);
                 if (vi == menu.pendingFormIndex) {
                     DialDrawer.circleOutline(g, dx + 8f, dy + 8f,  9.55f, 1.5f, 0xFFFFFFFF);
                     DialDrawer.circleOutline(g, dx + 8f, dy + 8f, 10.45f, 1.5f, 0xFFFFFFFF);
                 }
-                g.pose().popPose();
+                g.pose().popMatrix();
             }
 
             // CRYSTALS: 空プレースホルダー + 選択インジケーター
@@ -315,40 +367,47 @@ public class JewelryTableScreen extends AbstractContainerScreen<JewelryTableMenu
             for (int vi = 0; vi < crystalSlots.length; vi++) {
                 DialSlot s = crystalSlots[vi];
                 if (!s.getVisibleFlag()) continue;
-                g.pose().pushPose();
-                g.pose().translate(s.renderFracX, s.renderFracY, 0f);
+                g.pose().pushMatrix();
+                g.pose().translate(s.renderFracX, s.renderFracY);
                 int dx = leftPos + s.x;
                 int dy = topPos  + s.y;
                 if (s.peekRealItem().isEmpty()) {
-                    g.blit(CRYSTAL_ICON, dx, dy, 0, 0, 16, 16, 16, 16);
+                    drawIcon(g, CRYSTAL_ICON, dx, dy);
                 }
                 if (menu.pendingFormIndex >= 0
                         && menu.pendingCrystals.contains(menu.crystalBackingOf(vi))) {
                     DialDrawer.circleOutline(g, dx + 8f, dy + 8f,  9.55f, 1.5f, 0xFFFFFFFF);
                     DialDrawer.circleOutline(g, dx + 8f, dy + 8f, 10.45f, 1.5f, 0xFFFFFFFF);
                 }
-                g.pose().popPose();
+                g.pose().popMatrix();
             }
 
-            // REGISTRIES: ロードアウト枠表示（登録済み=実アイテム描画、空=empty_slot_stick）
+            // REGISTRIES: ロードアウト枠表示（24 位置に登録枠を vi % maxLoadouts で繰り返しマップ）
             DialSlot[] registrySlots = menu.getRingSlots(JewelryTableMenu.Ring.REGISTRIES);
             var loadoutList = ToolBase.getLoadout(center);
+            int regTier = (center.getItem() instanceof ToolBase tb) ? tb.getTier() : 1;
+            int regMax  = Math.max(1, ToolBase.maxLoadouts(regTier));
             ItemStack displayBase = center.isEmpty() ? null : center.copy();
             if (displayBase != null) ToolBase.clearDraftLoadout(displayBase);
             for (int vi = 0; vi < registrySlots.length; vi++) {
                 DialSlot s = registrySlots[vi];
                 if (!s.getVisibleFlag() || s.mode() != DialSlot.Mode.BUTTON) continue;
-                g.pose().pushPose();
-                g.pose().translate(s.renderFracX, s.renderFracY, 0f);
+                int li = vi % regMax;
+                g.pose().pushMatrix();
+                g.pose().translate(s.renderFracX, s.renderFracY);
                 int dx = leftPos + s.x;
                 int dy = topPos  + s.y;
-                if (displayBase != null && loadoutList.getAtSlot(vi).isPresent()) {
-                    ToolBase.setActiveIndex(displayBase, vi);
-                    g.renderItem(displayBase, dx, dy);
+                if (displayBase != null && loadoutList.getAtSlot(li).isPresent()) {
+                    ToolBase.setActiveIndex(displayBase, li);
+                    g.item(displayBase, dx, dy);
                 } else {
-                    g.blit(EMPTY_SLOT_STICK, dx, dy, 0, 0, 16, 16, 16, 16);
+                    drawIcon(g, EMPTY_SLOT_STICK, dx, dy);
                 }
-                g.pose().popPose();
+                if (li == menu.editingRegistrySlot) {
+                    DialDrawer.circleOutline(g, dx + 8f, dy + 8f,  9.55f, 1.5f, 0xFFFFFFFF);
+                    DialDrawer.circleOutline(g, dx + 8f, dy + 8f, 10.45f, 1.5f, 0xFFFFFFFF);
+                }
+                g.pose().popMatrix();
             }
 
             // 装飾スロット（isActive=false）の実アイテム描画
@@ -361,75 +420,66 @@ public class JewelryTableScreen extends AbstractContainerScreen<JewelryTableMenu
                                 && menu.getUiState() == JewelryTableMenu.UiState.FORM_SELECTED) continue;
                         ItemStack item = s.peekRealItem();
                         if (!item.isEmpty()) {
-                            g.pose().pushPose();
-                            g.pose().translate(s.renderFracX, s.renderFracY, 0f);
+                            g.pose().pushMatrix();
+                            g.pose().translate(s.renderFracX, s.renderFracY);
                             int dx = leftPos + s.x;
                             int dy = topPos  + s.y;
-                            g.renderItem(item, dx, dy);
-                            g.renderItemDecorations(this.font, item, dx, dy);
-                            g.pose().popPose();
+                            g.item(item, dx, dy);
+                            g.itemDecorations(this.font, item, dx, dy);
+                            g.pose().popMatrix();
                         }
                     }
                 }
             }
         } finally {
-            RenderSystem.disableBlend();
-            RenderSystem.disableScissor();
+            g.disableScissor();
+        }
+    }
+
+    // ---- ホバー円ハイライト（全スロット描画後＝最前面に描く） ----
+    // 旧 renderSlotHighlight 相当。バニラの白四角は DialSlot.isHighlightable()=false で抑制済み。
+    // INTERACTIVE のダイヤルスロットをホバー中のときだけ、コンテナ座標で円を描画する。
+    @Override
+    public void extractContents(@NotNull GuiGraphicsExtractor g, int mouseX, int mouseY, float partialTick) {
+        super.extractContents(g, mouseX, mouseY, partialTick);
+        if (this.hoveredSlot instanceof DialSlot ds
+                && ds.getVisibleFlag()
+                && ds.mode() == DialSlot.Mode.INTERACTIVE) {
+            g.pose().pushMatrix();
+            g.pose().translate(this.leftPos, this.topPos);
+            DialDrawer.filledCircleGui(g, ds.x + 8f, ds.y + 8f, 10f, 0x80FFFFFF);
+            g.pose().popMatrix();
         }
     }
 
     // ---- スロット描画（サブピクセル補正を pose.translate で加算） ----
     @Override
-    protected void renderSlot(@NotNull GuiGraphicsExtractor g, @NotNull Slot slot) {
+    protected void extractSlot(@NotNull GuiGraphicsExtractor g, @NotNull Slot slot, int mouseX, int mouseY) {
         if (slot instanceof DialSlot ds) {
-            int[] sc = scissorRectPixels();
-            enableGuiScissor(sc[0], sc[1], sc[2], sc[3]);
+            // extractSlot runs with the pose already translated to (leftPos, topPos), and
+            // enableScissor applies the current pose — so pass clip coords RELATIVE to the
+            // container origin (scissorRectContainer), not absolute screen coords.
+            int[] sc = scissorRectContainer();
+            g.enableScissor(sc[0], sc[1], sc[2], sc[3]);
             try {
+                // ホバー円ハイライトは全スロット描画後（最前面）に extractContents で描く。
                 if (ds.renderFracX != 0f || ds.renderFracY != 0f) {
-                    g.pose().pushPose();
-                    g.pose().translate(ds.renderFracX, ds.renderFracY, 0f);
-                    super.renderSlot(g, ds);
-                    g.pose().popPose();
+                    g.pose().pushMatrix();
+                    g.pose().translate(ds.renderFracX, ds.renderFracY);
+                    super.extractSlot(g, ds, mouseX, mouseY);
+                    g.pose().popMatrix();
                 } else {
-                    super.renderSlot(g, ds);
+                    super.extractSlot(g, ds, mouseX, mouseY);
                 }
             } finally {
-                RenderSystem.disableScissor();
+                g.disableScissor();
             }
             return;
         }
-        super.renderSlot(g, slot);
+        super.extractSlot(g, slot, mouseX, mouseY);
     }
 
-    // ダイヤルスロットのホバーハイライトを滑らかな円形に置き換える。
-    // guiOverlay バッファに直接書き込むため描画順が正しく保証される。
-    // INTERACTIVE のみ円を表示し、BUTTON は何も表示しない。
-    @Override
-    protected void renderSlotHighlight(@NotNull GuiGraphicsExtractor g, @NotNull Slot slot, int mouseX, int mouseY, float partialTick) {
-        if (slot instanceof DialSlot ds) {
-            if (ds.mode() == DialSlot.Mode.INTERACTIVE) {
-                DialDrawer.filledCircleGui(g, ds.x + 8f, ds.y + 8f, 10f, 0x80FFFFFF);
-            }
-            // BUTTON モードはハイライト無し（バニラの白四角も抑制）
-        } else {
-            super.renderSlotHighlight(g, slot, mouseX, mouseY, partialTick);
-        }
-    }
-
-    @Override
-    public void render(@NotNull GuiGraphicsExtractor g, int mouseX, int mouseY, float pt) {
-        updateSlotPositions(); // 毎フレーム slot.x/y を回転位置に更新（ヒットボックスも移動）
-        ItemStack current = menu.getRingSlots(JewelryTableMenu.Ring.CENTER)[0].peekRealItem();
-        if (!ItemStack.matches(current, lastKnownCenter)) {
-            lastKnownCenter = current.copy();
-            menu.clientSyncState();
-        }
-        renderBackground(g, mouseX, mouseY, pt);
-        super.render(g, mouseX, mouseY, pt);
-        renderTooltip(g, mouseX, mouseY);
-    }
-
-    // ---- scissor 補助 ----
+    // ---- scissor 補助（GUI 座標。スケール変換は GuiGraphics 側が行う） ----
     private int[] scissorRectPixels() {
         int left = (width - imageWidth) / 2;
         int top  = (height - imageHeight) / 2;
@@ -441,22 +491,6 @@ public class JewelryTableScreen extends AbstractContainerScreen<JewelryTableMenu
         if (x1 <= x0) x1 = x0 + 1;
         if (y1 <= y0) y1 = y0 + 1;
         return new int[]{x0, y0, x1, y1};
-    }
-
-    private void enableGuiScissor(int guiX0, int guiY0, int guiX1, int guiY1) {
-        if (guiX1 < guiX0) { int t = guiX0; guiX0 = guiX1; guiX1 = t; }
-        if (guiY1 < guiY0) { int t = guiY0; guiY0 = guiY1; guiY1 = t; }
-
-        var window = this.minecraft.getWindow();
-        double scale = window.getGuiScale();
-
-        int px0 = (int) Math.floor(guiX0 * scale), py0 = (int) Math.floor(guiY0 * scale);
-        int px1 = (int) Math.ceil (guiX1 * scale), py1 = (int) Math.ceil (guiY1 * scale);
-
-        if (px1 <= px0) px1 = px0 + 1;
-        if (py1 <= py0) py1 = py0 + 1;
-
-        RenderSystem.enableScissor(px0, window.getHeight() - py1, px1 - px0, py1 - py0);
     }
 
     private int[] scissorRectContainer() {

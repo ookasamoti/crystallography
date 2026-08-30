@@ -6,8 +6,8 @@ import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.inventory.*;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.Level;
-import net.neoforged.neoforge.items.IItemHandler;
-import net.neoforged.neoforge.items.ItemStackHandler;
+import net.neoforged.neoforge.transfer.item.ItemResource;
+import net.neoforged.neoforge.transfer.item.ItemStacksResourceHandler;
 import net.ookasamoti.crystallography.common.block.entity.JewelryTableBlockEntity;
 import net.ookasamoti.crystallography.common.item.crystal.Crystal;
 import net.ookasamoti.crystallography.common.item.tool.ToolBase;
@@ -17,7 +17,9 @@ import net.ookasamoti.crystallography.common.item.tool.ToolWand;
 import net.ookasamoti.crystallography.common.item.tool.component.ToolForm;
 import net.ookasamoti.crystallography.common.item.tool.component.ToolLoadout;
 import net.ookasamoti.crystallography.common.item.tool.component.ToolStats;
+import net.ookasamoti.crystallography.data.CrystalStatsRegistry;
 import net.ookasamoti.crystallography.setup.BlockRegistry;
+import net.ookasamoti.crystallography.setup.DataComponentsRegistry;
 import net.ookasamoti.crystallography.setup.MenuTypesRegistry;
 import org.jetbrains.annotations.NotNull;
 
@@ -43,8 +45,8 @@ public class JewelryTableMenu extends AbstractContainerMenu {
     private static final EnumMap<Ring, RingDef> DEF = new EnumMap<>(Map.of(
             Ring.CENTER,     new RingDef( 1,  0,  0f),
             Ring.TOOLS,      new RingDef( 6, 32, 60f),
-            Ring.CRYSTALS,   new RingDef(24, 64, 78f),
-            Ring.REGISTRIES, new RingDef(32, 96, 78f)
+            Ring.CRYSTALS,   new RingDef(18, 64, 78f),
+            Ring.REGISTRIES, new RingDef(24, 96, 78f)
     ));
 
     public static int   countOf (Ring r){ return Objects.requireNonNull(DEF.get(r)).count(); }
@@ -52,29 +54,15 @@ public class JewelryTableMenu extends AbstractContainerMenu {
     public static float baseDegOf(Ring r){ return Objects.requireNonNull(DEF.get(r)).baseDeg(); }
 
     /**
-     * max を超えない tierCount の最大倍数を返す（二つが等距離の場合は小さい方）。
-     * 例: tierCount=12, max=32 → floor(32/12)*12=24
+     * リングが表示するスロット位置数(物理数, tier 非依存・一定間隔)。
+     *
+     * <p>CRYSTALS=18(20°)、REGISTRIES=24(15°) を全 tier 共通で円周いっぱいに配置し、
+     * 無限回転させる。実データ数 D(結晶 6/9/12、登録 8/12/16)より位置数が多い分は
+     * {@code vi % D} で円周に繰り返しマップして埋める(tier1/tier2 はシームレス、
+     * tier3 のみ継ぎ目が 1 箇所できる)。
      */
-    public static int nearestMultiple(int tierCount, int max) {
-        if (tierCount <= 0) return 0;
-        return (max / tierCount) * tierCount;
-    }
-
-    public static int crystalCountForTier(int tier) {
-        return nearestMultiple(ToolBase.crystalSlotCount(tier), countOf(Ring.CRYSTALS));
-    }
-
-    public static int registryCountForTier(int tier) {
-        return nearestMultiple(ToolBase.maxLoadouts(tier), countOf(Ring.REGISTRIES));
-    }
-
-    /** tier に応じた実効スロット数（CRYSTALS/REGISTRIES は動的、その他は物理数）。 */
     public int effectiveCountOf(Ring r) {
-        return switch (r) {
-            case CRYSTALS   -> crystalCountForTier(getToolTier());
-            case REGISTRIES -> registryCountForTier(getToolTier());
-            default         -> countOf(r);
-        };
+        return countOf(r);
     }
 
     /* ===== フォームマッピング ===== */
@@ -104,15 +92,17 @@ public class JewelryTableMenu extends AbstractContainerMenu {
     private int playerEndIndex   = -1;
 
     /* TOOLS/REGISTRIES スロットは常に BUTTON モードで実アイテムを持たないため、共有の空ハンドラを使う */
-    private static final ItemStackHandler EMPTY_HANDLER = new ItemStackHandler(1);
+    private static final ItemStacksResourceHandler EMPTY_HANDLER = new ItemStacksResourceHandler(1);
 
-    private final ItemStackHandler fallbackEmpty = new ItemStackHandler(9);
-    private IItemHandler backingCrystals = fallbackEmpty;
+    private final ItemStacksResourceHandler fallbackEmpty = new ItemStacksResourceHandler(9);
+    private ItemStacksResourceHandler backingCrystals = fallbackEmpty;
 
     /** 保留中フォームインデックス（-1 = 未選択） */
     public int pendingFormIndex = -1;
     /** 選択済み結晶の backing index 一覧 */
     public final ArrayList<Integer> pendingCrystals = new ArrayList<>();
+    /** 編集中の REGISTRIES 登録枠（-1 = 新規登録／未編集）。REGISTRIES 管理機能で使用。 */
+    public int editingRegistrySlot = -1;
 
     public JewelryTableMenu(int id, Inventory inv, FriendlyByteBuf buf) {
         this(id, inv,
@@ -150,8 +140,17 @@ public class JewelryTableMenu extends AbstractContainerMenu {
 
         addRing(Ring.CRYSTALS,
                 () -> backingCrystals,
-                vi -> vi % Math.max(1, backingCrystals.getSlots()),
-                stack -> stack.getItem() instanceof Crystal);
+                // 実データ数 D(=crystalSlotCount)で剰余を取る。backingCrystals.size() は
+                // 旧 NBT を deserialize すると保存サイズ(18/24等)に膨らむことがあり、
+                // それに依存するとサイクル周期がずれるため tier の D を直接使う。
+                vi -> vi % Math.max(1, ToolBase.crystalSlotCount(getToolTier())),
+                // Crystal クラスのアイテムに限らず、CrystalStatsRegistry に登録されていれば置ける
+                // （minecraft:raw_iron 等、原石バッテリー用のバニラアイテムを含む）。
+                stack -> stack.getItem() instanceof Crystal || CrystalStatsRegistry.get(stack).isPresent());
+
+        for (DialSlot s : rings.get(Ring.CRYSTALS)) {
+            s.setRemovalPenalty(this::shouldPenalizeOreRemoval);
+        }
 
         addRing(Ring.REGISTRIES,
                 () -> EMPTY_HANDLER,
@@ -159,8 +158,30 @@ public class JewelryTableMenu extends AbstractContainerMenu {
                 stack -> false);
     }
 
+    /**
+     * 原石バッテリー（[[ToolBase#ORE_CATEGORY]]）専用の取り外しペナルティ判定。
+     * backingIdx を参照するいずれかのロードアウトが原石バッテリーモードかつ耐久値減少中
+     * （currentDurability < stats.durability()）であれば true を返す（DialSlot.remove から呼ばれる）。
+     */
+    private boolean shouldPenalizeOreRemoval(int backingIdx, ItemStack removedStack) {
+        var rangeOpt = CrystalStatsRegistry.get(removedStack);
+        if (rangeOpt.isEmpty() || !rangeOpt.get().categories().contains(ToolBase.ORE_CATEGORY)) return false;
+
+        ItemStack tool = rings.get(Ring.CENTER)[0].peekRealItem();
+        if (!isTool(tool)) return false;
+
+        for (var lo : ToolBase.getLoadout(tool).entries()) {
+            for (int ci : lo.crystalIndices()) {
+                if (ci == backingIdx && lo.currentDurability() < lo.stats().durability()) {
+                    return true;
+                }
+            }
+        }
+        return false;
+    }
+
     private void addRing(Ring ring,
-                         Supplier<IItemHandler> supplier,
+                         Supplier<? extends ItemStacksResourceHandler> supplier,
                          IntUnaryOperator mapper,
                          Predicate<ItemStack> placePredicate) {
         RingDef d = DEF.get(ring);
@@ -195,7 +216,7 @@ public class JewelryTableMenu extends AbstractContainerMenu {
     /* ---------- アクセサ ---------- */
     public DialSlot[] getRingSlots(Ring ring) { return rings.get(ring); }
     public UiState getUiState() { return uiState; }
-    public IItemHandler getBackingCrystals() { return backingCrystals; }
+    public ItemStacksResourceHandler getBackingCrystals() { return backingCrystals; }
 
     /** クライアント専用: CENTER スロットの変化を検知したときに呼ぶ。draft DataComponent から状態を復元する。 */
     public void clientSyncState() {
@@ -226,16 +247,29 @@ public class JewelryTableMenu extends AbstractContainerMenu {
         if (draft != null) {
             boolean isWand = tool.getItem() instanceof ToolWand;
             ToolForm[] forms = isWand ? WAND_FORMS : ROD_FORMS;
-            for (int i = 0; i < forms.length; i++) {
-                if (forms[i] == draft.form()) { pendingFormIndex = i; break; }
-            }
+            pendingFormIndex = baseFormIndexOf(draft.form(), forms);
             for (int ci : draft.crystalIndices()) {
                 if (ci >= 0) pendingCrystals.add(ci);
             }
             uiState = pendingFormIndex >= 0 ? UiState.FORM_SELECTED : UiState.EDIT_CRYSTALS;
         } else {
             uiState = UiState.EDIT_CRYSTALS;
+            editingRegistrySlot = -1;
         }
+    }
+
+    /**
+     * form に対応する TOOLS ボタンの index を返す。TRIDENT/MACE は昇格後の form なので、
+     * TOOLS ボタン一覧に無い（元の SPEAR/PICKAXE ボタンとして扱う）。見つからなければ -1。
+     */
+    private static int baseFormIndexOf(ToolForm form, ToolForm[] forms) {
+        ToolForm base = switch (form) {
+            case TRIDENT -> ToolForm.SPEAR;
+            case MACE    -> ToolForm.PICKAXE;
+            default      -> form;
+        };
+        for (int i = 0; i < forms.length; i++) if (forms[i] == base) return i;
+        return -1;
     }
 
     private void layoutSlots() {
@@ -277,6 +311,7 @@ public class JewelryTableMenu extends AbstractContainerMenu {
         if (formIndex < 0 || !hasTool) {
             pendingFormIndex = -1;
             pendingCrystals.clear();
+            editingRegistrySlot = -1;
             uiState = hasTool ? UiState.EDIT_CRYSTALS : UiState.EMPTY;
         } else {
             pendingFormIndex = formIndex;
@@ -293,6 +328,31 @@ public class JewelryTableMenu extends AbstractContainerMenu {
                 pendingCrystals.add(crystalBacking);
             }
         }
+    }
+
+    /**
+     * 初期状態（pendingFormIndex<0）で登録済み REGISTRIES 枠を選択したときの編集開始処理。
+     * 既存ロードアウトの form/結晶を pending 状態へ読み込み、FORM_SELECTED 相当に遷移する。
+     * 対象枠が空なら何もしない。
+     */
+    public void applyStartEditRegistry(int slotIndex) {
+        ItemStack tool = rings.get(Ring.CENTER)[0].peekRealItem();
+        if (!isTool(tool)) return;
+        var loOpt = ToolBase.getLoadout(tool).getAtSlot(slotIndex);
+        if (loOpt.isEmpty()) return;
+        ToolLoadout lo = loOpt.get();
+
+        boolean isWand = tool.getItem() instanceof ToolWand;
+        ToolForm[] forms = isWand ? WAND_FORMS : ROD_FORMS;
+        int formIdx = baseFormIndexOf(lo.form(), forms);
+        if (formIdx < 0) return;
+
+        pendingFormIndex = formIdx;
+        pendingCrystals.clear();
+        for (int ci : lo.crystalIndices()) if (ci >= 0) pendingCrystals.add(ci);
+        editingRegistrySlot = slotIndex;
+        uiState = UiState.FORM_SELECTED;
+        layoutSlots();
     }
 
     /* ---------- サーバー専用アクション ---------- */
@@ -323,8 +383,10 @@ public class JewelryTableMenu extends AbstractContainerMenu {
         ToolForm form = forms[pendingFormIndex];
 
         int[] crystalIndices = pendingCrystals.stream().mapToInt(Integer::intValue).toArray();
+        // 結晶構成からトライデント/メイスへの form 昇格を判定。
+        form = ToolBase.upgradeFormForCrystals(form, crystalIndices, backingCrystals);
         ToolStats stats = ToolBase.buildStats(form, tier, crystalIndices, backingCrystals);
-        ToolLoadout loadout = new ToolLoadout(slotIndex, form, crystalIndices, stats);
+        ToolLoadout loadout = ToolLoadout.fresh(slotIndex, form, crystalIndices, stats);
 
         ItemStack modified = toolStack.copy();
         ToolBase.clearDraftLoadout(modified); // 仮登録を削除してから本登録
@@ -333,6 +395,53 @@ public class JewelryTableMenu extends AbstractContainerMenu {
         ToolBase.applyComputedStats(modified);
 
         writeToCenter(modified);
+        applySelectForm(-1);
+        broadcastChanges();
+    }
+
+    public void serverStartEditRegistry(int slotIndex) {
+        applyStartEditRegistry(slotIndex);
+        if (pendingFormIndex >= 0) writeDraft();
+        broadcastChanges();
+    }
+
+    /** Esc キャンセル：仮登録を破棄し初期状態に戻す（登録内容には触れない）。 */
+    public void serverCancelEdit() {
+        applySelectForm(-1);
+        clearDraftFromItem();
+        broadcastChanges();
+    }
+
+    /** Space キー：編集中の REGISTRIES 枠の登録を削除する。 */
+    public void serverDeleteRegistry() {
+        if (editingRegistrySlot < 0) return;
+        ItemStack tool = rings.get(Ring.CENTER)[0].peekRealItem();
+        if (!isTool(tool)) return;
+
+        ItemStack modified = tool.copy();
+        ToolBase.removeLoadout(modified, editingRegistrySlot);
+        ToolBase.clearDraftLoadout(modified);
+        writeToCenter(modified);
+        applySelectForm(-1);
+        broadcastChanges();
+    }
+
+    /** 別の REGISTRIES 枠を選択：編集中の枠と登録内容をスワップし初期状態化（並べ替え）。 */
+    public void serverSwapRegistry(int otherSlotIndex) {
+        if (editingRegistrySlot < 0) return;
+        ItemStack tool = rings.get(Ring.CENTER)[0].peekRealItem();
+        if (!isTool(tool)) return;
+
+        if (otherSlotIndex != editingRegistrySlot) {
+            int tier = getToolTier();
+            if (otherSlotIndex < 0 || otherSlotIndex >= ToolBase.maxLoadouts(tier)) return;
+            ItemStack modified = tool.copy();
+            ToolBase.swapLoadouts(modified, editingRegistrySlot, otherSlotIndex);
+            ToolBase.clearDraftLoadout(modified);
+            writeToCenter(modified);
+        } else {
+            clearDraftFromItem();
+        }
         applySelectForm(-1);
         broadcastChanges();
     }
@@ -363,8 +472,10 @@ public class JewelryTableMenu extends AbstractContainerMenu {
             crystalIndices[i] = i < pendingCrystals.size() ? pendingCrystals.get(i) : -1;
         }
 
+        // draft でも form 昇格をプレビュー表示（モデル/能力プレビューが正しく反映される）。
+        form = ToolBase.upgradeFormForCrystals(form, crystalIndices, backingCrystals);
         ToolStats stats = ToolBase.buildStats(form, tier, crystalIndices, backingCrystals);
-        ToolLoadout draft = new ToolLoadout(ToolLoadout.DRAFT_SLOT, form, crystalIndices, stats);
+        ToolLoadout draft = ToolLoadout.fresh(ToolLoadout.DRAFT_SLOT, form, crystalIndices, stats);
 
         ItemStack modified = tool.copy();
         ToolBase.setDraftLoadout(modified, draft);
@@ -400,15 +511,49 @@ public class JewelryTableMenu extends AbstractContainerMenu {
     private void bindCrystalsBacking() {
         ItemStack tool = rings.get(Ring.CENTER)[0].peekRealItem();
         if (isTool(tool)) {
-            backingCrystals = ToolInventory.get(tool, crystalCountForTier(getToolTier()), level.registryAccess());
+            // peekRealItem() returns a COPY (the resource API exposes copies, not the live backing
+            // stack), so edits to the crystal inventory must be written back into the center slot or
+            // they are lost. The onSaved callback pushes the updated tool back into slot 0.
+            // 結晶構成の変化に追従して、各ロードアウトの耐久値を「削れた分」継承で再評価する。
+            backingCrystals = ToolInventory.get(tool, ToolBase.crystalSlotCount(getToolTier()), level.registryAccess(),
+                    updated -> {
+                        ToolBase.reconcileLoadouts(updated, getToolTier(), backingCrystals);
+                        blockEntity.getItemHandler().set(0, ItemResource.of(updated), Math.max(1, updated.getCount()));
+                    });
+            // CrystalStats 未解決の結晶（例: minecraft:raw_iron 等、Crystal クラスでない、あるいは
+            // onCraftedPostProcess/クラック経由でない手段で入手したもの）をここで解決しておく。
+            // buildStats/reconcileLoadouts は CrystalStats が無いと hardness 等を 0 扱いしてしまう。
+            resolveUnresolvedCrystalStats();
+            // 初回バインド時にも一度 reconcile を実行する。これがないと、以前のビルドや
+            // 旧フォーミュラで登録された stale な ToolStats が触らない限り更新されない。
+            // tool は peekRealItem() のコピーなので直接書き換え可。差分があれば BE に書き戻す。
+            ItemStack before = tool.copy();
+            ToolBase.reconcileLoadouts(tool, getToolTier(), backingCrystals);
+            if (!ItemStack.matches(before, tool)) {
+                blockEntity.getItemHandler().set(0, ItemResource.of(tool), Math.max(1, tool.getCount()));
+            }
         } else {
             backingCrystals = fallbackEmpty;
         }
     }
 
+    /** backingCrystals 内の各結晶に CrystalStats が未解決なら解決して書き戻す。 */
+    private void resolveUnresolvedCrystalStats() {
+        var statsType = DataComponentsRegistry.CRYSTAL_STATS.get();
+        int count = ToolBase.crystalSlotCount(getToolTier());
+        for (int i = 0; i < count && i < backingCrystals.size(); i++) {
+            ItemStack crystal = backingCrystals.getResource(i).toStack(backingCrystals.getAmountAsInt(i));
+            if (crystal.isEmpty() || crystal.get(statsType) != null) continue;
+            Crystal.resolveStats(crystal, level);
+            if (crystal.get(statsType) != null) {
+                backingCrystals.set(i, ItemResource.of(crystal), crystal.getCount());
+            }
+        }
+    }
+
     /* ---------- クリスタル backing アクセサ ---------- */
     public int crystalBackingOf(int vi) {
-        return vi % Math.max(1, backingCrystals.getSlots());
+        return vi % Math.max(1, ToolBase.crystalSlotCount(getToolTier()));
     }
 
     /* ---------- 同期 ---------- */
@@ -434,7 +579,7 @@ public class JewelryTableMenu extends AbstractContainerMenu {
 
     /* ---------- ボタン処理 ---------- */
     @Override
-    public void clicked(int slotId, int button, @NotNull ClickType clickType, @NotNull Player player) {
+    public void clicked(int slotId, int button, @NotNull ContainerInput clickType, @NotNull Player player) {
         if (slotId >= 0 && slotId < this.slots.size()) {
             Slot sl = this.slots.get(slotId);
             if (sl instanceof DialSlot rs && rs.mode() == DialSlot.Mode.BUTTON) {

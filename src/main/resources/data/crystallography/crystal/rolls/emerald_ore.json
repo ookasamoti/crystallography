@@ -1,0 +1,8 @@
+{
+  "input": "minecraft:emerald_ore",
+  "picks": ["#minecraft:pickaxes"],
+  "results": [
+    { "item": "crystallography:emerald", "weight": 65, "type": "crystal" },
+    { "item": "minecraft:emerald", "weight": 35, "type": "vanilla" }
+  ]
+}

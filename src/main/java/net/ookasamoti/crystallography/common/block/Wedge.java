@@ -2,20 +2,21 @@ package net.ookasamoti.crystallography.common.block;
 
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
-import net.minecraft.nbt.CompoundTag;
 import net.minecraft.server.level.ServerLevel;
+import net.minecraft.tags.ItemTags;
 import net.minecraft.sounds.SoundEvents;
 import net.minecraft.sounds.SoundSource;
+import net.minecraft.util.ProblemReporter;
 import net.minecraft.util.RandomSource;
 import net.minecraft.world.InteractionHand;
-import net.minecraft.world.ItemInteractionResult;
+import net.minecraft.world.InteractionResult;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.*;
 import net.minecraft.world.item.context.BlockPlaceContext;
 import net.minecraft.world.level.BlockGetter;
 import net.minecraft.world.level.Level;
-import net.minecraft.world.level.LevelAccessor;
 import net.minecraft.world.level.LevelReader;
+import net.minecraft.world.level.ScheduledTickAccess;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.block.SimpleWaterloggedBlock;
@@ -26,6 +27,7 @@ import net.minecraft.world.level.block.state.StateDefinition;
 import net.minecraft.world.level.block.state.properties.*;
 import net.minecraft.world.level.material.FluidState;
 import net.minecraft.world.level.material.Fluids;
+import net.minecraft.world.level.storage.TagValueOutput;
 import net.minecraft.world.phys.BlockHitResult;
 import net.minecraft.world.phys.shapes.CollisionContext;
 import net.minecraft.world.phys.shapes.VoxelShape;
@@ -39,7 +41,7 @@ public class Wedge extends Block implements SimpleWaterloggedBlock {
     public static final IntegerProperty HITS = IntegerProperty.create("hits", 0, 3); // 叩かれた回数
     public static final BooleanProperty WATERLOGGED = BlockStateProperties.WATERLOGGED;
     public static final EnumProperty<AttachFace> FACE = BlockStateProperties.ATTACH_FACE;
-    public static final DirectionProperty FACING = DirectionProperty.create("facing", Direction.Plane.HORIZONTAL);
+    public static final EnumProperty<Direction> FACING = EnumProperty.create("facing", Direction.class, Direction.Plane.HORIZONTAL);
 
     public Wedge(BlockBehaviour.Properties properties) {
         super(properties);
@@ -148,8 +150,8 @@ public class Wedge extends Block implements SimpleWaterloggedBlock {
         return level.getBlockState(supportPos).isFaceSturdy(level, supportPos, attachDirection.getOpposite());
     }
 
-    public @NotNull ItemInteractionResult useItemOn(ItemStack stack, @NotNull BlockState state, @NotNull Level level, @NotNull BlockPos pos, @NotNull Player player, @NotNull InteractionHand hand, @NotNull BlockHitResult hit) {
-        if (stack.getItem() instanceof PickaxeItem) {
+    public @NotNull InteractionResult useItemOn(ItemStack stack, @NotNull BlockState state, @NotNull Level level, @NotNull BlockPos pos, @NotNull Player player, @NotNull InteractionHand hand, @NotNull BlockHitResult hit) {
+        if (stack.is(ItemTags.PICKAXES)) {
             int currentHits = state.getValue(HITS);
             int wedgeCount = state.getValue(WEDGES);
             Direction attachDirection = getAttachDirection(state);
@@ -163,7 +165,7 @@ public class Wedge extends Block implements SimpleWaterloggedBlock {
                     attemptWedgeMining(level, targetPos, pos, wedgeCount, player);
                 }
             }
-            return ItemInteractionResult.sidedSuccess(level.isClientSide);
+            return InteractionResult.SUCCESS;
         } else if (stack.getItem() == BlockRegistry.WEDGE.get().asItem() && state.getValue(WEDGES) < 4) {
             int currentWedges = state.getValue(WEDGES);
             level.setBlock(pos, state.setValue(WEDGES, currentWedges + 1), 3);
@@ -171,17 +173,17 @@ public class Wedge extends Block implements SimpleWaterloggedBlock {
                 stack.shrink(1);
             }
             level.playSound(null, pos, SoundEvents.METAL_PLACE, SoundSource.BLOCKS, 1.0F, 1.0F);
-            return ItemInteractionResult.sidedSuccess(level.isClientSide);
+            return InteractionResult.SUCCESS;
         }
-        return ItemInteractionResult.SUCCESS;
+        return InteractionResult.SUCCESS;
     }
 
     @Override
-    public @NotNull BlockState updateShape(@NotNull BlockState state, @NotNull Direction direction, @NotNull BlockState neighborState, @NotNull LevelAccessor level, @NotNull BlockPos pos, @NotNull BlockPos neighborPos) {
+    protected @NotNull BlockState updateShape(@NotNull BlockState state, @NotNull LevelReader level, @NotNull ScheduledTickAccess ticks, @NotNull BlockPos pos, @NotNull Direction direction, @NotNull BlockPos neighborPos, @NotNull BlockState neighborState, @NotNull RandomSource random) {
         Direction attachDirection = getAttachDirection(state);
 
         if (state.getValue(WATERLOGGED)) {
-            level.scheduleTick(pos, Fluids.WATER, Fluids.WATER.getTickDelay(level));
+            ticks.scheduleTick(pos, Fluids.WATER, Fluids.WATER.getTickDelay(level));
         }
 
         if (attachDirection == direction && !state.canSurvive(level, pos)) {
@@ -189,15 +191,17 @@ public class Wedge extends Block implements SimpleWaterloggedBlock {
             int hits = state.getValue(HITS);
             double dropChance = 1.0 - (hits * 0.1);
 
-            for (int i = 0; i < wedgeCount; i++) {
-                if (RandomSource.create().nextDouble() < dropChance) {
-                    popResource((Level) level, pos, new ItemStack(this));
+            if (level instanceof Level realLevel) {
+                for (int i = 0; i < wedgeCount; i++) {
+                    if (random.nextDouble() < dropChance) {
+                        popResource(realLevel, pos, new ItemStack(this));
+                    }
                 }
             }
             return Blocks.AIR.defaultBlockState();
         }
 
-        return super.updateShape(state, direction, neighborState, level, pos, neighborPos);
+        return super.updateShape(state, level, ticks, pos, direction, neighborPos, neighborState, random);
     }
 
     private void attemptWedgeMining(Level level, BlockPos targetPos, BlockPos wedgePos, int wedgeCount, Player player) {
@@ -213,14 +217,15 @@ public class Wedge extends Block implements SimpleWaterloggedBlock {
 
             if (!isMultiParts(level, targetPos) && canDropBlock) {
                 if (blockEntity != null) {
-                    CompoundTag blockEntityData = blockEntity.saveWithFullMetadata(level.registryAccess());
-                    BlockItem.setBlockEntityData(blockStack, blockEntity.getType(), blockEntityData);
+                    var beOutput = TagValueOutput.createWithContext(ProblemReporter.DISCARDING, level.registryAccess());
+                    blockEntity.saveWithFullMetadata(beOutput);
+                    BlockItem.setBlockEntityData(blockStack, blockEntity.getType(), beOutput);
                 }
                 Block.popResource(level, targetPos, blockStack);
             }
             level.removeBlock(targetPos, false);
         } else {
-            level.playSound(null, targetPos, SoundEvents.ITEM_BREAK, SoundSource.BLOCKS, 1.0F, 1.0F);
+            level.playSound(null, targetPos, SoundEvents.ITEM_BREAK.value(), SoundSource.BLOCKS, 1.0F, 1.0F);
             level.removeBlock(wedgePos, false);
         }
     }

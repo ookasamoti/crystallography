@@ -1,0 +1,8 @@
+{
+  "input": "minecraft:deepslate_copper_ore",
+  "picks": ["#minecraft:pickaxes"],
+  "results": [
+    { "item": "crystallography:chalcopyrite", "weight": 65, "type": "crystal" },
+    { "item": "minecraft:raw_copper", "weight": 35, "type": "vanilla" }
+  ]
+}

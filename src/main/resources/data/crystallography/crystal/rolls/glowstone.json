@@ -1,0 +1,8 @@
+{
+  "input": "minecraft:glowstone",
+  "picks": ["#minecraft:pickaxes"],
+  "results": [
+    { "item": "crystallography:glowstone", "weight": 65, "type": "crystal" },
+    { "item": "minecraft:glowstone_dust", "weight": 35, "type": "vanilla" }
+  ]
+}

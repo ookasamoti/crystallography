@@ -1,0 +1,8 @@
+{
+  "input": "minecraft:nether_quartz_ore",
+  "picks": ["#minecraft:pickaxes"],
+  "results": [
+    { "item": "crystallography:nether_quartz", "weight": 65, "type": "crystal" },
+    { "item": "minecraft:quartz", "weight": 35, "type": "vanilla" }
+  ]
+}

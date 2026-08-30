@@ -1,0 +1,12 @@
+{
+  "item": "crystallography:anthracite",
+  "tier": 0,
+  "hardness": 16,
+  "cut":     { "min": 0.0, "max": 0.0 },
+  "carat":   { "min": 4, "max": 8 },
+  "clarity": { "min": 4.0, "max": 4.8 },
+  "category": "stone",
+  "traits": [ "smelting" ],
+  "crack_result": { "item": "minecraft:coal", "count": 1 },
+  "color": "#2A2A2E"
+}
