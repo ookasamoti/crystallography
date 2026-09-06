@@ -16,8 +16,9 @@ import net.ookasamoti.crystallography.client.gui.dial.DialDrawer;
 import net.ookasamoti.crystallography.client.gui.dial.DialLayout;
 import net.ookasamoti.crystallography.common.menu.DialSlot;
 import net.ookasamoti.crystallography.common.menu.JewelryTableMenu;
+import net.ookasamoti.crystallography.common.item.tool.CrystalToolLogic;
+import net.ookasamoti.crystallography.common.item.tool.ICrystalTool;
 import net.ookasamoti.crystallography.common.item.tool.ToolBase;
-import net.ookasamoti.crystallography.common.item.tool.ToolWand;
 import net.ookasamoti.crystallography.common.item.tool.component.ToolLoadout;
 import net.ookasamoti.crystallography.network.JewelryActionC2S;
 import org.jetbrains.annotations.NotNull;
@@ -223,7 +224,7 @@ public class JewelryTableScreen extends AbstractContainerScreen<JewelryTableMenu
 
     private void handleRegistryClick(int vi) {
         ItemStack tool = menu.getRingSlots(JewelryTableMenu.Ring.CENTER)[0].peekRealItem();
-        int tier = (tool.getItem() instanceof ToolBase tb) ? tb.getTier() : 1;
+        int tier = (tool.getItem() instanceof ICrystalTool ct) ? ct.getTier() : 1;
         int slotIndex = vi % Math.max(1, ToolBase.maxLoadouts(tier)); // 24 位置 → 登録枠を繰り返しマップ
 
         if (menu.pendingFormIndex < 0) {
@@ -343,7 +344,8 @@ public class JewelryTableScreen extends AbstractContainerScreen<JewelryTableMenu
         g.enableScissor(sc[0], sc[1], sc[2], sc[3]);
         try {
             ItemStack center = menu.getRingSlots(JewelryTableMenu.Ring.CENTER)[0].peekRealItem();
-            Icon[] toolIcons = (center.getItem() instanceof ToolWand) ? WAND_ICONS : ROD_ICONS;
+            boolean isWand = center.getItem() instanceof ICrystalTool ct && ct.getKind() == ICrystalTool.Kind.WAND;
+            Icon[] toolIcons = isWand ? WAND_ICONS : ROD_ICONS;
 
             // TOOLSボタン: slot[vi] のアイコンは vi % length で固定、選択中は pendingFormIndex でハイライト
             DialSlot[] toolSlots = menu.getRingSlots(JewelryTableMenu.Ring.TOOLS);
@@ -385,7 +387,7 @@ public class JewelryTableScreen extends AbstractContainerScreen<JewelryTableMenu
             // REGISTRIES: ロードアウト枠表示（24 位置に登録枠を vi % maxLoadouts で繰り返しマップ）
             DialSlot[] registrySlots = menu.getRingSlots(JewelryTableMenu.Ring.REGISTRIES);
             var loadoutList = ToolBase.getLoadout(center);
-            int regTier = (center.getItem() instanceof ToolBase tb) ? tb.getTier() : 1;
+            int regTier = (center.getItem() instanceof ICrystalTool ct) ? ct.getTier() : 1;
             int regMax  = Math.max(1, ToolBase.maxLoadouts(regTier));
             ItemStack displayBase = center.isEmpty() ? null : center.copy();
             if (displayBase != null) ToolBase.clearDraftLoadout(displayBase);
@@ -398,8 +400,13 @@ public class JewelryTableScreen extends AbstractContainerScreen<JewelryTableMenu
                 int dx = leftPos + s.x;
                 int dy = topPos  + s.y;
                 if (displayBase != null && loadoutList.getAtSlot(li).isPresent()) {
-                    ToolBase.setActiveIndex(displayBase, li);
-                    g.item(displayBase, dx, dy);
+                    // 各枠のフォームで実際にプレビューするには、アクティブindexを切り替えるだけでは
+                    // 足りない（フォームごとに実 Item クラスが分かれているため、そのスロットが登録
+                    // している form に対応する Item へ retarget しないと見た目が変わらない）。
+                    ItemStack preview = displayBase.copy();
+                    ToolBase.setActiveIndex(preview, li);
+                    preview = CrystalToolLogic.retargetToActiveForm(preview, regTier);
+                    g.item(preview, dx, dy);
                 } else {
                     drawIcon(g, EMPTY_SLOT_STICK, dx, dy);
                 }

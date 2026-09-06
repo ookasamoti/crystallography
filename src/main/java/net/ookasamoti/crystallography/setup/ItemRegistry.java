@@ -8,6 +8,25 @@ import net.ookasamoti.crystallography.CrystallographyMod;
 import net.ookasamoti.crystallography.common.item.crystal.Crystal;
 import net.ookasamoti.crystallography.common.item.tool.ToolRod;
 import net.ookasamoti.crystallography.common.item.tool.ToolWand;
+import net.ookasamoti.crystallography.common.item.tool.component.ToolForm;
+import net.ookasamoti.crystallography.common.item.tool.form.CrystalAxe;
+import net.ookasamoti.crystallography.common.item.tool.form.CrystalBow;
+import net.ookasamoti.crystallography.common.item.tool.form.CrystalCrossbow;
+import net.ookasamoti.crystallography.common.item.tool.form.CrystalFishingRod;
+import net.ookasamoti.crystallography.common.item.tool.form.CrystalHoe;
+import net.ookasamoti.crystallography.common.item.tool.form.CrystalMace;
+import net.ookasamoti.crystallography.common.item.tool.form.CrystalPickaxe;
+import net.ookasamoti.crystallography.common.item.tool.form.CrystalShears;
+import net.ookasamoti.crystallography.common.item.tool.form.CrystalShield;
+import net.ookasamoti.crystallography.common.item.tool.form.CrystalShovel;
+import net.ookasamoti.crystallography.common.item.tool.form.CrystalSpear;
+import net.ookasamoti.crystallography.common.item.tool.form.CrystalSpyglass;
+import net.ookasamoti.crystallography.common.item.tool.form.CrystalSword;
+import net.ookasamoti.crystallography.common.item.tool.form.CrystalTrident;
+
+import java.util.EnumMap;
+import java.util.Map;
+import java.util.function.BiFunction;
 
 public class ItemRegistry {
     public static final DeferredRegister.Items ITEMS = DeferredRegister.createItems(CrystallographyMod.MOD_ID);
@@ -19,6 +38,44 @@ public class ItemRegistry {
     public static final DeferredItem<Item> TOOLWAND_TIER1 = ITEMS.registerItem("toolwand_tier1", props -> new ToolWand(props, 1));
     public static final DeferredItem<Item> TOOLWAND_TIER2 = ITEMS.registerItem("toolwand_tier2", props -> new ToolWand(props, 2));
     public static final DeferredItem<Item> TOOLWAND_TIER3 = ITEMS.registerItem("toolwand_tier3", props -> new ToolWand(props, 3));
+
+    // ---- フォーム別 Item（アクティブなロードアウトのフォームに応じて retarget される先） ----
+    // 素の状態(TOOLROD_TIER*/TOOLWAND_TIER*)とは別に、フォーム×tier ごとに専用の Item を1つずつ
+    // 登録する。クリエイティブタブには意図的に載せない（retarget 経由でのみ出現する）。
+    private static final Map<ToolForm, BiFunction<Item.Properties, Integer, Item>> FORM_FACTORIES = new EnumMap<>(ToolForm.class);
+    static {
+        FORM_FACTORIES.put(ToolForm.PICKAXE,     CrystalPickaxe::new);
+        FORM_FACTORIES.put(ToolForm.SHOVEL,      CrystalShovel::new);
+        FORM_FACTORIES.put(ToolForm.HOE,         CrystalHoe::new);
+        FORM_FACTORIES.put(ToolForm.AXE,         CrystalAxe::new);
+        FORM_FACTORIES.put(ToolForm.SWORD,       CrystalSword::new);
+        FORM_FACTORIES.put(ToolForm.SPEAR,       CrystalSpear::new);
+        FORM_FACTORIES.put(ToolForm.TRIDENT,     CrystalTrident::new);
+        FORM_FACTORIES.put(ToolForm.MACE,        CrystalMace::new);
+        FORM_FACTORIES.put(ToolForm.BOW,         CrystalBow::new);
+        FORM_FACTORIES.put(ToolForm.CROSSBOW,    CrystalCrossbow::new);
+        FORM_FACTORIES.put(ToolForm.SHEARS,      CrystalShears::new);
+        FORM_FACTORIES.put(ToolForm.SPYGLASS,    CrystalSpyglass::new);
+        FORM_FACTORIES.put(ToolForm.FISHING_ROD, CrystalFishingRod::new);
+        FORM_FACTORIES.put(ToolForm.SHIELD,      CrystalShield::new);
+    }
+
+    public static final Map<ToolForm, DeferredItem<Item>[]> FORM_TIER_ITEMS = registerFormItems();
+
+    @SuppressWarnings("unchecked")
+    private static Map<ToolForm, DeferredItem<Item>[]> registerFormItems() {
+        Map<ToolForm, DeferredItem<Item>[]> out = new EnumMap<>(ToolForm.class);
+        FORM_FACTORIES.forEach((form, factory) -> {
+            DeferredItem<Item>[] tiers = new DeferredItem[3];
+            String formName = form.name().toLowerCase();
+            for (int tier = 1; tier <= 3; tier++) {
+                int t = tier;
+                tiers[tier - 1] = ITEMS.registerItem("tool_" + formName + "_tier" + tier, props -> factory.apply(props, t));
+            }
+            out.put(form, tiers);
+        });
+        return out;
+    }
 
     // registerItem supplies a Properties with the item's registry id already set; the plain
     // register(name, Supplier) form with a hand-made Item.Properties crashes with "Item id not set".

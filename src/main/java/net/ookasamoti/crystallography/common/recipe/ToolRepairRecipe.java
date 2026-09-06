@@ -9,6 +9,7 @@ import net.minecraft.world.item.crafting.CraftingInput;
 import net.minecraft.world.item.crafting.CustomRecipe;
 import net.minecraft.world.item.crafting.RecipeSerializer;
 import net.minecraft.world.level.Level;
+import net.ookasamoti.crystallography.common.item.tool.ICrystalTool;
 import net.ookasamoti.crystallography.common.item.tool.ToolBase;
 import net.ookasamoti.crystallography.common.item.tool.component.ToolLoadout;
 import org.jetbrains.annotations.Nullable;
@@ -37,7 +38,7 @@ public class ToolRepairRecipe extends CustomRecipe {
         for (int i = 0; i < input.size(); i++) {
             ItemStack stack = input.getItem(i);
             if (stack.isEmpty()) continue;
-            if (stack.getItem() instanceof ToolBase) {
+            if (stack.getItem() instanceof ICrystalTool) {
                 if (tool != null) return null; // ツールが2つ→不成立
                 tool = stack;
             } else {
@@ -48,7 +49,7 @@ public class ToolRepairRecipe extends CustomRecipe {
         if (tool == null || material == null) return null;
         if (tool.getCount() != 1 || material.getCount() != 1) return null;
 
-        int tier = ((ToolBase) tool.getItem()).getTier();
+        int tier = ((ICrystalTool) tool.getItem()).getTier();
         if (!ToolBase.isRepairMaterial(tier, material)) return null;
         if (ToolBase.getActiveLoadout(tool) == null) return null; // 回復対象のロードアウトが無い
 
@@ -66,7 +67,7 @@ public class ToolRepairRecipe extends CustomRecipe {
         if (pair == null) return ItemStack.EMPTY;
 
         ItemStack tool = pair.getFirst().copy();
-        int tier = ((ToolBase) tool.getItem()).getTier();
+        int tier = ((ICrystalTool) tool.getItem()).getTier();
 
         ToolLoadout lo = ToolBase.getActiveLoadout(tool);
         if (lo == null) return ItemStack.EMPTY;

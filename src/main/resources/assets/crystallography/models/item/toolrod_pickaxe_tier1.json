@@ -2,8 +2,8 @@
   "parent": "minecraft:item/generated",
   "textures": {
     "layer0": "crystallography:item/toolrod_tier1",
-    "layer1": "crystallography:item/toolrod_pickaxe_center",
-    "layer2": "crystallography:item/toolrod_pickaxe_left",
-    "layer3": "crystallography:item/toolrod_pickaxe_right"
+    "layer1": "crystallography:item/toolrod_pickaxe_left",
+    "layer2": "crystallography:item/toolrod_pickaxe_right",
+    "layer3": "crystallography:item/toolrod_pickaxe_center"
   }
 }

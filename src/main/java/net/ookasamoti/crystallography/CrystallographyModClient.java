@@ -1,6 +1,7 @@
 package net.ookasamoti.crystallography;
 
 import net.minecraft.resources.Identifier;
+import net.minecraft.world.item.ItemStack;
 import net.neoforged.api.distmarker.Dist;
 import net.neoforged.bus.api.SubscribeEvent;
 import net.neoforged.fml.ModContainer;
@@ -18,8 +19,7 @@ import net.ookasamoti.crystallography.client.event.CrystalClientHooks;
 import net.ookasamoti.crystallography.client.model.FormProperty;
 import net.ookasamoti.crystallography.client.screen.JewelryTableScreen;
 import net.ookasamoti.crystallography.client.screen.LapidaryAnvilScreen;
-import net.ookasamoti.crystallography.common.item.tool.ToolRod;
-import net.ookasamoti.crystallography.common.item.tool.ToolWand;
+import net.ookasamoti.crystallography.common.item.tool.ICrystalTool;
 import net.ookasamoti.crystallography.network.ToolCycleC2S;
 import net.ookasamoti.crystallography.setup.KeyBindingRegistry;
 import net.ookasamoti.crystallography.setup.MenuTypesRegistry;
@@ -70,8 +70,8 @@ public class CrystallographyModClient {
         var main = mc.player.getMainHandItem();
         var off  = mc.player.getOffhandItem();
 
-        boolean rodHeld  = main.getItem() instanceof ToolRod  || off.getItem() instanceof ToolRod;
-        boolean wandHeld = main.getItem() instanceof ToolWand || off.getItem() instanceof ToolWand;
+        boolean rodHeld  = isKind(main, ICrystalTool.Kind.ROD)  || isKind(off, ICrystalTool.Kind.ROD);
+        boolean wandHeld = isKind(main, ICrystalTool.Kind.WAND) || isKind(off, ICrystalTool.Kind.WAND);
 
         boolean rodKey  = KeyBindingRegistry.KEY_ROD_CYCLE.isDown();
         boolean wandKey = KeyBindingRegistry.KEY_WAND_CYCLE.isDown();
@@ -81,5 +81,14 @@ public class CrystallographyModClient {
             int delta = event.getScrollDeltaY() > 0 ? 1 : -1;
             ClientPacketDistributor.sendToServer(new ToolCycleC2S(delta));
         }
+    }
+
+    /**
+     * stack がロッド系／ワンド系かを判定する。フォーム確定前の「素の状態」
+     * ({@code ToolRod}/{@code ToolWand}) と、確定後のフォーム別 Item の両方に対応するため
+     * {@link ICrystalTool#getKind()} を見る（特定クラスへの instanceof は使わない）。
+     */
+    private static boolean isKind(ItemStack stack, ICrystalTool.Kind kind) {
+        return stack.getItem() instanceof ICrystalTool ct && ct.getKind() == kind;
     }
 }

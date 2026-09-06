@@ -1,0 +1,74 @@
+{
+  "model": {
+    "type": "minecraft:select",
+    "property": "crystallography:form",
+    "fallback": {
+      "type": "minecraft:select",
+      "property": "minecraft:display_context",
+      "cases": [
+        {
+          "when": [
+            "gui",
+            "ground",
+            "fixed",
+            "on_shelf"
+          ],
+          "model": {
+            "type": "minecraft:model",
+            "model": "crystallography:item/toolrod_spear_tier3",
+            "tints": [
+              {
+                "type": "minecraft:constant",
+                "value": -1
+              },
+              {
+                "type": "crystallography:crystal",
+                "crystal_slot": 0
+              },
+              {
+                "type": "crystallography:crystal",
+                "crystal_slot": 1
+              },
+              {
+                "type": "crystallography:crystal",
+                "crystal_slot": 2
+              }
+            ]
+          }
+        }
+      ],
+      "fallback": {
+        "type": "minecraft:model",
+        "model": "crystallography:item/toolmodel_spear_tier3",
+        "tints": [
+          {
+            "type": "minecraft:constant",
+            "value": -1
+          },
+          {
+            "type": "crystallography:crystal",
+            "crystal_slot": 0
+          },
+          {
+            "type": "crystallography:crystal",
+            "crystal_slot": 1
+          },
+          {
+            "type": "crystallography:crystal",
+            "crystal_slot": 2
+          }
+        ]
+      }
+    },
+    "cases": [
+      {
+        "when": "crashed",
+        "model": {
+          "type": "minecraft:model",
+          "model": "crystallography:item/toolrod_crashed_tier3"
+        }
+      }
+    ]
+  },
+  "swap_animation_scale": 1.95
+}

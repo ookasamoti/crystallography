@@ -10,10 +10,10 @@ import net.neoforged.neoforge.transfer.item.ItemResource;
 import net.neoforged.neoforge.transfer.item.ItemStacksResourceHandler;
 import net.ookasamoti.crystallography.common.block.entity.JewelryTableBlockEntity;
 import net.ookasamoti.crystallography.common.item.crystal.Crystal;
+import net.ookasamoti.crystallography.common.item.tool.CrystalToolLogic;
+import net.ookasamoti.crystallography.common.item.tool.ICrystalTool;
 import net.ookasamoti.crystallography.common.item.tool.ToolBase;
 import net.ookasamoti.crystallography.common.item.tool.ToolInventory;
-import net.ookasamoti.crystallography.common.item.tool.ToolRod;
-import net.ookasamoti.crystallography.common.item.tool.ToolWand;
 import net.ookasamoti.crystallography.common.item.tool.component.ToolForm;
 import net.ookasamoti.crystallography.common.item.tool.component.ToolLoadout;
 import net.ookasamoti.crystallography.common.item.tool.component.ToolStats;
@@ -71,7 +71,7 @@ public class JewelryTableMenu extends AbstractContainerMenu {
             ToolForm.SWORD,   ToolForm.AXE,    ToolForm.SPEAR
     };
     public static final ToolForm[] WAND_FORMS = {
-            ToolForm.BOW, ToolForm.CROSSBOW, ToolForm.KNIFE,
+            ToolForm.BOW, ToolForm.CROSSBOW, ToolForm.SHEARS,
             ToolForm.SPYGLASS, ToolForm.FISHING_ROD, ToolForm.SHIELD
     };
 
@@ -245,7 +245,7 @@ public class JewelryTableMenu extends AbstractContainerMenu {
         // draft DataComponent があれば状態を復元（サーバー書き込み後のクライアント sync 時に使用）
         ToolLoadout draft = ToolBase.getDraftLoadout(tool);
         if (draft != null) {
-            boolean isWand = tool.getItem() instanceof ToolWand;
+            boolean isWand = kindOf(tool) == ICrystalTool.Kind.WAND;
             ToolForm[] forms = isWand ? WAND_FORMS : ROD_FORMS;
             pendingFormIndex = baseFormIndexOf(draft.form(), forms);
             for (int ci : draft.crystalIndices()) {
@@ -342,7 +342,7 @@ public class JewelryTableMenu extends AbstractContainerMenu {
         if (loOpt.isEmpty()) return;
         ToolLoadout lo = loOpt.get();
 
-        boolean isWand = tool.getItem() instanceof ToolWand;
+        boolean isWand = kindOf(tool) == ICrystalTool.Kind.WAND;
         ToolForm[] forms = isWand ? WAND_FORMS : ROD_FORMS;
         int formIdx = baseFormIndexOf(lo.form(), forms);
         if (formIdx < 0) return;
@@ -377,7 +377,7 @@ public class JewelryTableMenu extends AbstractContainerMenu {
         int tier = getToolTier();
         if (slotIndex < 0 || slotIndex >= ToolBase.maxLoadouts(tier)) return;
 
-        boolean isWand = toolStack.getItem() instanceof ToolWand;
+        boolean isWand = kindOf(toolStack) == ICrystalTool.Kind.WAND;
         ToolForm[] forms = isWand ? WAND_FORMS : ROD_FORMS;
         if (pendingFormIndex >= forms.length) return;
         ToolForm form = forms[pendingFormIndex];
@@ -393,6 +393,7 @@ public class JewelryTableMenu extends AbstractContainerMenu {
         if (!ToolBase.setLoadout(modified, loadout)) return;
         ToolBase.setActiveIndex(modified, slotIndex);
         ToolBase.applyComputedStats(modified);
+        modified = retargetIfFormChanged(modified, tier);
 
         writeToCenter(modified);
         applySelectForm(-1);
@@ -421,6 +422,7 @@ public class JewelryTableMenu extends AbstractContainerMenu {
         ItemStack modified = tool.copy();
         ToolBase.removeLoadout(modified, editingRegistrySlot);
         ToolBase.clearDraftLoadout(modified);
+        modified = retargetIfFormChanged(modified, getToolTier());
         writeToCenter(modified);
         applySelectForm(-1);
         broadcastChanges();
@@ -438,6 +440,7 @@ public class JewelryTableMenu extends AbstractContainerMenu {
             ItemStack modified = tool.copy();
             ToolBase.swapLoadouts(modified, editingRegistrySlot, otherSlotIndex);
             ToolBase.clearDraftLoadout(modified);
+            modified = retargetIfFormChanged(modified, tier);
             writeToCenter(modified);
         } else {
             clearDraftFromItem();
@@ -461,7 +464,7 @@ public class JewelryTableMenu extends AbstractContainerMenu {
         ItemStack tool = rings.get(Ring.CENTER)[0].peekRealItem();
         if (!isTool(tool)) return;
 
-        boolean isWand = tool.getItem() instanceof ToolWand;
+        boolean isWand = kindOf(tool) == ICrystalTool.Kind.WAND;
         ToolForm[] forms = isWand ? WAND_FORMS : ROD_FORMS;
         if (pendingFormIndex >= forms.length) return;
         ToolForm form = forms[pendingFormIndex];
@@ -479,6 +482,9 @@ public class JewelryTableMenu extends AbstractContainerMenu {
 
         ItemStack modified = tool.copy();
         ToolBase.setDraftLoadout(modified, draft);
+        // プレビューの見た目もdraftのformへ retarget する（フォームごとに実Itemクラスが
+        // 分かれているため、これをしないとTOOLSリングで選び直しても見た目が変わらない）。
+        modified = retargetIfFormChanged(modified, tier);
         writeToCenter(modified);
     }
 
@@ -488,6 +494,8 @@ public class JewelryTableMenu extends AbstractContainerMenu {
         if (!isTool(tool) || ToolBase.getDraftLoadout(tool) == null) return;
         ItemStack modified = tool.copy();
         ToolBase.clearDraftLoadout(modified);
+        // draftのプレビュー表示から、本来のアクティブロードアウトの見た目へ戻す。
+        modified = retargetIfFormChanged(modified, getToolTier());
         writeToCenter(modified);
     }
 
@@ -499,13 +507,26 @@ public class JewelryTableMenu extends AbstractContainerMenu {
 
     /* ---------- ツール判定 / tier ---------- */
     private boolean isTool(ItemStack s) {
-        return (s.getItem() instanceof ToolRod) || (s.getItem() instanceof ToolWand);
+        return s.getItem() instanceof ICrystalTool;
+    }
+
+    /** ロッド系かワンド系か。フォーム確定前の「素の状態」と、確定後のフォーム別 Item の両方に対応。 */
+    private static ICrystalTool.Kind kindOf(ItemStack tool) {
+        return (tool.getItem() instanceof ICrystalTool ct) ? ct.getKind() : ICrystalTool.Kind.ROD;
     }
 
     private int getToolTier() {
         ItemStack tool = rings.get(Ring.CENTER)[0].peekRealItem();
-        if (tool.getItem() instanceof ToolBase tb) return Math.max(1, Math.min(3, tb.getTier()));
+        if (tool.getItem() instanceof ICrystalTool ct) return Math.max(1, Math.min(3, ct.getTier()));
         return 1;
+    }
+
+    /**
+     * 中央スロットの見た目が変わりうる箇所で呼ぶ retarget（実体は
+     * {@link CrystalToolLogic#retargetForDisplay}）。draft があればその form を優先する。
+     */
+    private static ItemStack retargetIfFormChanged(ItemStack stack, int tier) {
+        return CrystalToolLogic.retargetForDisplay(stack, tier);
     }
 
     private void bindCrystalsBacking() {
@@ -518,7 +539,8 @@ public class JewelryTableMenu extends AbstractContainerMenu {
             backingCrystals = ToolInventory.get(tool, ToolBase.crystalSlotCount(getToolTier()), level.registryAccess(),
                     updated -> {
                         ToolBase.reconcileLoadouts(updated, getToolTier(), backingCrystals);
-                        blockEntity.getItemHandler().set(0, ItemResource.of(updated), Math.max(1, updated.getCount()));
+                        ItemStack retargeted = retargetIfFormChanged(updated, getToolTier());
+                        blockEntity.getItemHandler().set(0, ItemResource.of(retargeted), Math.max(1, retargeted.getCount()));
                     });
             // CrystalStats 未解決の結晶（例: minecraft:raw_iron 等、Crystal クラスでない、あるいは
             // onCraftedPostProcess/クラック経由でない手段で入手したもの）をここで解決しておく。
@@ -529,8 +551,9 @@ public class JewelryTableMenu extends AbstractContainerMenu {
             // tool は peekRealItem() のコピーなので直接書き換え可。差分があれば BE に書き戻す。
             ItemStack before = tool.copy();
             ToolBase.reconcileLoadouts(tool, getToolTier(), backingCrystals);
-            if (!ItemStack.matches(before, tool)) {
-                blockEntity.getItemHandler().set(0, ItemResource.of(tool), Math.max(1, tool.getCount()));
+            ItemStack retargeted = retargetIfFormChanged(tool, getToolTier());
+            if (!ItemStack.matches(before, retargeted)) {
+                blockEntity.getItemHandler().set(0, ItemResource.of(retargeted), Math.max(1, retargeted.getCount()));
             }
         } else {
             backingCrystals = fallbackEmpty;

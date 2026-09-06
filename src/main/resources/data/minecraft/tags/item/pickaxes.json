@@ -1,0 +1,8 @@
+{
+  "replace": false,
+  "values": [
+    "crystallography:tool_pickaxe_tier1",
+    "crystallography:tool_pickaxe_tier2",
+    "crystallography:tool_pickaxe_tier3"
+  ]
+}

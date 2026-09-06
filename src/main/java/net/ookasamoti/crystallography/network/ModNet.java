@@ -1,10 +1,13 @@
 package net.ookasamoti.crystallography.network;
 
 import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.world.InteractionHand;
 import net.minecraft.world.item.ItemStack;
 import net.neoforged.bus.api.IEventBus;
 import net.neoforged.neoforge.network.event.RegisterPayloadHandlersEvent;
 import net.ookasamoti.crystallography.CrystallographyMod;
+import net.ookasamoti.crystallography.common.item.tool.CrystalToolLogic;
+import net.ookasamoti.crystallography.common.item.tool.ICrystalTool;
 import net.ookasamoti.crystallography.common.item.tool.ToolBase;
 import net.ookasamoti.crystallography.common.item.tool.component.ToolLoadout;
 import net.ookasamoti.crystallography.common.menu.JewelryTableMenu;
@@ -47,10 +50,12 @@ public final class ModNet {
                 (msg, ctx) -> ctx.enqueueWork(() -> {
                     if (!(ctx.player() instanceof ServerPlayer sp)) return;
 
+                    InteractionHand hand = InteractionHand.MAIN_HAND;
                     ItemStack stack = sp.getMainHandItem();
-                    if (!(stack.getItem() instanceof ToolBase)) {
+                    if (!(stack.getItem() instanceof ICrystalTool)) {
+                        hand = InteractionHand.OFF_HAND;
                         stack = sp.getOffhandItem();
-                        if (!(stack.getItem() instanceof ToolBase)) return;
+                        if (!(stack.getItem() instanceof ICrystalTool)) return;
                     }
 
                     var registered = ToolBase.getLoadout(stack).entries().stream()
@@ -64,8 +69,15 @@ public final class ModNet {
                     int pos = registered.indexOf(current);
                     if (pos < 0) pos = 0;
                     int next = Math.floorMod(pos + msg.delta(), registered.size());
-                    ToolBase.setActiveIndex(stack, registered.get(next));
-                    ToolBase.applyComputedStats(stack);
+
+                    ItemStack modified = stack.copy();
+                    ToolBase.setActiveIndex(modified, registered.get(next));
+                    ToolBase.applyComputedStats(modified);
+
+                    int tier = (modified.getItem() instanceof ICrystalTool ct) ? ct.getTier() : 1;
+                    modified = CrystalToolLogic.retargetToActiveForm(modified, tier);
+
+                    sp.setItemInHand(hand, modified);
                 })
         );
     }

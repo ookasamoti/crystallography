@@ -1,0 +1,37 @@
+{
+  "model": {
+    "type": "minecraft:select",
+    "property": "crystallography:form",
+    "fallback": {
+      "type": "minecraft:model",
+      "model": "crystallography:item/toolrod_axe_tier3",
+      "tints": [
+        {
+          "type": "minecraft:constant",
+          "value": -1
+        },
+        {
+          "type": "crystallography:crystal",
+          "crystal_slot": 0
+        },
+        {
+          "type": "crystallography:crystal",
+          "crystal_slot": 1
+        },
+        {
+          "type": "crystallography:crystal",
+          "crystal_slot": 2
+        }
+      ]
+    },
+    "cases": [
+      {
+        "when": "crashed",
+        "model": {
+          "type": "minecraft:model",
+          "model": "crystallography:item/toolrod_crashed_tier3"
+        }
+      }
+    ]
+  }
+}

@@ -1,0 +1,8 @@
+{
+  "replace": false,
+  "values": [
+    "crystallography:tool_spear_tier1",
+    "crystallography:tool_spear_tier2",
+    "crystallography:tool_spear_tier3"
+  ]
+}

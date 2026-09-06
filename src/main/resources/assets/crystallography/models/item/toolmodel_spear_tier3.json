@@ -1,0 +1,9 @@
+{
+  "parent": "crystallography:item/toolmodel_spear_in_hand_base",
+  "textures": {
+    "layer0": "crystallography:item/toolmodel_spear_toolrod_tier3",
+    "layer1": "crystallography:item/toolmodel_spear_center",
+    "layer2": "crystallography:item/toolmodel_spear_left",
+    "layer3": "crystallography:item/toolmodel_spear_right"
+  }
+}

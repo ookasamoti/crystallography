@@ -7,6 +7,7 @@ import net.minecraft.client.color.item.ItemTintSource;
 import net.minecraft.client.multiplayer.ClientLevel;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.item.ItemStack;
+import net.ookasamoti.crystallography.common.item.tool.ICrystalTool;
 import net.ookasamoti.crystallography.common.item.tool.ToolBase;
 import net.ookasamoti.crystallography.common.item.tool.ToolInventory;
 import net.ookasamoti.crystallography.data.CrystalStatsRegistry;
@@ -40,7 +41,7 @@ public record CrystalTintSource(int crystalSlot) implements ItemTintSource {
         if (crystalIndex < 0) return -1;
 
         if (level == null) return -1;
-        int tier = (stack.getItem() instanceof ToolBase tb) ? tb.getTier() : 1;
+        int tier = (stack.getItem() instanceof ICrystalTool ct) ? ct.getTier() : 1;
         var inv = ToolInventory.get(stack, ToolBase.crystalSlotCount(tier), level.registryAccess());
         var crystal = inv.getResource(crystalIndex).toStack(inv.getAmountAsInt(crystalIndex));
         if (crystal.isEmpty()) return -1;

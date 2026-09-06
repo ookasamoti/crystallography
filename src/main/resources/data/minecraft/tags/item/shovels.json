@@ -1,0 +1,8 @@
+{
+  "replace": false,
+  "values": [
+    "crystallography:tool_shovel_tier1",
+    "crystallography:tool_shovel_tier2",
+    "crystallography:tool_shovel_tier3"
+  ]
+}

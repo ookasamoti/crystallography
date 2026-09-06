@@ -1,7 +1,7 @@
 {
   "parent": "minecraft:item/generated",
   "textures": {
-    "layer0": "crystallography:item/toolrod_trident_tier3",
+    "layer0": "crystallography:item/toolrod_tier3",
     "layer1": "crystallography:item/toolrod_trident_center",
     "layer2": "crystallography:item/toolrod_trident_left",
     "layer3": "crystallography:item/toolrod_trident_right"

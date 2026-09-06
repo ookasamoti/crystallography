@@ -28,6 +28,9 @@ public class CreativeTabRegistry {
                         output.accept(ItemRegistry.TOOLWAND_TIER1.get());
                         output.accept(ItemRegistry.TOOLWAND_TIER2.get());
                         output.accept(ItemRegistry.TOOLWAND_TIER3.get());
+                        // ItemRegistry.FORM_TIER_ITEMS (tool_<form>_tierN) はここに意図的に含めない。
+                        // これらはロードアウトのフォーム確定に伴う retarget でのみ出現するべきアイテムで、
+                        // /give 以外では直接入手できない状態を保つ。
                         output.accept(ItemRegistry.CHALCOPYRITE.get());
                         output.accept(ItemRegistry.MAGNETITE.get());
                         output.accept(ItemRegistry.PYRITE.get());
