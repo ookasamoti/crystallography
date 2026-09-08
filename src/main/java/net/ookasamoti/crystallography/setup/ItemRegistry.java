@@ -113,6 +113,8 @@ public class ItemRegistry {
     public static final DeferredItem<Item> TRIDENT_CORE       = crystal("trident_core");
     public static final DeferredItem<Item> HEAVY_CORE         = crystal("heavy_core");
 
+    public static final DeferredItem<Item> STONE = ITEMS.registerSimpleItem("stone");
+
     public static void register(IEventBus bus) {
         ITEMS.register(bus);
     }

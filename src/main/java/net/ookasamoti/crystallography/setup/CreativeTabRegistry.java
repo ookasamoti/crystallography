@@ -60,6 +60,7 @@ public class CreativeTabRegistry {
                         output.accept(ItemRegistry.SONAR_SHARD.get());
                         output.accept(ItemRegistry.TRIDENT_CORE.get());
                         output.accept(ItemRegistry.HEAVY_CORE.get());
+                        output.accept(ItemRegistry.STONE.get());
                     }).build()
     );
 
