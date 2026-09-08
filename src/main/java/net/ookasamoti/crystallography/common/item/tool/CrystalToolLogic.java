@@ -78,6 +78,16 @@ public final class CrystalToolLogic {
 
     private CrystalToolLogic() {}
 
+    // ---- Attack Damage/Speed 属性修飾子ID ----
+    // フォーム固有分は vanilla の Item.BASE_ATTACK_DAMAGE_ID/BASE_ATTACK_SPEED_ID をそのまま使う
+    // （applyComputedStats 参照）。結晶合計分はこの独自IDで登録し、AttackAttributeTooltipHooks が
+    // ツールチップ上でこのIDを個別スキップして自前フォーマットに差し替える。
+
+    public static final Identifier CRYSTAL_ATK_ID =
+            Identifier.fromNamespaceAndPath(CrystallographyMod.MOD_ID, "crystal_atk");
+    public static final Identifier CRYSTAL_ATK_SPEED_ID =
+            Identifier.fromNamespaceAndPath(CrystallographyMod.MOD_ID, "crystal_atk_speed");
+
     // ---- Tier定数（設計書準拠） ----
 
     /** Tier に対応する内部結晶インベントリのスロット数（tier1=6, tier2=9, tier3=12）。 */
@@ -287,8 +297,10 @@ public final class CrystalToolLogic {
         // attackDamage = form.baseAttack + Σcut（form 別の武器特性で剣／ピッケル等を差別化）。
         // Σcut が表 damage 相当（満強化で表×1.2）、form ベースで武器形状ごとのボーナスを上乗せ。
         // ただし HOE はバニラ仕様に倣い、全ティア固定で攻撃修飾子 = 0。
+        // attackSpeed = form.baseAttackSpeed + (Σclarity − 20)×0.1（小数点二桁未満切り捨て）。
         // miningSpeed = form.baseMiningSpeed × avg(clarity)（現状 baseMiningSpeed=1.0 なので実質 avg(clarity)）。
         float attackDmg = (form == ToolForm.HOE) ? 0f : (form.baseAttack() + cutSum);
+        float clarityAtkSpeedBonus = truncateTo2((claritySum - 20f) * 0.1f);
 
         // 原石バッテリーモード：3枠のいずれかが原石系(category=raw_ore)なら、通常の
         // tier*128+Σhardness とは別系統で「原石の hardness + 残り2枠の hardness(=ボーナス)」
@@ -301,9 +313,14 @@ public final class CrystalToolLogic {
                 avgTier,
                 durability,
                 attackDmg,
-                form.baseAttackSpeed(),
+                form.baseAttackSpeed() + clarityAtkSpeedBonus,
                 form.baseMiningSpeed() * clarityAvg
         );
+    }
+
+    /** 小数点三桁目以降を切り捨てて二桁に丸める（四捨五入ではない）。 */
+    private static float truncateTo2(float value) {
+        return (float) (Math.floor(value * 100.0) / 100.0);
     }
 
     /**
@@ -429,15 +446,27 @@ public final class CrystalToolLogic {
         }
 
         // 通常状態
-        var idAtk = Identifier.fromNamespaceAndPath(CrystallographyMod.MOD_ID, "atk");
-        var idSpd = Identifier.fromNamespaceAndPath(CrystallographyMod.MOD_ID, "atk_speed");
+        // Attack Damage/Speed は「フォーム固有分」と「結晶合計分」の2つの AttributeModifier に分けて
+        // 登録する。フォーム固有分は vanilla の Item.BASE_ATTACK_DAMAGE_ID/BASE_ATTACK_SPEED_ID を
+        // そのまま使うため実際の戦闘計算は vanilla と同じ扱いになる。結晶合計分は CRYSTAL_ATK_ID/
+        // CRYSTAL_ATK_SPEED_ID で登録し、AttackAttributeTooltipHooks がツールチップ上でこの2つの
+        // modifier IDを個別スキップして [素手 + フォーム + 結晶] 形式の自前表示に差し替える
+        // （実際の属性値そのものは vanilla の仕組みのままここで確定させる）。
+        float formAtk = lo.form().baseAttack();
+        float formSpd = lo.form().baseAttackSpeed();
 
         ItemAttributeModifiers.Builder b = ItemAttributeModifiers.builder();
         b.add(Attributes.ATTACK_DAMAGE,
-                new AttributeModifier(idAtk, s.attackDamage(), AttributeModifier.Operation.ADD_VALUE),
+                new AttributeModifier(Item.BASE_ATTACK_DAMAGE_ID, formAtk, AttributeModifier.Operation.ADD_VALUE),
+                EquipmentSlotGroup.MAINHAND);
+        b.add(Attributes.ATTACK_DAMAGE,
+                new AttributeModifier(CRYSTAL_ATK_ID, s.attackDamage() - formAtk, AttributeModifier.Operation.ADD_VALUE),
                 EquipmentSlotGroup.MAINHAND);
         b.add(Attributes.ATTACK_SPEED,
-                new AttributeModifier(idSpd, s.attackSpeed(), AttributeModifier.Operation.ADD_VALUE),
+                new AttributeModifier(Item.BASE_ATTACK_SPEED_ID, formSpd, AttributeModifier.Operation.ADD_VALUE),
+                EquipmentSlotGroup.MAINHAND);
+        b.add(Attributes.ATTACK_SPEED,
+                new AttributeModifier(CRYSTAL_ATK_SPEED_ID, s.attackSpeed() - formSpd, AttributeModifier.Operation.ADD_VALUE),
                 EquipmentSlotGroup.MAINHAND);
         stack.set(DataComponents.ATTRIBUTE_MODIFIERS, b.build());
 
@@ -928,15 +957,6 @@ public final class CrystalToolLogic {
                     .withStyle(ChatFormatting.YELLOW));
             out.accept(Component.literal("結晶: " + selected + " / " + ToolLoadout.CRYSTAL_SLOTS)
                     .withStyle(ChatFormatting.GRAY));
-            if (selected > 0) {
-                var s = draft.stats();
-                out.accept(Component.literal("Durability " + s.durability())
-                        .withStyle(ChatFormatting.DARK_GREEN));
-                out.accept(Component.literal(
-                        "Atk " + String.format(java.util.Locale.ROOT, "%.2f", s.attackDamage()) +
-                        "  Spd " + String.format(java.util.Locale.ROOT, "%.2f", s.attackSpeed()))
-                        .withStyle(ChatFormatting.DARK_GREEN));
-            }
             return;
         }
 
@@ -947,14 +967,7 @@ public final class CrystalToolLogic {
 
         var lo = getActiveLoadout(stack);
         if (lo != null) {
-            var s = lo.stats();
             out.accept(Component.literal("- " + lo.form().name()).withStyle(ChatFormatting.AQUA));
-            out.accept(Component.literal("Durability " + s.durability())
-                    .withStyle(ChatFormatting.DARK_GREEN));
-            out.accept(Component.literal(
-                    "Atk " + String.format(java.util.Locale.ROOT, "%.2f", s.attackDamage()) +
-                    "  Spd " + String.format(java.util.Locale.ROOT, "%.2f", s.attackSpeed()))
-                    .withStyle(ChatFormatting.DARK_GREEN));
         } else {
             out.accept(Component.literal("No registered tool").withStyle(ChatFormatting.RED));
         }

@@ -6,6 +6,7 @@ import net.neoforged.fml.ModContainer;
 import net.neoforged.neoforge.event.AddServerReloadListenersEvent;
 import net.neoforged.neoforge.event.entity.EntityJoinLevelEvent;
 import net.ookasamoti.crystallography.common.entity.TridentVisualData;
+import net.ookasamoti.crystallography.common.item.tool.AttackAttributeTooltipHooks;
 import net.ookasamoti.crystallography.data.CrystalRollsReloader;
 import net.ookasamoti.crystallography.data.CrystalStatsReloader;
 import net.ookasamoti.crystallography.network.ModNet;
@@ -38,6 +39,7 @@ public class CrystallographyMod {
         RecipeSerializersRegistry.register(modEventBus);
         AttachmentTypeRegistry.register(modEventBus);
         ModNet.register(modEventBus);
+        AttackAttributeTooltipHooks.register(modEventBus);
     }
 
     private static void onAddReloadListeners(AddServerReloadListenersEvent e) {
