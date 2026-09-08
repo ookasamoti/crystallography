@@ -10,6 +10,7 @@ import net.minecraft.network.chat.MutableComponent;
 import net.minecraft.util.Util;
 import net.minecraft.world.entity.ai.attributes.Attribute;
 import net.minecraft.world.entity.ai.attributes.Attributes;
+import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
 import net.ookasamoti.crystallography.common.item.tool.component.ToolLoadout;
@@ -55,10 +56,11 @@ public final class AttackAttributeTooltipHooks {
         var s = lo.stats();
         float formAtk = lo.form().baseAttack();
         float formSpd = lo.form().baseAttackSpeed();
+        var player = event.getContext().player();
 
         event.addTooltipLines(
-                breakdownLine(Attributes.ATTACK_DAMAGE, formAtk, s.attackDamage() - formAtk),
-                breakdownLine(Attributes.ATTACK_SPEED, formSpd, s.attackSpeed() - formSpd)
+                breakdownLine(player, Attributes.ATTACK_DAMAGE, formAtk, s.attackDamage() - formAtk),
+                breakdownLine(player, Attributes.ATTACK_SPEED, formSpd, s.attackSpeed() - formSpd)
         );
     }
 
@@ -68,8 +70,12 @@ public final class AttackAttributeTooltipHooks {
         return ToolBase.getActiveLoadout(stack);
     }
 
-    private static Component breakdownLine(Holder<Attribute> attribute, double formBonus, double crystalBonus) {
-        double entityBase = attribute.value().getDefaultValue();
+    private static Component breakdownLine(@Nullable Player player, Holder<Attribute> attribute, double formBonus, double crystalBonus) {
+        // NOT attribute.value().getDefaultValue(): that is the generic Attribute class default
+        // (2.0 for attack damage), not the player's own bare-hand base (1.0). Vanilla/NeoForge's
+        // own attribute tooltip code (AttributeUtil#applyTextFor) reads the entity's actual base
+        // value the same way.
+        double entityBase = player == null ? 0 : player.getAttributeBaseValue(attribute);
         double total = entityBase + formBonus + crystalBonus;
 
         MutableComponent bracket = Component.literal("[" + FORMAT.format(entityBase))
