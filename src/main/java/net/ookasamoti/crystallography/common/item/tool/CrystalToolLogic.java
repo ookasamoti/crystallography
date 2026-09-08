@@ -383,16 +383,19 @@ public final class CrystalToolLogic {
         }
 
         // バニラ ToolMaterial#applySwordProperties と同じ特殊ルール（クモの巣は正規ドロップ+高速、
-        // 竹は事実上瞬時、SWORD_EFFICIENT タグ(葉/カボチャ/コルリーフ等)は1.5倍速）。
+        // 竹は事実上瞬時、SWORD_EFFICIENT タグ(葉/カボチャ/コルリーフ等)は1.5倍速、
+        // かつ damagePerBlock=2＝剣で採掘するとツルハシ等の2倍の速さで耐久が減る）。
         // form別の mineableTagFor だけでは剣はどのブロックにも速度ボーナスが無く（素手と同速で正しい）、
         // これらのバニラ準拠の例外だけ別途追加する。
+        int damagePerBlock = 1;
         if (form == ToolForm.SWORD) {
             rules.add(Tool.Rule.minesAndDrops(HolderSet.direct(Blocks.COBWEB.builtInRegistryHolder()), 15.0f));
             rules.add(Tool.Rule.overrideSpeed(tagHolderSet(BlockTags.SWORD_INSTANTLY_MINES), Float.MAX_VALUE));
             rules.add(Tool.Rule.overrideSpeed(tagHolderSet(BlockTags.SWORD_EFFICIENT), 1.5f));
+            damagePerBlock = 2;
         }
 
-        return new Tool(rules, 1.0f, 1, false);
+        return new Tool(rules, 1.0f, damagePerBlock, false);
     }
 
     private static HolderSet<Block> tagHolderSet(TagKey<Block> tag) {
