@@ -2,7 +2,7 @@
   "item": "crystallography:blaze_crystal",
   "tier": 2,
   "hardness": 128,
-  "cut":     { "min": 0.67, "max": 0.8 },
+  "cut":     { "min": 0.4, "max": 0.8 },
   "carat":   { "min": 5, "max": 9 },
   "clarity": { "min": 7.0, "max": 8.4 },
   "category": "crystal",

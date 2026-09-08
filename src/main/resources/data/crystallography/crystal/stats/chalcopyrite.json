@@ -2,7 +2,7 @@
   "item": "crystallography:chalcopyrite",
   "tier": 1,
   "hardness": 64,
-  "cut":     { "min": 0.33, "max": 0.4 },
+  "cut":     { "min": 0.3, "max": 0.5 },
   "carat":   { "min": 4, "max": 8 },
   "clarity": { "min": 5.0, "max": 6.0 },
   "category": "metal",

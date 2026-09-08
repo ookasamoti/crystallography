@@ -2,7 +2,7 @@
   "item": "crystallography:blue_ice_crystal",
   "tier": 0,
   "hardness": 64,
-  "cut":     { "min": 0.33, "max": 0.4 },
+  "cut":     { "min": 0.4, "max": 0.7 },
   "carat":   { "min": 5, "max": 9 },
   "clarity": { "min": 4.0, "max": 4.8 },
   "category": "crystal",

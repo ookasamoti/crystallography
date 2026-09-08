@@ -2,7 +2,7 @@
   "item": "crystallography:obsidian",
   "tier": 4,
   "hardness": 1024,
-  "cut":     { "min": 1.0, "max": 1.2 },
+  "cut":     { "min": 0.9, "max": 1.1 },
   "carat":   { "min": 5, "max": 9 },
   "clarity": { "min": 8.0, "max": 9.6 },
   "category": "stone",

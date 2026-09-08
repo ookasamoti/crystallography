@@ -2,7 +2,7 @@
   "item": "crystallography:nether_quartz",
   "tier": 2,
   "hardness": 128,
-  "cut":     { "min": 1.0, "max": 1.2 },
+  "cut":     { "min": 0.8, "max": 1.1 },
   "carat":   { "min": 6, "max": 10 },
   "clarity": { "min": 6.0, "max": 7.2 },
   "category": "quartz",

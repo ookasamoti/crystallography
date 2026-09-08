@@ -2,7 +2,8 @@
   "item": "minecraft:raw_gold",
   "tier": 1,
   "hardness": 650,
-  "carat": { "min": 2.3, "max": 2.3 },
+  "cut": { "min": 0.2, "max": 0.2 },
+  "carat": { "min": 1, "max": 1 },
   "clarity": { "min": 10, "max": 10 },
   "category": [
     "metal",

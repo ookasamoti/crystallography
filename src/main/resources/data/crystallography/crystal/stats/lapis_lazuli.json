@@ -2,7 +2,7 @@
   "item": "crystallography:lapis_lazuli",
   "tier": 1,
   "hardness": 64,
-  "cut":     { "min": 0.33, "max": 0.4 },
+  "cut":     { "min": 0.2, "max": 0.4 },
   "carat":   { "min": 8, "max": 12 },
   "clarity": { "min": 5.0, "max": 6.0 },
   "category": "jewel",

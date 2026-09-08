@@ -2,7 +2,7 @@
   "item": "crystallography:anthracite",
   "tier": 0,
   "hardness": 16,
-  "cut":     { "min": 0.0, "max": 0.0 },
+  "cut":     { "min": 0.2, "max": 0.5 },
   "carat":   { "min": 4, "max": 8 },
   "clarity": { "min": 4.0, "max": 4.8 },
   "category": "stone",

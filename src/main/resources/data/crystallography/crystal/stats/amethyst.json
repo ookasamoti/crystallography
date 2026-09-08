@@ -2,7 +2,7 @@
   "item": "crystallography:amethyst",
   "tier": 1,
   "hardness": 64,
-  "cut":     { "min": 0.0, "max": 0.0 },
+  "cut":     { "min": 0.2, "max": 0.5 },
   "carat":   { "min": 7, "max": 11 },
   "clarity": { "min": 4.0, "max": 4.8 },
   "category": "quartz",
