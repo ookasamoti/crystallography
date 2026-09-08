@@ -17,7 +17,7 @@ public enum ToolForm {
 
     // 派生フォーム：SPEAR + trident_core → TRIDENT、PICKAXE + heavy_core → MACE。
     // TRIDENT/MACE は vanilla だとティア無し固定値。attack speed もそのまま流用。
-    TRIDENT     (8.0f,  -2.9f,  1.00f),  // vanilla trident (8.0, -2.9)
+    TRIDENT     (5.0f,  -2.9f,  1.00f),  // 手動調整: vanilla trident の base は8.0だが強すぎるため5.0に調整
     MACE        (5.0f,  -3.4f,  1.00f),  // vanilla mace    (5.0, -3.4)
 
     // ---- ワンドフォーム ----
