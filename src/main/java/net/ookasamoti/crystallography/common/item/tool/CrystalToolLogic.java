@@ -126,13 +126,13 @@ public final class CrystalToolLogic {
     // 一時的に高硬度の結晶へ差し替えてから修繕→元に戻す、という往復操作で無限に耐久を
     // 水増しできてしまう（reconcileLoadouts が「削れた分」を絶対値で引き継ぐため）。
 
-    /** tier に対応する修繕素材（tier1=木材, tier2=金インゴット, tier3=黒曜石）。 */
+    /** tier に対応する修繕素材（tier1=木材, tier2=金インゴット, tier3=ネザライトインゴット）。 */
     public static boolean isRepairMaterial(int tier, ItemStack stack) {
         if (stack.isEmpty()) return false;
         return switch (tier) {
             case 1 -> stack.is(ItemTags.PLANKS);
             case 2 -> stack.is(Items.GOLD_INGOT);
-            default -> stack.is(Items.OBSIDIAN);
+            default -> stack.is(Items.NETHERITE_INGOT);
         };
     }
 
