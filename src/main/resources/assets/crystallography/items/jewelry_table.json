@@ -1,6 +1,6 @@
 {
   "model": {
     "type": "minecraft:model",
-    "model": "crystallography:item/jewelry_table"
+    "model": "crystallography:block/jewelry_table"
   }
 }

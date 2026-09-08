@@ -24,7 +24,7 @@ import com.mojang.serialization.MapCodec;
 
 public class JewelryTableBlock extends BaseEntityBlock {
 
-    public static final VoxelShape SHAPE = Block.box(0, 0, 0, 16, 10, 16);
+    public static final VoxelShape SHAPE = Block.box(0, 0, 0, 16, 16, 16);
 
     public static final MapCodec<JewelryTableBlock> CODEC = simpleCodec(JewelryTableBlock::new);
     @Override

@@ -1,21 +1,8 @@
 {
-	"credit": "Made with Blockbench",
-	"textures": {
-		"0": "crystallography:block/jewelry_table_base",
-		"particle": "crystallography:block/jewelry_table_base"
-	},
-	"elements": [
-		{
-			"from": [0, 0, 0],
-			"to": [16, 10, 16],
-			"faces": {
-				"north": {"uv": [0, 6, 16, 16], "texture": "#0"},
-				"east": {"uv": [0, 6, 16, 16], "texture": "#0"},
-				"south": {"uv": [0, 6, 16, 16], "texture": "#0"},
-				"west": {"uv": [0, 6, 16, 16], "texture": "#0"},
-				"up": {"uv": [16, 16, 0, 0], "texture": "#0"},
-				"down": {"uv": [16, 0, 0, 16], "texture": "#0"}
-			}
-		}
-	]
+  "parent": "minecraft:block/cube_bottom_top",
+  "textures": {
+    "top": "crystallography:block/jewelry_table_top",
+    "side": "crystallography:block/jewelry_table_side",
+    "bottom": "minecraft:block/oak_planks"
+  }
 }
