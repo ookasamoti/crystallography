@@ -1,0 +1,7 @@
+{
+  "type": "crystallography:tool_tier_upgrade",
+  "base": "crystallography:toolwand_tier1",
+  "corner": "minecraft:gold_ingot",
+  "filler": "minecraft:calcite",
+  "result": "crystallography:toolwand_tier2"
+}

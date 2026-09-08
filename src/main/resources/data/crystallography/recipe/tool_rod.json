@@ -1,0 +1,12 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "pattern": [
+    "CCC",
+    " P "
+  ],
+  "key": {
+    "C": "minecraft:cobblestone",
+    "P": "minecraft:wooden_pickaxe"
+  },
+  "result": { "id": "crystallography:toolrod_tier1" }
+}
