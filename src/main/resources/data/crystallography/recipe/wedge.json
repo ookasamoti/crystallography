@@ -5,12 +5,9 @@
     " # "
   ],
   "key": {
-    "#": {
-      "item": "minecraft:iron_nugget"
-    }
+    "#": "minecraft:iron_nugget"
   },
   "result": {
-    "item": "crystallography:wedge",
-    "count": 1
+    "id": "crystallography:wedge"
   }
 }
