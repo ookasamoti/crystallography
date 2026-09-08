@@ -3,26 +3,90 @@
     "type": "minecraft:select",
     "property": "crystallography:form",
     "fallback": {
-      "type": "minecraft:model",
-      "model": "crystallography:item/toolrod_trident_tier3",
-      "tints": [
+      "type": "minecraft:select",
+      "property": "minecraft:display_context",
+      "cases": [
         {
-          "type": "minecraft:constant",
-          "value": -1
-        },
-        {
-          "type": "crystallography:crystal",
-          "crystal_slot": 0
-        },
-        {
-          "type": "crystallography:crystal",
-          "crystal_slot": 1
-        },
-        {
-          "type": "crystallography:crystal",
-          "crystal_slot": 2
+          "when": [
+            "gui",
+            "ground",
+            "fixed",
+            "on_shelf"
+          ],
+          "model": {
+            "type": "minecraft:model",
+            "model": "crystallography:item/toolrod_trident_tier3",
+            "tints": [
+              {
+                "type": "minecraft:constant",
+                "value": -1
+              },
+              {
+                "type": "crystallography:crystal",
+                "crystal_slot": 0
+              },
+              {
+                "type": "crystallography:crystal",
+                "crystal_slot": 1
+              },
+              {
+                "type": "crystallography:crystal",
+                "crystal_slot": 2
+              }
+            ]
+          }
         }
-      ]
+      ],
+      "fallback": {
+        "type": "minecraft:condition",
+        "property": "minecraft:using_item",
+        "on_false": {
+          "type": "minecraft:special",
+          "base": "crystallography:item/crystal_trident_in_hand",
+          "model": {
+            "type": "crystallography:crystal_trident",
+            "frame_texture": "crystallography:textures/item/toolmodel_trident_toolrod_tier3.png",
+            "center_texture": "crystallography:item/toolmodel_trident_center",
+            "left_texture": "crystallography:item/toolmodel_trident_left",
+            "right_texture": "crystallography:item/toolmodel_trident_right"
+          }
+        },
+        "on_true": {
+          "type": "minecraft:special",
+          "base": "crystallography:item/crystal_trident_throwing",
+          "model": {
+            "type": "crystallography:crystal_trident",
+            "frame_texture": "crystallography:textures/item/toolmodel_trident_toolrod_tier3.png",
+            "center_texture": "crystallography:item/toolmodel_trident_center",
+            "left_texture": "crystallography:item/toolmodel_trident_left",
+            "right_texture": "crystallography:item/toolmodel_trident_right"
+          }
+        },
+        "transformation": {
+          "left_rotation": [
+            0.0,
+            0.0,
+            0.0,
+            1.0
+          ],
+          "right_rotation": [
+            0.0,
+            0.0,
+            0.0,
+            1.0
+          ],
+          "scale": [
+            1.0,
+            -1.0,
+            -1.0
+          ],
+          "translation": [
+            0.0,
+            0.0,
+            0.0
+          ]
+        }
+      }
     },
     "cases": [
       {

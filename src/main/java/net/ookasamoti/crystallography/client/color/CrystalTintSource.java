@@ -7,10 +7,7 @@ import net.minecraft.client.color.item.ItemTintSource;
 import net.minecraft.client.multiplayer.ClientLevel;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.item.ItemStack;
-import net.ookasamoti.crystallography.common.item.tool.ICrystalTool;
-import net.ookasamoti.crystallography.common.item.tool.ToolBase;
-import net.ookasamoti.crystallography.common.item.tool.ToolInventory;
-import net.ookasamoti.crystallography.data.CrystalStatsRegistry;
+import net.ookasamoti.crystallography.common.item.tool.CrystalColorHelper;
 import org.jetbrains.annotations.Nullable;
 
 /**
@@ -31,22 +28,7 @@ public record CrystalTintSource(int crystalSlot) implements ItemTintSource {
 
     @Override
     public int calculate(ItemStack stack, @Nullable ClientLevel level, @Nullable LivingEntity owner) {
-        var draft = ToolBase.getDraftLoadout(stack);
-        var lo = draft != null ? draft : ToolBase.getActiveLoadout(stack);
-        if (lo == null) return -1;
-
-        int[] indices = lo.crystalIndices();
-        if (crystalSlot >= indices.length) return -1;
-        int crystalIndex = indices[crystalSlot];
-        if (crystalIndex < 0) return -1;
-
-        if (level == null) return -1;
-        int tier = (stack.getItem() instanceof ICrystalTool ct) ? ct.getTier() : 1;
-        var inv = ToolInventory.get(stack, ToolBase.crystalSlotCount(tier), level.registryAccess());
-        var crystal = inv.getResource(crystalIndex).toStack(inv.getAmountAsInt(crystalIndex));
-        if (crystal.isEmpty()) return -1;
-
-        return CrystalStatsRegistry.get(crystal).map(r -> r.color()).orElse(-1);
+        return CrystalColorHelper.colorForSlot(stack, level != null ? level.registryAccess() : null, crystalSlot);
     }
 
     @Override

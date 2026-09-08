@@ -6,10 +6,13 @@ import net.neoforged.api.distmarker.Dist;
 import net.neoforged.bus.api.SubscribeEvent;
 import net.neoforged.fml.ModContainer;
 import net.neoforged.fml.common.Mod;
+import net.minecraft.world.entity.EntityType;
+import net.neoforged.neoforge.client.event.EntityRenderersEvent;
 import net.neoforged.neoforge.client.event.InputEvent;
 import net.neoforged.neoforge.client.event.RegisterColorHandlersEvent;
 import net.neoforged.neoforge.client.event.RegisterSelectItemModelPropertyEvent;
 import net.neoforged.neoforge.client.event.RegisterMenuScreensEvent;
+import net.neoforged.neoforge.client.event.RegisterSpecialModelRendererEvent;
 import net.neoforged.neoforge.client.gui.ConfigurationScreen;
 import net.neoforged.neoforge.client.gui.IConfigScreenFactory;
 import net.neoforged.neoforge.client.network.ClientPacketDistributor;
@@ -17,6 +20,8 @@ import net.neoforged.neoforge.common.NeoForge;
 import net.ookasamoti.crystallography.client.color.CrystalTintSource;
 import net.ookasamoti.crystallography.client.event.CrystalClientHooks;
 import net.ookasamoti.crystallography.client.model.FormProperty;
+import net.ookasamoti.crystallography.client.renderer.CrystalThrownTridentRenderer;
+import net.ookasamoti.crystallography.client.renderer.CrystalTridentSpecialRenderer;
 import net.ookasamoti.crystallography.client.screen.JewelryTableScreen;
 import net.ookasamoti.crystallography.client.screen.LapidaryAnvilScreen;
 import net.ookasamoti.crystallography.common.item.tool.ICrystalTool;
@@ -36,6 +41,8 @@ public class CrystallographyModClient {
         bus.addListener(CrystallographyModClient::onRegisterScreens);
         bus.addListener(CrystallographyModClient::onRegisterItemTintSources);
         bus.addListener(CrystallographyModClient::onRegisterSelectProperties);
+        bus.addListener(CrystallographyModClient::onRegisterEntityRenderers);
+        bus.addListener(CrystallographyModClient::onRegisterSpecialModelRenderers);
         bus.addListener(KeyBindingRegistry::onRegisterKeyMappings);
         NeoForge.EVENT_BUS.addListener(CrystallographyModClient::onMouseScroll);
     }
@@ -60,6 +67,22 @@ public class CrystallographyModClient {
         // a minecraft:select model (see FormProperty).
         event.register(Identifier.fromNamespaceAndPath(CrystallographyMod.MOD_ID, "form"),
                 FormProperty.TYPE);
+    }
+
+    @SubscribeEvent
+    static void onRegisterEntityRenderers(EntityRenderersEvent.RegisterRenderers event) {
+        // Overrides vanilla's ThrownTridentRenderer, which always draws the hardcoded
+        // entity/trident/trident.png special model regardless of the actual thrown stack.
+        event.registerEntityRenderer(EntityType.TRIDENT, CrystalThrownTridentRenderer::new);
+    }
+
+    @SubscribeEvent
+    static void onRegisterSpecialModelRenderers(RegisterSpecialModelRendererEvent event) {
+        // Same TridentModel geometry/pipeline as vanilla's "trident" special model, just with a
+        // data-driven texture field instead of a hardcoded one, so each tier's item model JSON
+        // can point at its own composited texture (see items/tool_trident_tierN.json).
+        event.register(Identifier.fromNamespaceAndPath(CrystallographyMod.MOD_ID, "crystal_trident"),
+                CrystalTridentSpecialRenderer.Unbaked.MAP_CODEC);
     }
 
     @SubscribeEvent

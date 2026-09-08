@@ -1,8 +1,11 @@
 package net.ookasamoti.crystallography;
 
 import net.minecraft.resources.Identifier;
+import net.minecraft.world.entity.projectile.arrow.ThrownTrident;
 import net.neoforged.fml.ModContainer;
 import net.neoforged.neoforge.event.AddServerReloadListenersEvent;
+import net.neoforged.neoforge.event.entity.EntityJoinLevelEvent;
+import net.ookasamoti.crystallography.common.entity.TridentVisualData;
 import net.ookasamoti.crystallography.data.CrystalRollsReloader;
 import net.ookasamoti.crystallography.data.CrystalStatsReloader;
 import net.ookasamoti.crystallography.network.ModNet;
@@ -22,6 +25,7 @@ public class CrystallographyMod {
 
     public CrystallographyMod(IEventBus modEventBus, ModContainer modContainer) {
         NeoForge.EVENT_BUS.addListener(CrystallographyMod::onAddReloadListeners);
+        NeoForge.EVENT_BUS.addListener(CrystallographyMod::onEntityJoinLevel);
 
         DataComponentsRegistry.register(modEventBus);
         ItemRegistry.register(modEventBus);
@@ -32,11 +36,26 @@ public class CrystallographyMod {
         MenuTypesRegistry.register(modEventBus);
         ToolComponentsRegistry.register(modEventBus);
         RecipeSerializersRegistry.register(modEventBus);
+        AttachmentTypeRegistry.register(modEventBus);
         ModNet.register(modEventBus);
     }
 
     private static void onAddReloadListeners(AddServerReloadListenersEvent e) {
         e.addListener(Identifier.fromNamespaceAndPath(MOD_ID, "crystal_stats"), new CrystalStatsReloader());
         e.addListener(Identifier.fromNamespaceAndPath(MOD_ID, "crystal_rolls"), new CrystalRollsReloader());
+    }
+
+    /**
+     * A thrown trident's real weapon stack is never sent to the client (vanilla only syncs a
+     * couple of individual bits for that entity), so the tier/crystal-colour data the client
+     * needs to render it correctly is computed here, server-side, and stashed in a synced
+     * attachment (see {@link TridentVisualData}).
+     */
+    private static void onEntityJoinLevel(EntityJoinLevelEvent event) {
+        if (event.getLevel().isClientSide()) return;
+        if (event.getEntity() instanceof ThrownTrident trident) {
+            var data = TridentVisualData.compute(trident.getWeaponItem(), event.getLevel().registryAccess());
+            trident.setData(AttachmentTypeRegistry.TRIDENT_VISUAL, data);
+        }
     }
 }
