@@ -29,9 +29,7 @@ public record TridentVisualData(int tier, int centerColor, int leftColor, int ri
 
     public static TridentVisualData compute(ItemStack weapon, RegistryAccess registryAccess) {
         int tier = weapon.getItem() instanceof ICrystalTool ct ? Math.max(1, Math.min(3, ct.getTier())) : 1;
-        int center = CrystalColorHelper.colorForSlot(weapon, registryAccess, 0);
-        int left = CrystalColorHelper.colorForSlot(weapon, registryAccess, 1);
-        int right = CrystalColorHelper.colorForSlot(weapon, registryAccess, 2);
-        return new TridentVisualData(tier, center, left, right);
+        int[] colors = CrystalColorHelper.colorsForAllSlots(weapon, registryAccess);
+        return new TridentVisualData(tier, colors[0], colors[1], colors[2]);
     }
 }

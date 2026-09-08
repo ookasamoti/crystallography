@@ -62,10 +62,8 @@ public class CrystalTridentSpecialRenderer implements SpecialModelRenderer<Cryst
     public @Nullable TridentColors extractArgument(ItemStack stack) {
         var level = Minecraft.getInstance().level;
         var registryAccess = level != null ? level.registryAccess() : null;
-        int center = CrystalColorHelper.colorForSlot(stack, registryAccess, 0);
-        int left = CrystalColorHelper.colorForSlot(stack, registryAccess, 1);
-        int right = CrystalColorHelper.colorForSlot(stack, registryAccess, 2);
-        return new TridentColors(center, left, right);
+        int[] colors = CrystalColorHelper.colorsForAllSlots(stack, registryAccess);
+        return new TridentColors(colors[0], colors[1], colors[2]);
     }
 
     @Override

@@ -16,21 +16,35 @@ public final class CrystalColorHelper {
     }
 
     public static int colorForSlot(ItemStack stack, @Nullable RegistryAccess registryAccess, int crystalSlot) {
+        return colorsForAllSlots(stack, registryAccess)[crystalSlot];
+    }
+
+    /**
+     * Same as {@link #colorForSlot} but resolves all three crystal slots (center/left/right) at
+     * once, building the stack's {@link ToolInventory} only once instead of once per slot. Prefer
+     * this whenever more than one slot's colour is needed in the same place (e.g. a special-model
+     * renderer tinting several overlay passes per frame) — {@code ToolInventory.get} deep-copies
+     * and re-deserialises the crystal inventory's NBT on every call, so calling it three times for
+     * the same stack is pure waste.
+     */
+    public static int[] colorsForAllSlots(ItemStack stack, @Nullable RegistryAccess registryAccess) {
+        int[] colors = {-1, -1, -1};
+
         var draft = ToolBase.getDraftLoadout(stack);
         var lo = draft != null ? draft : ToolBase.getActiveLoadout(stack);
-        if (lo == null) return -1;
+        if (lo == null || registryAccess == null) return colors;
 
         int[] indices = lo.crystalIndices();
-        if (crystalSlot >= indices.length) return -1;
-        int crystalIndex = indices[crystalSlot];
-        if (crystalIndex < 0) return -1;
-
-        if (registryAccess == null) return -1;
         int tier = (stack.getItem() instanceof ICrystalTool ct) ? ct.getTier() : 1;
         var inv = ToolInventory.get(stack, ToolBase.crystalSlotCount(tier), registryAccess);
-        var crystal = inv.getResource(crystalIndex).toStack(inv.getAmountAsInt(crystalIndex));
-        if (crystal.isEmpty()) return -1;
 
-        return CrystalStatsRegistry.get(crystal).map(r -> r.color()).orElse(-1);
+        for (int slot = 0; slot < colors.length && slot < indices.length; slot++) {
+            int crystalIndex = indices[slot];
+            if (crystalIndex < 0) continue;
+            var crystal = inv.getResource(crystalIndex).toStack(inv.getAmountAsInt(crystalIndex));
+            if (crystal.isEmpty()) continue;
+            colors[slot] = CrystalStatsRegistry.get(crystal).map(r -> r.color()).orElse(-1);
+        }
+        return colors;
     }
 }
