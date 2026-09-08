@@ -483,6 +483,7 @@ public final class CrystalToolLogic {
             applySpearComponents(stack, s.tier());
         } else {
             clearSpearComponents(stack);
+            applyWeaponComponent(stack, lo.form());
         }
 
         var hint = Identifier.parse(CrystallographyMod.MOD_ID + ":form/" + lo.form().name().toLowerCase());
@@ -545,6 +546,24 @@ public final class CrystalToolLogic {
         stack.remove(DataComponents.SWING_ANIMATION);
         stack.remove(DataComponents.WEAPON);
         stack.remove(DataComponents.USE_EFFECTS);
+    }
+
+    /**
+     * バニラの {@code Item.Properties#sword/axe/pickaxe/hoe/shovel} 等が登録時に付与する
+     * {@code DataComponents.WEAPON} 相当（近接命中1回あたりのアイテムダメージ量 ＋ 斧の盾無効化秒数）。
+     * {@link ItemStack#hurtEnemy} はこのコンポーネントの有無だけを見て {@code postHurtEnemy}
+     * （＝耐久減少）を呼ぶかどうかを決めるため、フォーム変更のたびに必ず再設定/削除する。
+     * SWORD/MACE/TRIDENT はバニラ同様 1、PICKAXE/HOE/SHOVEL は 2、AXE は 2 かつ盾無効化5秒。
+     * BOW/CROSSBOW/FISHING_ROD/SPYGLASS/SHEARS/SHIELD はバニラ同様コンポーネント無し
+     * （近接で殴っても耐久が減らない）。SPEAR は {@link #applySpearComponents} 側で個別に設定する。
+     */
+    private static void applyWeaponComponent(ItemStack stack, ToolForm form) {
+        switch (form) {
+            case SWORD, MACE, TRIDENT -> stack.set(DataComponents.WEAPON, new Weapon(1));
+            case PICKAXE, HOE, SHOVEL -> stack.set(DataComponents.WEAPON, new Weapon(2));
+            case AXE -> stack.set(DataComponents.WEAPON, new Weapon(2, Weapon.AXE_DISABLES_BLOCKING_FOR_SECONDS));
+            default -> stack.remove(DataComponents.WEAPON);
+        }
     }
 
     /**
