@@ -1,13 +1,18 @@
 package net.ookasamoti.crystallography.common.item.tool.form;
 
 import net.minecraft.core.BlockPos;
+import net.minecraft.core.component.DataComponents;
 import net.minecraft.network.chat.Component;
+import net.minecraft.sounds.SoundEvents;
+import net.minecraft.tags.DamageTypeTags;
+import net.minecraft.world.entity.EquipmentSlot;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemInstance;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.ShieldItem;
 import net.minecraft.world.item.TooltipFlag;
+import net.minecraft.world.item.component.BlocksAttacks;
 import net.minecraft.world.item.component.ItemAttributeModifiers;
 import net.minecraft.world.item.component.TooltipDisplay;
 import net.minecraft.world.level.Level;
@@ -18,6 +23,8 @@ import net.ookasamoti.crystallography.common.item.tool.ICrystalTool;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.List;
+import java.util.Optional;
 import java.util.function.Consumer;
 
 /**
@@ -25,14 +32,38 @@ import java.util.function.Consumer;
  * 染料での名前表示以外のオーバーライドを持たず、防御自体は {@code DataComponents.BLOCKS_ATTACKS}
  * コンポーネントで駆動される（クラス側の特別なロジックはほぼ無い）。それでも他フォームとの
  * 実装パターン統一のため本物の {@link ShieldItem} を継承する。
+ * <p>
+ * このコンポーネントは vanilla {@code Items.SHIELD} 側では登録時の {@code Item.Properties} に
+ * 付与されており、{@code Item.Properties} は継承されないため、ここで明示的に付与しないと
+ * 見た目こそ盾でも実際には一切ブロックできない（右クリックしても何も起きない）。
  */
 public class CrystalShield extends ShieldItem implements ICrystalTool {
 
     private final int tier;
 
     public CrystalShield(Properties props, int tier) {
-        super(props);
+        super(withBlocking(props));
         this.tier = tier;
+    }
+
+    // vanilla Items.SHIELD と同じ値。BYPASSES_SHIELD は DamageTypeTags 側の登録が
+    // 完了してから解決する必要があるため、delayedComponent で遅延解決する。
+    private static Properties withBlocking(Properties props) {
+        return props
+                .equippableUnswappable(EquipmentSlot.OFFHAND)
+                .delayedComponent(
+                        DataComponents.BLOCKS_ATTACKS,
+                        context -> new BlocksAttacks(
+                                0.25F,
+                                1.0F,
+                                List.of(new BlocksAttacks.DamageReduction(90.0F, Optional.empty(), 0.0F, 1.0F)),
+                                new BlocksAttacks.ItemDamageFunction(3.0F, 1.0F, 1.0F),
+                                Optional.of(context.getOrThrow(DamageTypeTags.BYPASSES_SHIELD)),
+                                Optional.of(SoundEvents.SHIELD_BLOCK),
+                                Optional.of(SoundEvents.SHIELD_BREAK)
+                        )
+                )
+                .component(DataComponents.BREAK_SOUND, SoundEvents.SHIELD_BREAK);
     }
 
     @Override public int getTier() { return tier; }
