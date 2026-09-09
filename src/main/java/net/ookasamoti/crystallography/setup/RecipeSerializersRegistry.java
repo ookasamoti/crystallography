@@ -8,6 +8,7 @@ import net.neoforged.neoforge.registries.DeferredRegister;
 import net.ookasamoti.crystallography.CrystallographyMod;
 import net.ookasamoti.crystallography.common.recipe.JewelryTableRecipe;
 import net.ookasamoti.crystallography.common.recipe.ToolRepairRecipe;
+import net.ookasamoti.crystallography.common.recipe.ToolRodPickaxeRecipe;
 import net.ookasamoti.crystallography.common.recipe.ToolTierUpgradeRecipe;
 
 public final class RecipeSerializersRegistry {
@@ -22,6 +23,9 @@ public final class RecipeSerializersRegistry {
 
     public static final DeferredHolder<RecipeSerializer<?>, RecipeSerializer<JewelryTableRecipe>> JEWELRY_TABLE =
             RECIPE_SERIALIZERS.register("jewelry_table", () -> JewelryTableRecipe.SERIALIZER);
+
+    public static final DeferredHolder<RecipeSerializer<?>, RecipeSerializer<ToolRodPickaxeRecipe>> TOOL_ROD_PICKAXE =
+            RECIPE_SERIALIZERS.register("tool_rod_pickaxe", () -> ToolRodPickaxeRecipe.SERIALIZER);
 
     public static void register(IEventBus bus) {
         RECIPE_SERIALIZERS.register(bus);
