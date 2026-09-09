@@ -113,7 +113,9 @@ public class ItemRegistry {
     public static final DeferredItem<Item> TRIDENT_CORE       = crystal("trident_core");
     public static final DeferredItem<Item> HEAVY_CORE         = crystal("heavy_core");
 
-    public static final DeferredItem<Item> STONE = ITEMS.registerSimpleItem("stone");
+    // raw_copper/raw_iron/raw_gold 同様の原石バッテリー用結晶のため、他の crystal() 系(1個ずつ
+    // 装着する想定でstacksTo(1))とは異なりバニラの生鉱石と同じ通常スタック(64)のままにする。
+    public static final DeferredItem<Item> STONE = ITEMS.registerItem("stone", Crystal::new);
 
     public static void register(IEventBus bus) {
         ITEMS.register(bus);
