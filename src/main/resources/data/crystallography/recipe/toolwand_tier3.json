@@ -1,7 +1,6 @@
 {
-  "type": "minecraft:smithing_transform",
+  "type": "crystallography:tool_tier_smithing_upgrade",
   "template": "minecraft:netherite_upgrade_smithing_template",
-  "base": "crystallography:toolwand_tier2",
   "addition": "minecraft:netherite_ingot",
-  "result": { "id": "crystallography:toolwand_tier3" }
+  "result": "crystallography:toolwand_tier3"
 }
