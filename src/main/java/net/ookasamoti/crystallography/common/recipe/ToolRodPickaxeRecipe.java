@@ -23,10 +23,9 @@ import org.jetbrains.annotations.Nullable;
 
 /**
  * 丸石5枠(上段3枠＋中段中央/右)＋下段中央に木のツルハシ(耐久値無視)で tier1 ToolRod を作る。
- * 丸石の各枠は {@code crystallography:stone} でも代用可。使用した丸石/stoneの数から
- * 「丸石1個=stone9、stone1個=stone1」で結晶インベントリ用の stone 合計量を計算し、
- * 3枠(x, 1, 1。xに端数を寄せる)へ分配して装着した状態で、PICKAXE(アクティブ)・AXE・
- * SWORD・SHOVEL・HOE の5ロードアウトを登録済みで払い出す。
+ * 結晶インベントリ3枠は固定で「丸石3個(原石バッテリー用、1枠にスタック)＋stone1個×2枠
+ * (実ステータス用、黄銅鉱由来のレンジからそれぞれ独立に解決＝ランダム)」で登録し、
+ * PICKAXE(アクティブ)・AXE・SWORD・SHOVEL・HOE の5ロードアウトを登録済みで払い出す。
  * <p>
  * {@link #assemble} は {@code HolderLookup.Provider}（結晶インベントリの NBT シリアライズに必要）
  * を受け取れないため、直前に必ず呼ばれる {@link #matches} で渡された {@link Level} を一時的に
@@ -46,10 +45,6 @@ public class ToolRodPickaxeRecipe extends CustomRecipe {
 
     private @Nullable Level lastLevel;
 
-    private static boolean isCobbleOrStone(ItemStack stack) {
-        return stack.is(Items.COBBLESTONE) || stack.is(ItemRegistry.STONE.get());
-    }
-
     @Override
     public boolean matches(CraftingInput input, Level level) {
         if (input.width() != 3 || input.height() != 3) return false;
@@ -63,7 +58,7 @@ public class ToolRodPickaxeRecipe extends CustomRecipe {
 
         for (int[] c : MATERIAL_CELLS) {
             ItemStack s = input.getItem(c[0], c[1]);
-            if (!isCobbleOrStone(s) || s.getCount() != 1) return false;
+            if (!s.is(Items.COBBLESTONE) || s.getCount() != 1) return false;
         }
 
         this.lastLevel = level;
@@ -75,22 +70,13 @@ public class ToolRodPickaxeRecipe extends CustomRecipe {
         Level level = this.lastLevel;
         if (level == null) return ItemStack.EMPTY;
 
-        int cobbleCount = 0, stoneCount = 0;
-        for (int[] c : MATERIAL_CELLS) {
-            ItemStack s = input.getItem(c[0], c[1]);
-            if (s.is(Items.COBBLESTONE)) cobbleCount++;
-            else if (s.is(ItemRegistry.STONE.get())) stoneCount++;
-            else return ItemStack.EMPTY;
-        }
-
-        int totalStone = cobbleCount * 9 + stoneCount;
         int tier = 1;
         int[] crystalIndices = {0, 1, 2};
 
         ItemStack stack = new ItemStack(ItemRegistry.TOOLROD_TIER1.get());
         ItemStacksResourceHandler crystalInv =
                 ToolInventory.get(stack, CrystalToolLogic.crystalSlotCount(tier), level.registryAccess());
-        setStoneSlot(crystalInv, level, 0, totalStone - 2);
+        setCobblestoneSlot(crystalInv, 0, 3);
         setStoneSlot(crystalInv, level, 1, 1);
         setStoneSlot(crystalInv, level, 2, 1);
 
@@ -102,6 +88,10 @@ public class ToolRodPickaxeRecipe extends CustomRecipe {
         ToolBase.setActiveIndex(stack, 0); // PICKAXE をアクティブに
         ToolBase.applyComputedStats(stack);
         return CrystalToolLogic.retargetToActiveForm(stack, tier);
+    }
+
+    private static void setCobblestoneSlot(ItemStacksResourceHandler inv, int index, int amount) {
+        inv.set(index, ItemResource.of(new ItemStack(Items.COBBLESTONE)), amount);
     }
 
     private static void setStoneSlot(ItemStacksResourceHandler inv, Level level, int index, int amount) {

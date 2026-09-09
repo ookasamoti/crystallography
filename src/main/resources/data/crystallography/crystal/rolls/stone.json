@@ -1,0 +1,8 @@
+{
+  "input": "minecraft:stone",
+  "picks": ["#minecraft:pickaxes"],
+  "results": [
+    { "item": "crystallography:stone", "weight": 70, "type": "crystal" },
+    { "item": "minecraft:gravel", "weight": 30, "type": "vanilla" }
+  ]
+}

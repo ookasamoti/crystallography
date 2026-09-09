@@ -1,0 +1,12 @@
+{
+  "item": "minecraft:cobblestone",
+  "tier": 1,
+  "hardness": 650,
+  "cut":     { "min": 0.3, "max": 0.3 },
+  "carat":   1,
+  "clarity": 4,
+  "category": [
+    "stone",
+    "raw_ore"
+  ]
+}
