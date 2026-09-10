@@ -1,0 +1,8 @@
+{
+  "item": "crystallography:sigil_surge",
+  "cost": 2,
+  "grants": [
+    { "form": "SPEAR", "enchantment": "minecraft:lunge", "level": 3 },
+    { "form": "TRIDENT", "enchantment": "minecraft:riptide", "level": 3 }
+  ]
+}

@@ -1,0 +1,6 @@
+{
+  "item": "crystallography:sigil_force",
+  "cost": 1,
+  "attack_damage_bonus": 3.0,
+  "forms": ["SWORD", "AXE", "SPEAR", "TRIDENT"]
+}

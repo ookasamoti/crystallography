@@ -1,0 +1,8 @@
+{
+  "item": "crystallography:sigil_frost",
+  "cost": 2,
+  "forms": ["SWORD", "AXE", "SPEAR", "TRIDENT"],
+  "on_hit_effect": "minecraft:slowness",
+  "on_hit_duration": 60,
+  "on_hit_amplifier": 1
+}

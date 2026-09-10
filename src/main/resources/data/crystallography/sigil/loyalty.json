@@ -1,0 +1,7 @@
+{
+  "item": "crystallography:sigil_loyalty",
+  "cost": 3,
+  "grants": [
+    { "form": "TRIDENT", "enchantment": "minecraft:loyalty", "level": 1 }
+  ]
+}

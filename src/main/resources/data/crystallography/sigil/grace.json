@@ -1,0 +1,14 @@
+{
+  "item": "crystallography:sigil_grace",
+  "cost": 2,
+  "grants": [
+    { "form": "PICKAXE", "enchantment": "minecraft:fortune", "level": 3 },
+    { "form": "AXE", "enchantment": "minecraft:fortune", "level": 3 },
+    { "form": "HOE", "enchantment": "minecraft:fortune", "level": 3 },
+    { "form": "SHOVEL", "enchantment": "minecraft:fortune", "level": 3 },
+    { "form": "SWORD", "enchantment": "minecraft:looting", "level": 3 },
+    { "form": "AXE", "enchantment": "minecraft:looting", "level": 3 },
+    { "form": "SPEAR", "enchantment": "minecraft:looting", "level": 3 },
+    { "form": "FISHING_ROD", "enchantment": "minecraft:luck_of_the_sea", "level": 3 }
+  ]
+}

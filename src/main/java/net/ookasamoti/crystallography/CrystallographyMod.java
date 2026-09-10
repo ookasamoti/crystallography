@@ -5,10 +5,16 @@ import net.minecraft.world.entity.projectile.arrow.ThrownTrident;
 import net.neoforged.fml.ModContainer;
 import net.neoforged.neoforge.event.AddServerReloadListenersEvent;
 import net.neoforged.neoforge.event.entity.EntityJoinLevelEvent;
+import net.neoforged.neoforge.event.server.ServerStartingEvent;
+import net.neoforged.neoforge.event.server.ServerStoppingEvent;
+import net.ookasamoti.crystallography.common.entity.SoulFireIgnitionHooks;
 import net.ookasamoti.crystallography.common.entity.TridentVisualData;
 import net.ookasamoti.crystallography.common.item.tool.AttackAttributeTooltipHooks;
+import net.ookasamoti.crystallography.common.item.tool.SigilCombatHooks;
 import net.ookasamoti.crystallography.data.CrystalRollsReloader;
 import net.ookasamoti.crystallography.data.CrystalStatsReloader;
+import net.ookasamoti.crystallography.data.ServerRegistryHolder;
+import net.ookasamoti.crystallography.data.SigilReloader;
 import net.ookasamoti.crystallography.network.ModNet;
 import net.ookasamoti.crystallography.setup.*;
 import org.slf4j.Logger;
@@ -27,6 +33,8 @@ public class CrystallographyMod {
     public CrystallographyMod(IEventBus modEventBus, ModContainer modContainer) {
         NeoForge.EVENT_BUS.addListener(CrystallographyMod::onAddReloadListeners);
         NeoForge.EVENT_BUS.addListener(CrystallographyMod::onEntityJoinLevel);
+        NeoForge.EVENT_BUS.addListener(CrystallographyMod::onServerStarting);
+        NeoForge.EVENT_BUS.addListener(CrystallographyMod::onServerStopping);
 
         DataComponentsRegistry.register(modEventBus);
         ItemRegistry.register(modEventBus);
@@ -40,11 +48,26 @@ public class CrystallographyMod {
         AttachmentTypeRegistry.register(modEventBus);
         ModNet.register(modEventBus);
         AttackAttributeTooltipHooks.register(modEventBus);
+        SigilCombatHooks.register(modEventBus);
+        SoulFireIgnitionHooks.register(modEventBus);
+    }
+
+    /**
+     * シジル付与エンチャントの解決（{@code CrystalToolLogic#applyComputedStats}）用に、
+     * サーバーの RegistryAccess を静的に保持しておく（詳細は {@link ServerRegistryHolder}）。
+     */
+    private static void onServerStarting(ServerStartingEvent event) {
+        ServerRegistryHolder.set(event.getServer().registryAccess());
+    }
+
+    private static void onServerStopping(ServerStoppingEvent event) {
+        ServerRegistryHolder.set(null);
     }
 
     private static void onAddReloadListeners(AddServerReloadListenersEvent e) {
         e.addListener(Identifier.fromNamespaceAndPath(MOD_ID, "crystal_stats"), new CrystalStatsReloader());
         e.addListener(Identifier.fromNamespaceAndPath(MOD_ID, "crystal_rolls"), new CrystalRollsReloader());
+        e.addListener(Identifier.fromNamespaceAndPath(MOD_ID, "sigil"), new SigilReloader());
     }
 
     /**

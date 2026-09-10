@@ -2,6 +2,7 @@ package net.ookasamoti.crystallography.common.util;
 
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Holder;
+import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.core.registries.Registries;
 import net.minecraft.network.chat.Component;
 import net.minecraft.network.protocol.game.ClientboundSetActionBarTextPacket;
@@ -18,8 +19,12 @@ import net.neoforged.neoforge.transfer.item.ItemResource;
 import net.neoforged.neoforge.transfer.item.ItemStacksResourceHandler;
 import net.neoforged.neoforge.transfer.transaction.Transaction;
 import net.ookasamoti.crystallography.common.block.entity.LapidaryAnvilBlockEntity;
+import net.ookasamoti.crystallography.common.item.crystal.AttachedSigils;
+import net.ookasamoti.crystallography.common.item.crystal.Crystal;
 import net.ookasamoti.crystallography.data.CrystalRollsRegistry;
 import net.ookasamoti.crystallography.data.CrystalStatsRegistry;
+import net.ookasamoti.crystallography.data.SigilRegistry;
+import net.ookasamoti.crystallography.setup.DataComponentsRegistry;
 
 import java.util.List;
 
@@ -81,6 +86,78 @@ public final class LapidaryAnvilOperations {
             insertOrDrop(be, List.of(out), level, be.getBlockPos());
         }
         be.setChanged();
+    }
+
+    /**
+     * ジェムスロット(3..17)の中から「シジル」を1つと、そのコストが carat 予算内に収まる
+     * 「結晶」を1つ見つけて、シジルを消費して結晶に付与する。見つからなければ何もしない
+     * （アクションバーで通知）。同じ操作で複数のシジル/結晶があっても最初に見つかった
+     * 組み合わせ1件だけを処理する（原石割り同様、1クリック=1操作）。
+     */
+    public static void attachSigil(LapidaryAnvilBlockEntity be, ServerPlayer sp) {
+        var level = sp.level();
+        var items = be.getItems();
+
+        int sigilSlot = -1;
+        Identifier sigilItemId = null;
+        SigilRegistry.Definition def = null;
+        for (int i = LapidaryAnvilBlockEntity.SLOT_RIGHT_START; i <= LapidaryAnvilBlockEntity.SLOT_RIGHT_END; i++) {
+            var st = stackAt(items, i);
+            if (st.isEmpty()) continue;
+            var maybeDef = SigilRegistry.get(st);
+            if (maybeDef.isPresent()) {
+                sigilSlot = i;
+                sigilItemId = BuiltInRegistries.ITEM.getKey(st.getItem());
+                def = maybeDef.get();
+                break;
+            }
+        }
+        if (def == null) {
+            sp.connection.send(new ClientboundSetActionBarTextPacket(
+                    Component.translatable("message.crystallography.lapidary.no_sigil_attach")));
+            return;
+        }
+
+        int crystalSlot = -1;
+        for (int i = LapidaryAnvilBlockEntity.SLOT_RIGHT_START; i <= LapidaryAnvilBlockEntity.SLOT_RIGHT_END; i++) {
+            if (i == sigilSlot) continue;
+            var st = stackAt(items, i);
+            if (st.isEmpty()) continue;
+
+            Crystal.resolveStats(st, level);
+            var stats = st.get(DataComponentsRegistry.CRYSTAL_STATS.get());
+            if (stats == null) continue;
+
+            var attached = st.getOrDefault(DataComponentsRegistry.ATTACHED_SIGILS.get(), AttachedSigils.EMPTY);
+            if (usedCarat(attached) + def.cost() > stats.carat()) continue;
+
+            crystalSlot = i;
+            break;
+        }
+        if (crystalSlot < 0) {
+            sp.connection.send(new ClientboundSetActionBarTextPacket(
+                    Component.translatable("message.crystallography.lapidary.no_sigil_attach")));
+            return;
+        }
+
+        if (!consumeOne(items, sigilSlot)) return;
+
+        var crystalStack = stackAt(items, crystalSlot).copy();
+        var attached = crystalStack.getOrDefault(DataComponentsRegistry.ATTACHED_SIGILS.get(), AttachedSigils.EMPTY);
+        crystalStack.set(DataComponentsRegistry.ATTACHED_SIGILS.get(), attached.withAdded(sigilItemId));
+        items.set(crystalSlot, ItemResource.of(crystalStack), crystalStack.getCount());
+
+        level.playSound(null, be.getBlockPos(), SoundEvents.ANVIL_USE, SoundSource.BLOCKS, 0.6f, 0.9f);
+        be.setChanged();
+    }
+
+    /** 結晶に既に付与済みのシジルのコスト合計（carat 予算の消費済み分）。 */
+    private static int usedCarat(AttachedSigils attached) {
+        int total = 0;
+        for (var id : attached.sigils()) {
+            total += SigilRegistry.get(id).map(SigilRegistry.Definition::cost).orElse(0);
+        }
+        return total;
     }
 
     /** Reads a slot's contents as an ItemStack (a copy; mutating it does NOT affect the handler). */

@@ -61,6 +61,23 @@ public class CreativeTabRegistry {
                         output.accept(ItemRegistry.TRIDENT_CORE.get());
                         output.accept(ItemRegistry.HEAVY_CORE.get());
                         output.accept(ItemRegistry.STONE.get());
+                        output.accept(ItemRegistry.SIGIL_FORCE.get());
+                        output.accept(ItemRegistry.SIGIL_SMITE.get());
+                        output.accept(ItemRegistry.SIGIL_FUMIGATE.get());
+                        output.accept(ItemRegistry.SIGIL_CHANNELING.get());
+                        output.accept(ItemRegistry.SIGIL_LOYALTY.get());
+                        output.accept(ItemRegistry.SIGIL_INFINITY.get());
+                        output.accept(ItemRegistry.SIGIL_DENSITY.get());
+                        output.accept(ItemRegistry.SIGIL_SURGE.get());
+                        output.accept(ItemRegistry.SIGIL_GRACE.get());
+                        output.accept(ItemRegistry.SIGIL_STEADY.get());
+                        output.accept(ItemRegistry.SIGIL_FROST.get());
+                        output.accept(ItemRegistry.SIGIL_GALE.get());
+                        output.accept(ItemRegistry.SIGIL_HASTE.get());
+                        output.accept(ItemRegistry.SIGIL_SWEEP.get());
+                        output.accept(ItemRegistry.SIGIL_FLAME.get());
+                        output.accept(ItemRegistry.SIGIL_PIERCE.get());
+                        output.accept(ItemRegistry.SIGIL_UNBREAKING.get());
                     }).build()
     );
 

@@ -1,0 +1,7 @@
+{
+  "item": "crystallography:sigil_density",
+  "cost": 1,
+  "grants": [
+    { "form": "MACE", "enchantment": "minecraft:density", "level": 5 }
+  ]
+}

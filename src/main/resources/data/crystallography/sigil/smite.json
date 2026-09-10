@@ -1,0 +1,7 @@
+{
+  "item": "crystallography:sigil_smite",
+  "cost": 1,
+  "conditional_damage_bonus": 12.5,
+  "target_tag": "minecraft:sensitive_to_smite",
+  "forms": ["SWORD", "AXE", "SPEAR", "TRIDENT"]
+}

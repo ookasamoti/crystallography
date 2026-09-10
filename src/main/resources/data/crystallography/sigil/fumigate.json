@@ -1,0 +1,10 @@
+{
+  "item": "crystallography:sigil_fumigate",
+  "cost": 1,
+  "conditional_damage_bonus": 12.5,
+  "target_tag": "minecraft:sensitive_to_bane_of_arthropods",
+  "on_hit_effect": "minecraft:slowness",
+  "on_hit_duration": 70,
+  "on_hit_amplifier": 3,
+  "forms": ["SWORD", "AXE", "SPEAR", "TRIDENT"]
+}

@@ -17,8 +17,9 @@ import org.jetbrains.annotations.NotNull;
 
 public class LapidaryAnvilMenu extends AbstractContainerMenu {
 
-    public static final int BTN_CRACK_ORE  = 0;
-    public static final int BTN_CRACK_GEMS = 1;
+    public static final int BTN_CRACK_ORE     = 0;
+    public static final int BTN_CRACK_GEMS    = 1;
+    public static final int BTN_ATTACH_SIGIL  = 2;
 
     private final ContainerLevelAccess access;
     private final LapidaryAnvilBlockEntity blockEntity;
@@ -80,6 +81,10 @@ public class LapidaryAnvilMenu extends AbstractContainerMenu {
             LapidaryAnvilOperations.crackGems(blockEntity, sp);
             return true;
         }
+        if (id == BTN_ATTACH_SIGIL) {
+            LapidaryAnvilOperations.attachSigil(blockEntity, sp);
+            return true;
+        }
         return false;
     }
 
@@ -114,6 +119,14 @@ public class LapidaryAnvilMenu extends AbstractContainerMenu {
     public boolean canCrackGems() {
         for (int i = 3; i <= 17; i++) if (hasItemInSlot(i)) return true;
         return false;
+    }
+
+    /** ラフな判定（本当にコスト内に収まるかはサーバー側 attachSigil で確認する）：
+     * ジェム欄に2個以上アイテムが入っていれば押せる状態にする。 */
+    public boolean canAttachSigil() {
+        int count = 0;
+        for (int i = 3; i <= 17; i++) if (hasItemInSlot(i)) count++;
+        return count >= 2;
     }
 
     private boolean hasItemInSlot(int idx) {

@@ -6,6 +6,7 @@ import net.neoforged.bus.api.IEventBus;
 import net.neoforged.neoforge.registries.DeferredHolder;
 import net.neoforged.neoforge.registries.DeferredRegister;
 import net.ookasamoti.crystallography.CrystallographyMod;
+import net.ookasamoti.crystallography.common.item.crystal.AttachedSigils;
 import net.ookasamoti.crystallography.common.item.crystal.CrystalStats;
 
 public final class DataComponentsRegistry {
@@ -17,6 +18,14 @@ public final class DataComponentsRegistry {
                     DataComponentType.<CrystalStats>builder()
                             .persistent(CrystalStats.CODEC)
                             .networkSynchronized(CrystalStats.STREAM_CODEC)
+                            .build()
+            );
+
+    public static final DeferredHolder<DataComponentType<?>, DataComponentType<AttachedSigils>> ATTACHED_SIGILS =
+            DATA_COMPONENT_TYPES.register("attached_sigils", () ->
+                    DataComponentType.<AttachedSigils>builder()
+                            .persistent(AttachedSigils.CODEC)
+                            .networkSynchronized(AttachedSigils.STREAM_CODEC)
                             .build()
             );
 

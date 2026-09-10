@@ -7,6 +7,7 @@ import net.neoforged.neoforge.registries.DeferredRegister;
 import net.neoforged.neoforge.registries.NeoForgeRegistries;
 import net.ookasamoti.crystallography.CrystallographyMod;
 import net.ookasamoti.crystallography.common.entity.TridentVisualData;
+import net.minecraft.network.codec.ByteBufCodecs;
 
 public final class AttachmentTypeRegistry {
     public static final DeferredRegister<AttachmentType<?>> ATTACHMENT_TYPES =
@@ -16,6 +17,15 @@ public final class AttachmentTypeRegistry {
             ATTACHMENT_TYPES.register("trident_visual", () ->
                     AttachmentType.builder(() -> TridentVisualData.DEFAULT)
                             .sync(TridentVisualData.STREAM_CODEC)
+                            .build()
+            );
+
+    // ソウルファイア(青い炎)で着火されたかどうかのサーバー側判定結果。クライアントの見た目
+    // (炎エフェクトの色)にのみ使うため永続化は不要で、同期のみ行う（詳細は SoulFireIgnitionHooks）。
+    public static final DeferredHolder<AttachmentType<?>, AttachmentType<Boolean>> SOUL_FIRE_IGNITED =
+            ATTACHMENT_TYPES.register("soul_fire_ignited", () ->
+                    AttachmentType.builder(() -> Boolean.FALSE)
+                            .sync(ByteBufCodecs.BOOL)
                             .build()
             );
 

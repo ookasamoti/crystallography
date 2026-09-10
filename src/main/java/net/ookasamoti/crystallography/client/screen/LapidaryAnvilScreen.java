@@ -19,6 +19,7 @@ public class LapidaryAnvilScreen extends AbstractContainerScreen<LapidaryAnvilMe
 
     private Button btnCrackOre;
     private Button btnCrackGems;
+    private Button btnAttachSigil;
 
     public LapidaryAnvilScreen(LapidaryAnvilMenu menu, Inventory inv, Component title) {
         // imageWidth/imageHeight are now final and must be supplied to the super constructor.
@@ -44,8 +45,14 @@ public class LapidaryAnvilScreen extends AbstractContainerScreen<LapidaryAnvilMe
             Minecraft.getInstance().gameMode.handleInventoryButtonClick(menu.containerId, LapidaryAnvilMenu.BTN_CRACK_GEMS);
         }).bounds(diamondBtnX, y + 80, 20, 20).build();
 
+        btnAttachSigil = Button.builder(Component.literal("✦"), b -> {
+            assert Minecraft.getInstance().gameMode != null;
+            Minecraft.getInstance().gameMode.handleInventoryButtonClick(menu.containerId, LapidaryAnvilMenu.BTN_ATTACH_SIGIL);
+        }).bounds((x + 20 + diamondBtnX) / 2, y + 80, 20, 20).build();
+
         addRenderableWidget(btnCrackOre);
         addRenderableWidget(btnCrackGems);
+        addRenderableWidget(btnAttachSigil);
         updateButtons();
     }
 
@@ -56,8 +63,9 @@ public class LapidaryAnvilScreen extends AbstractContainerScreen<LapidaryAnvilMe
     }
 
     private void updateButtons() {
-        btnCrackOre.active  = menu.canCrackOre();
-        btnCrackGems.active = menu.canCrackGems();
+        btnCrackOre.active     = menu.canCrackOre();
+        btnCrackGems.active    = menu.canCrackGems();
+        btnAttachSigil.active  = menu.canAttachSigil();
     }
 
     @Override

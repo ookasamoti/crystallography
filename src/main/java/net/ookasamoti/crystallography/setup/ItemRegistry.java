@@ -117,6 +117,25 @@ public class ItemRegistry {
     // 装着する想定でstacksTo(1))とは異なりバニラの生鉱石と同じ通常スタック(64)のままにする。
     public static final DeferredItem<Item> STONE = ITEMS.registerItem("stone", Crystal::new);
 
+    // ---- シジル（露天堀り採掘台で結晶に付与する紙片。効果は SigilRegistry で id 引き） ----
+    public static final DeferredItem<Item> SIGIL_FORCE = ITEMS.registerSimpleItem("sigil_force");
+    public static final DeferredItem<Item> SIGIL_SMITE = ITEMS.registerSimpleItem("sigil_smite");
+    public static final DeferredItem<Item> SIGIL_FUMIGATE = ITEMS.registerSimpleItem("sigil_fumigate");
+    public static final DeferredItem<Item> SIGIL_CHANNELING = ITEMS.registerSimpleItem("sigil_channeling");
+    public static final DeferredItem<Item> SIGIL_LOYALTY = ITEMS.registerSimpleItem("sigil_loyalty");
+    public static final DeferredItem<Item> SIGIL_INFINITY = ITEMS.registerSimpleItem("sigil_infinity");
+    public static final DeferredItem<Item> SIGIL_DENSITY = ITEMS.registerSimpleItem("sigil_density");
+    public static final DeferredItem<Item> SIGIL_SURGE = ITEMS.registerSimpleItem("sigil_surge");
+    public static final DeferredItem<Item> SIGIL_GRACE = ITEMS.registerSimpleItem("sigil_grace");
+    public static final DeferredItem<Item> SIGIL_STEADY = ITEMS.registerSimpleItem("sigil_steady");
+    public static final DeferredItem<Item> SIGIL_FROST = ITEMS.registerSimpleItem("sigil_frost");
+    public static final DeferredItem<Item> SIGIL_GALE = ITEMS.registerSimpleItem("sigil_gale");
+    public static final DeferredItem<Item> SIGIL_HASTE = ITEMS.registerSimpleItem("sigil_haste");
+    public static final DeferredItem<Item> SIGIL_SWEEP = ITEMS.registerSimpleItem("sigil_sweep");
+    public static final DeferredItem<Item> SIGIL_FLAME = ITEMS.registerSimpleItem("sigil_flame");
+    public static final DeferredItem<Item> SIGIL_PIERCE = ITEMS.registerSimpleItem("sigil_pierce");
+    public static final DeferredItem<Item> SIGIL_UNBREAKING = ITEMS.registerSimpleItem("sigil_unbreaking");
+
     public static void register(IEventBus bus) {
         ITEMS.register(bus);
     }

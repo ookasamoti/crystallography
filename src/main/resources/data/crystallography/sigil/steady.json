@@ -1,0 +1,10 @@
+{
+  "item": "crystallography:sigil_steady",
+  "cost": 3,
+  "grants": [
+    { "form": "PICKAXE", "enchantment": "minecraft:silk_touch", "level": 1 },
+    { "form": "AXE", "enchantment": "minecraft:silk_touch", "level": 1 },
+    { "form": "HOE", "enchantment": "minecraft:silk_touch", "level": 1 },
+    { "form": "SHOVEL", "enchantment": "minecraft:silk_touch", "level": 1 }
+  ]
+}

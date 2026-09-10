@@ -7,6 +7,7 @@ import net.neoforged.neoforge.registries.DeferredHolder;
 import net.neoforged.neoforge.registries.DeferredRegister;
 import net.ookasamoti.crystallography.CrystallographyMod;
 import net.ookasamoti.crystallography.common.recipe.JewelryTableRecipe;
+import net.ookasamoti.crystallography.common.recipe.SigilFromBookRecipe;
 import net.ookasamoti.crystallography.common.recipe.ToolRepairRecipe;
 import net.ookasamoti.crystallography.common.recipe.ToolRodPickaxeRecipe;
 import net.ookasamoti.crystallography.common.recipe.ToolTierSmithingUpgradeRecipe;
@@ -30,6 +31,9 @@ public final class RecipeSerializersRegistry {
 
     public static final DeferredHolder<RecipeSerializer<?>, RecipeSerializer<ToolTierSmithingUpgradeRecipe>> TOOL_TIER_SMITHING_UPGRADE =
             RECIPE_SERIALIZERS.register("tool_tier_smithing_upgrade", () -> ToolTierSmithingUpgradeRecipe.SERIALIZER);
+
+    public static final DeferredHolder<RecipeSerializer<?>, RecipeSerializer<SigilFromBookRecipe>> SIGIL_FROM_BOOK =
+            RECIPE_SERIALIZERS.register("sigil_from_book", () -> SigilFromBookRecipe.SERIALIZER);
 
     public static void register(IEventBus bus) {
         RECIPE_SERIALIZERS.register(bus);

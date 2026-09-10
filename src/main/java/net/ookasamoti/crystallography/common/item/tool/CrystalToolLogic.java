@@ -3,11 +3,15 @@ package net.ookasamoti.crystallography.common.item.tool;
 import net.minecraft.ChatFormatting;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
+import net.minecraft.core.Holder;
 import net.minecraft.core.HolderSet;
 import net.minecraft.core.component.DataComponents;
 import net.minecraft.core.registries.BuiltInRegistries;
+import net.minecraft.core.registries.Registries;
 import net.minecraft.network.chat.Component;
 import net.minecraft.resources.Identifier;
+import net.minecraft.resources.ResourceKey;
+import net.minecraft.server.level.ServerLevel;
 import net.minecraft.sounds.SoundEvent;
 import net.minecraft.sounds.SoundEvents;
 import net.minecraft.sounds.SoundSource;
@@ -38,6 +42,10 @@ import net.minecraft.world.item.component.TooltipDisplay;
 import net.minecraft.world.item.component.UseEffects;
 import net.minecraft.world.item.component.Weapon;
 import net.minecraft.world.item.context.UseOnContext;
+import net.minecraft.world.item.enchantment.Enchantment;
+import net.minecraft.world.item.enchantment.EnchantmentHelper;
+import net.minecraft.world.item.enchantment.Enchantments;
+import net.minecraft.world.item.enchantment.ItemEnchantments;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.Blocks;
@@ -55,13 +63,17 @@ import net.ookasamoti.crystallography.common.item.tool.component.ToolLoadout;
 import net.ookasamoti.crystallography.common.item.tool.component.ToolLoadoutList;
 import net.ookasamoti.crystallography.common.item.tool.component.ToolStats;
 import net.ookasamoti.crystallography.data.CrystalStatsRegistry;
+import net.ookasamoti.crystallography.data.ServerRegistryHolder;
+import net.ookasamoti.crystallography.data.SigilRegistry;
 import net.ookasamoti.crystallography.setup.DataComponentsRegistry;
 import net.ookasamoti.crystallography.setup.ItemRegistry;
 import net.ookasamoti.crystallography.setup.ToolComponentsRegistry;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 import java.util.function.Consumer;
@@ -270,6 +282,7 @@ public final class CrystalToolLogic {
         int tierSum      = 0;    // 採掘ティア = 結晶の tier の平均
         int crystalCount = 0;
         int tierCount    = 0;
+        float sigilAtkBonus = 0f; // 結晶に付与されたシジル由来の攻撃力ボーナス合計（form一致分のみ）
 
         for (int idx : crystalIndices) {
             if (idx < 0 || idx >= crystalInv.size()) continue;
@@ -289,6 +302,16 @@ public final class CrystalToolLogic {
                 tierSum += rangeOpt.get().tier();
                 tierCount++;
             }
+
+            var attached = crystal.get(DataComponentsRegistry.ATTACHED_SIGILS.get());
+            if (attached != null) {
+                for (var sigilId : attached.sigils()) {
+                    var def = SigilRegistry.get(sigilId).orElse(null);
+                    if (def != null && def.forms().contains(form)) {
+                        sigilAtkBonus += def.attackDamageBonus();
+                    }
+                }
+            }
         }
 
         float clarityAvg = crystalCount > 0 ? claritySum / crystalCount : 0f;
@@ -299,7 +322,7 @@ public final class CrystalToolLogic {
         // ただし HOE はバニラ仕様に倣い、全ティア固定で攻撃修飾子 = 0。
         // attackSpeed = form.baseAttackSpeed + (Σclarity − 20)×0.1（小数点二桁未満切り捨て）。
         // miningSpeed = form.baseMiningSpeed × avg(clarity)（現状 baseMiningSpeed=1.0 なので実質 avg(clarity)）。
-        float attackDmg = (form == ToolForm.HOE) ? 0f : (form.baseAttack() + cutSum);
+        float attackDmg = (form == ToolForm.HOE) ? 0f : (form.baseAttack() + cutSum + sigilAtkBonus);
         float clarityAtkSpeedBonus = truncateTo2((claritySum - 20f) * 0.1f);
 
         // 原石バッテリーモード：3枠のいずれかが原石系(category=raw_ore)なら、通常の
@@ -476,6 +499,8 @@ public final class CrystalToolLogic {
         // Tool component（採掘ティアゲート + form 別速度ボーナス）
         stack.set(DataComponents.TOOL, buildToolComponent(s.tier(), lo.form(), s.miningSpeed()));
 
+        applyGrantedEnchantments(stack, lo, s.tier());
+
         // SPEAR: 突き(PiercingWeapon)・突撃(KineticWeapon)・リーチ(AttackRange)等、バニラの
         // 槍が持つ専用コンポーネント一式。CrystalSpear は素の Item を継承する（このバージョンの
         // vanillaにも専用の SpearItem クラスが無く、全てこれらのコンポーネントだけで完結するため）。
@@ -488,6 +513,54 @@ public final class CrystalToolLogic {
 
         var hint = Identifier.parse(CrystallographyMod.MOD_ID + ":form/" + lo.form().name().toLowerCase());
         stack.set(ToolComponentsRegistry.TOOL_ACTIVE_MODEL.get(), hint);
+    }
+
+    /**
+     * 結晶に付与されたシジルのうち「本物の vanilla エンチャントとして付与する」もの（招雷等の
+     * 能力ゲート系）を集計し、{@code DataComponents.ENCHANTMENTS} に反映する。同じエンチャントが
+     * 複数付与されていればレベルは最大値を採用する（バニラの本の合成と同じ考え方）。
+     * これらのツールはそもそも vanilla のエンチャント台に対応していない（enchantable 未設定）ため
+     * プレイヤーが独自に付けた本物のエンチャントと衝突する心配はなく、常に総入れ替えでよい。
+     * <p>
+     * エンチャントは動的レジストリ（{@link net.minecraft.core.registries.BuiltInRegistries} 経由では
+     * 解決できない）のため {@link ServerRegistryHolder} 経由でサーバーの RegistryAccess を参照する。
+     * 取得できない場合（クライアント側の先行適用等）は何もしない（サーバー側の結果が component
+     * パッチとして同期されてくるのを待つ）。
+     */
+    private static void applyGrantedEnchantments(ItemStack stack, ToolLoadout lo, int tier) {
+        var registries = ServerRegistryHolder.get();
+        if (registries == null) return;
+
+        var crystalInv = ToolInventory.get(stack, crystalSlotCount(tier), registries);
+        Map<ResourceKey<Enchantment>, Integer> granted = new HashMap<>();
+        for (int idx : lo.crystalIndices()) {
+            if (idx < 0 || idx >= crystalInv.size()) continue;
+            var crystal = crystalInv.getResource(idx).toStack(crystalInv.getAmountAsInt(idx));
+            if (crystal.isEmpty()) continue;
+
+            var attached = crystal.get(DataComponentsRegistry.ATTACHED_SIGILS.get());
+            if (attached == null) continue;
+
+            for (var sigilId : attached.sigils()) {
+                var def = SigilRegistry.get(sigilId).orElse(null);
+                if (def == null) continue;
+                for (var g : def.grants()) {
+                    if (g.form() == lo.form()) granted.merge(g.enchantment(), g.level(), Math::max);
+                }
+            }
+        }
+
+        if (granted.isEmpty()) {
+            stack.remove(DataComponents.ENCHANTMENTS);
+            return;
+        }
+
+        var lookup = registries.lookupOrThrow(Registries.ENCHANTMENT);
+        var mutable = new ItemEnchantments.Mutable(ItemEnchantments.EMPTY);
+        for (var e : granted.entrySet()) {
+            lookup.get(e.getKey()).ifPresent(holder -> mutable.set(holder, e.getValue()));
+        }
+        stack.set(DataComponents.ENCHANTMENTS, mutable.toImmutable());
     }
 
     /**
@@ -779,6 +852,14 @@ public final class CrystalToolLogic {
         if (lo == null) return 0;
         if (lo.unusable()) return 0; // 破損 or 結晶欠落中 → 耐久を減らさない
 
+        // バニラの Unbreaking 処理（ItemStack#hurtAndBreak の EnchantmentHelper.processDurabilityChange）
+        // は、こちらの damageItem が常に 0 を返して独自耐久管理に肩代わりしているため一切素通りせず、
+        // このままだとエンチャントの Unbreaking が全く効かない。ここで自前計算に差し替える：
+        // 実際の Unbreaking レベルに tier 固有アビリティ分（tier2:+1, tier3:+2）を加算した
+        // 実効レベルで、バニラと同じ確率(実効レベル/(実効レベル+1))の per-point 判定を行う。
+        amount = applyUnbreaking(stack, amount, entity);
+        if (amount <= 0) return 0;
+
         int newCurrent = lo.currentDurability() - amount;
         if (newCurrent <= 0 && entity != null) {
             newCurrent = tryOreBatteryRefill(stack, lo, entity, newCurrent);
@@ -789,6 +870,40 @@ public final class CrystalToolLogic {
         applyComputedStats(stack);
         // バニラ側にはダメージ無し（破壊もしない）。
         return 0;
+    }
+
+    /**
+     * バニラの {@link EnchantmentHelper#processDurabilityChange} をそのまま使って耐久修正
+     * エンチャント（Unbreaking他、将来追加されるものも含む）を正しく処理しつつ、tier固有の
+     * アビリティ（tier2:+1, tier3:+2）を Unbreaking レベルに上乗せする。手計算で確率式を
+     * 再現するのではなく、Unbreaking レベルだけ底上げしたスタックのコピーに対して本物の
+     * バニラ処理を呼ぶことで、データパック側の計算式変更や他エンチャントの耐久修正効果にも
+     * 自動的に追従する。ServerLevel が取れない場合は素通しにフォールバックする。
+     */
+    private static int applyUnbreaking(ItemStack stack, int amount, @Nullable LivingEntity entity) {
+        if (!(entity != null && entity.level() instanceof ServerLevel serverLevel)) return amount;
+
+        int tierBonus = switch (getTier(stack)) {
+            case 2 -> 1;
+            case 3 -> 2;
+            default -> 0;
+        };
+        if (tierBonus <= 0) return EnchantmentHelper.processDurabilityChange(serverLevel, stack, amount);
+
+        Holder<Enchantment> unbreaking;
+        try {
+            unbreaking = serverLevel.registryAccess().lookupOrThrow(Registries.ENCHANTMENT).getOrThrow(Enchantments.UNBREAKING);
+        } catch (RuntimeException e) {
+            return EnchantmentHelper.processDurabilityChange(serverLevel, stack, amount);
+        }
+
+        ItemEnchantments real = stack.getOrDefault(DataComponents.ENCHANTMENTS, ItemEnchantments.EMPTY);
+        var boosted = new ItemEnchantments.Mutable(real);
+        boosted.set(unbreaking, real.getLevel(unbreaking) + tierBonus);
+
+        ItemStack probe = stack.copy();
+        probe.set(DataComponents.ENCHANTMENTS, boosted.toImmutable());
+        return EnchantmentHelper.processDurabilityChange(serverLevel, probe, amount);
     }
 
     /**

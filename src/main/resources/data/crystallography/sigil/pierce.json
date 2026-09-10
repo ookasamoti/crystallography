@@ -1,0 +1,9 @@
+{
+  "item": "crystallography:sigil_pierce",
+  "cost": 1,
+  "grants": [
+    { "form": "MACE", "enchantment": "minecraft:breach", "level": 4 },
+    { "form": "CROSSBOW", "enchantment": "minecraft:piercing", "level": 4 },
+    { "form": "SPEAR", "enchantment": "minecraft:impaling", "level": 5 }
+  ]
+}

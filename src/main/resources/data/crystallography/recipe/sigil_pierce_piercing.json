@@ -1,0 +1,5 @@
+{
+  "type": "crystallography:sigil_from_book",
+  "enchantment": "minecraft:piercing",
+  "result": "crystallography:sigil_pierce"
+}

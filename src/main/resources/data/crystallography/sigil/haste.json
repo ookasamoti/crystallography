@@ -1,0 +1,12 @@
+{
+  "item": "crystallography:sigil_haste",
+  "cost": 1,
+  "grants": [
+    { "form": "PICKAXE", "enchantment": "minecraft:efficiency", "level": 5 },
+    { "form": "AXE", "enchantment": "minecraft:efficiency", "level": 5 },
+    { "form": "HOE", "enchantment": "minecraft:efficiency", "level": 5 },
+    { "form": "SHOVEL", "enchantment": "minecraft:efficiency", "level": 5 },
+    { "form": "FISHING_ROD", "enchantment": "minecraft:lure", "level": 3 },
+    { "form": "CROSSBOW", "enchantment": "minecraft:quick_charge", "level": 3 }
+  ]
+}

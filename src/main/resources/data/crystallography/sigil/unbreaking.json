@@ -1,0 +1,20 @@
+{
+  "item": "crystallography:sigil_unbreaking",
+  "cost": 2,
+  "grants": [
+    { "form": "PICKAXE", "enchantment": "minecraft:unbreaking", "level": 3 },
+    { "form": "SHOVEL", "enchantment": "minecraft:unbreaking", "level": 3 },
+    { "form": "HOE", "enchantment": "minecraft:unbreaking", "level": 3 },
+    { "form": "AXE", "enchantment": "minecraft:unbreaking", "level": 3 },
+    { "form": "SWORD", "enchantment": "minecraft:unbreaking", "level": 3 },
+    { "form": "SPEAR", "enchantment": "minecraft:unbreaking", "level": 3 },
+    { "form": "TRIDENT", "enchantment": "minecraft:unbreaking", "level": 3 },
+    { "form": "MACE", "enchantment": "minecraft:unbreaking", "level": 3 },
+    { "form": "BOW", "enchantment": "minecraft:unbreaking", "level": 3 },
+    { "form": "CROSSBOW", "enchantment": "minecraft:unbreaking", "level": 3 },
+    { "form": "SHEARS", "enchantment": "minecraft:unbreaking", "level": 3 },
+    { "form": "SPYGLASS", "enchantment": "minecraft:unbreaking", "level": 3 },
+    { "form": "FISHING_ROD", "enchantment": "minecraft:unbreaking", "level": 3 },
+    { "form": "SHIELD", "enchantment": "minecraft:unbreaking", "level": 3 }
+  ]
+}

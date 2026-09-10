@@ -1,0 +1,12 @@
+{
+  "item": "crystallography:sigil_gale",
+  "cost": 2,
+  "grants": [
+    { "form": "SWORD", "enchantment": "minecraft:knockback", "level": 2 },
+    { "form": "AXE", "enchantment": "minecraft:knockback", "level": 2 },
+    { "form": "SPEAR", "enchantment": "minecraft:knockback", "level": 2 },
+    { "form": "TRIDENT", "enchantment": "minecraft:knockback", "level": 2 },
+    { "form": "BOW", "enchantment": "minecraft:punch", "level": 2 },
+    { "form": "MACE", "enchantment": "minecraft:wind_burst", "level": 3 }
+  ]
+}
