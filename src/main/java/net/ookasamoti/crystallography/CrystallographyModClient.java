@@ -13,10 +13,20 @@ import net.neoforged.neoforge.client.event.RegisterColorHandlersEvent;
 import net.neoforged.neoforge.client.event.RegisterSelectItemModelPropertyEvent;
 import net.neoforged.neoforge.client.event.RegisterMenuScreensEvent;
 import net.neoforged.neoforge.client.event.RegisterSpecialModelRendererEvent;
+import net.neoforged.neoforge.client.extensions.common.RegisterClientExtensionsEvent;
+import net.ookasamoti.crystallography.client.model.AmuletBodyModel;
+import net.ookasamoti.crystallography.client.model.AmuletFootModel;
+import net.ookasamoti.crystallography.client.model.AmuletHeadModel;
+import net.ookasamoti.crystallography.client.model.AmuletLegModel;
+import net.ookasamoti.crystallography.client.renderer.AmuletArmorClientExtensions;
+import net.ookasamoti.crystallography.client.renderer.AmuletCrystalLayer;
+import net.ookasamoti.crystallography.setup.ItemRegistry;
+import net.minecraft.world.entity.player.PlayerModelType;
 import net.neoforged.neoforge.client.gui.ConfigurationScreen;
 import net.neoforged.neoforge.client.gui.IConfigScreenFactory;
 import net.neoforged.neoforge.client.network.ClientPacketDistributor;
 import net.neoforged.neoforge.common.NeoForge;
+import net.ookasamoti.crystallography.client.color.AmuletCrystalTintSource;
 import net.ookasamoti.crystallography.client.color.CrystalTintSource;
 import net.ookasamoti.crystallography.client.event.CrystalClientHooks;
 import net.ookasamoti.crystallography.client.model.FormProperty;
@@ -44,6 +54,9 @@ public class CrystallographyModClient {
         bus.addListener(CrystallographyModClient::onRegisterItemTintSources);
         bus.addListener(CrystallographyModClient::onRegisterSelectProperties);
         bus.addListener(CrystallographyModClient::onRegisterEntityRenderers);
+        bus.addListener(CrystallographyModClient::onRegisterLayerDefinitions);
+        bus.addListener(CrystallographyModClient::onRegisterClientExtensions);
+        bus.addListener(CrystallographyModClient::onAddLayers);
         bus.addListener(CrystallographyModClient::onRegisterSpecialModelRenderers);
         bus.addListener(KeyBindingRegistry::onRegisterKeyMappings);
         NeoForge.EVENT_BUS.addListener(CrystallographyModClient::onMouseScroll);
@@ -63,6 +76,9 @@ public class CrystallographyModClient {
         // "tints" array (see CrystalTintSource). One source instance per crystal slot (0/1/2).
         event.register(Identifier.fromNamespaceAndPath(CrystallographyMod.MOD_ID, "crystal"),
                 CrystalTintSource.MAP_CODEC);
+        // Same idea for the amulet armor pieces' inventory icon (see AmuletCrystalTintSource).
+        event.register(Identifier.fromNamespaceAndPath(CrystallographyMod.MOD_ID, "amulet_crystal"),
+                AmuletCrystalTintSource.MAP_CODEC);
     }
 
     @SubscribeEvent
@@ -78,6 +94,36 @@ public class CrystallographyModClient {
         // Overrides vanilla's ThrownTridentRenderer, which always draws the hardcoded
         // entity/trident/trident.png special model regardless of the actual thrown stack.
         event.registerEntityRenderer(EntityType.TRIDENT, CrystalThrownTridentRenderer::new);
+    }
+
+    @SubscribeEvent
+    static void onRegisterLayerDefinitions(EntityRenderersEvent.RegisterLayerDefinitions event) {
+        event.registerLayerDefinition(AmuletHeadModel.LAYER_LOCATION, AmuletHeadModel::createLayer);
+        event.registerLayerDefinition(AmuletBodyModel.LAYER_LOCATION, AmuletBodyModel::createLayer);
+        event.registerLayerDefinition(AmuletLegModel.LAYER_LOCATION, AmuletLegModel::createLayer);
+        event.registerLayerDefinition(AmuletFootModel.LAYER_LOCATION, AmuletFootModel::createLayer);
+    }
+
+    @SubscribeEvent
+    static void onAddLayers(EntityRenderersEvent.AddLayers event) {
+        // アミュレットの結晶キューブ個別着色（AmuletCrystalRenderer）を、通常の防具レイヤーと
+        // 同じタイミングで描画するための専用レイヤー（詳細は AmuletCrystalLayer のコメント参照）。
+        // 現状はプレイヤーのみが対象（一般の人型モブは未対応）。
+        for (PlayerModelType skin : event.getSkins()) {
+            var renderer = event.getPlayerRenderer(skin);
+            if (renderer != null) {
+                renderer.addLayer(new AmuletCrystalLayer<>(renderer));
+            }
+        }
+    }
+
+    @SubscribeEvent
+    static void onRegisterClientExtensions(RegisterClientExtensionsEvent event) {
+        // アミュレット4部位の独自防具モデル（鎖付き）を HumanoidArmorLayer に差し込む。
+        event.registerItem(new AmuletArmorClientExtensions(AmuletHeadModel.LAYER_LOCATION, AmuletHeadModel::new), ItemRegistry.AMULET_HEAD.get());
+        event.registerItem(new AmuletArmorClientExtensions(AmuletBodyModel.LAYER_LOCATION, AmuletBodyModel::new), ItemRegistry.AMULET_BODY.get());
+        event.registerItem(new AmuletArmorClientExtensions(AmuletLegModel.LAYER_LOCATION, AmuletLegModel::new), ItemRegistry.AMULET_LEG.get());
+        event.registerItem(new AmuletArmorClientExtensions(AmuletFootModel.LAYER_LOCATION, AmuletFootModel::new), ItemRegistry.AMULET_FOOT.get());
     }
 
     @SubscribeEvent

@@ -1,0 +1,9 @@
+{
+  "parent": "minecraft:item/generated",
+  "textures": {
+    "layer0": "crystallography:item/amulet_head_chain",
+    "layer1": "crystallography:item/amulet_head_crystal_1",
+    "layer2": "crystallography:item/amulet_head_crystal_2",
+    "layer3": "crystallography:item/amulet_head_crystal_3"
+  }
+}

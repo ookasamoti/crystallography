@@ -9,6 +9,8 @@ import net.minecraft.world.level.Level;
 import net.neoforged.neoforge.transfer.item.ItemResource;
 import net.neoforged.neoforge.transfer.item.ItemStacksResourceHandler;
 import net.ookasamoti.crystallography.common.block.entity.JewelryTableBlockEntity;
+import net.ookasamoti.crystallography.common.item.armor.AmuletStatLogic;
+import net.ookasamoti.crystallography.common.item.armor.IAmuletItem;
 import net.ookasamoti.crystallography.common.item.crystal.Crystal;
 import net.ookasamoti.crystallography.common.item.tool.CrystalToolLogic;
 import net.ookasamoti.crystallography.common.item.tool.ICrystalTool;
@@ -76,7 +78,10 @@ public class JewelryTableMenu extends AbstractContainerMenu {
     };
 
     /* ===== 状態 ===== */
-    public enum UiState { EMPTY, EDIT_CRYSTALS, FORM_SELECTED }
+    // AMULET: CENTER にアミュレット防具が乗っている状態。ICrystalTool と違い form/registries の
+    // 概念が無いので、TOOLS/REGISTRIES リングを出さず CRYSTALS リング(3枠固定)だけを
+    // INTERACTIVE にして、そのままアミュレット自身の3枠結晶インベントリを直接編集させる。
+    public enum UiState { EMPTY, EDIT_CRYSTALS, FORM_SELECTED, AMULET }
 
     public final JewelryTableBlockEntity blockEntity;
     private final Level level;
@@ -131,7 +136,7 @@ public class JewelryTableMenu extends AbstractContainerMenu {
         addRing(Ring.CENTER,
                 () -> blockEntity.getItemHandler(),
                 vi -> 0,
-                this::isTool);
+                stack -> isTool(stack) || isAmulet(stack));
 
         addRing(Ring.TOOLS,
                 () -> EMPTY_HANDLER,
@@ -140,10 +145,11 @@ public class JewelryTableMenu extends AbstractContainerMenu {
 
         addRing(Ring.CRYSTALS,
                 () -> backingCrystals,
-                // 実データ数 D(=crystalSlotCount)で剰余を取る。backingCrystals.size() は
+                // 実データ数 D(=crystalCapacity)で剰余を取る。backingCrystals.size() は
                 // 旧 NBT を deserialize すると保存サイズ(18/24等)に膨らむことがあり、
-                // それに依存するとサイクル周期がずれるため tier の D を直接使う。
-                vi -> vi % Math.max(1, ToolBase.crystalSlotCount(getToolTier())),
+                // それに依存するとサイクル周期がずれるため tier の D(アミュレットなら固定3)を
+                // 直接使う。
+                vi -> vi % Math.max(1, crystalCapacity()),
                 // Crystal クラスのアイテムに限らず、CrystalStatsRegistry に登録されていれば置ける
                 // （minecraft:raw_iron 等、原石バッテリー用のバニラアイテムを含む）。
                 stack -> stack.getItem() instanceof Crystal || CrystalStatsRegistry.get(stack).isPresent());
@@ -237,6 +243,11 @@ public class JewelryTableMenu extends AbstractContainerMenu {
         pendingFormIndex = -1;
         pendingCrystals.clear();
 
+        if (isAmulet(tool)) {
+            uiState = UiState.AMULET;
+            return;
+        }
+
         if (!isTool(tool)) {
             uiState = UiState.EMPTY;
             return;
@@ -291,6 +302,13 @@ public class JewelryTableMenu extends AbstractContainerMenu {
                 showFirstN(Ring.TOOLS, countOf(Ring.TOOLS), DialSlot.Mode.BUTTON);
                 showFirstN(Ring.REGISTRIES, effectiveCountOf(Ring.REGISTRIES), DialSlot.Mode.BUTTON);
                 showFirstN(Ring.CRYSTALS, effectiveCountOf(Ring.CRYSTALS), DialSlot.Mode.BUTTON);
+            }
+            case AMULET -> {
+                // form/registries が無いので TOOLS/REGISTRIES は出さない。CRYSTALS は固定3枠のみ
+                // 表示し、アミュレット自身の結晶インベントリを直接編集させる（EDIT_CRYSTALS の
+                // CENTER/CRYSTALS だけを抜き出した形）。
+                showFirstN(Ring.CENTER, 1, DialSlot.Mode.INTERACTIVE);
+                showFirstN(Ring.CRYSTALS, IAmuletItem.CRYSTAL_SLOTS, DialSlot.Mode.INTERACTIVE);
             }
         }
     }
@@ -510,6 +528,10 @@ public class JewelryTableMenu extends AbstractContainerMenu {
         return s.getItem() instanceof ICrystalTool;
     }
 
+    private boolean isAmulet(ItemStack s) {
+        return s.getItem() instanceof IAmuletItem;
+    }
+
     /** ロッド系かワンド系か。フォーム確定前の「素の状態」と、確定後のフォーム別 Item の両方に対応。 */
     private static ICrystalTool.Kind kindOf(ItemStack tool) {
         return (tool.getItem() instanceof ICrystalTool ct) ? ct.getKind() : ICrystalTool.Kind.ROD;
@@ -519,6 +541,13 @@ public class JewelryTableMenu extends AbstractContainerMenu {
         ItemStack tool = rings.get(Ring.CENTER)[0].peekRealItem();
         if (tool.getItem() instanceof ICrystalTool ct) return Math.max(1, Math.min(3, ct.getTier()));
         return 1;
+    }
+
+    /** CRYSTALS リングの実データ数。アミュレットは固定3、ツールは tier 依存の結晶枠数。 */
+    private int crystalCapacity() {
+        ItemStack tool = rings.get(Ring.CENTER)[0].peekRealItem();
+        if (isAmulet(tool)) return IAmuletItem.CRYSTAL_SLOTS;
+        return ToolBase.crystalSlotCount(getToolTier());
     }
 
     /**
@@ -531,6 +560,27 @@ public class JewelryTableMenu extends AbstractContainerMenu {
 
     private void bindCrystalsBacking() {
         ItemStack tool = rings.get(Ring.CENTER)[0].peekRealItem();
+        if (isAmulet(tool)) {
+            // アミュレットは form/loadout/reconcile の概念が無く、固定3枠のインベントリが
+            // そのまま実体（各枠が結晶キューブ1個に対応）。書き戻しに加えて、結晶構成の変化に
+            // 追従して装備効果（AmuletStatLogic：防御力/靭性/ノックバック耐性/移動速度）を
+            // 再計算する。
+            backingCrystals = ToolInventory.get(tool, IAmuletItem.CRYSTAL_SLOTS, level.registryAccess(),
+                    updated -> {
+                        AmuletStatLogic.applyComputedStats(updated, level.registryAccess());
+                        blockEntity.getItemHandler().set(0, ItemResource.of(updated), Math.max(1, updated.getCount()));
+                    });
+            resolveUnresolvedCrystalStats(IAmuletItem.CRYSTAL_SLOTS);
+            // 初回バインド時にも一度再計算しておく（この機能追加前に登録された既存アミュレット、
+            // または全結晶が既に CrystalStats 解決済みで上の onSaved が一度も走らないケースの救済）。
+            // tool は peekRealItem() のコピーなので直接書き換え可。差分があれば BE に書き戻す。
+            ItemStack before = tool.copy();
+            AmuletStatLogic.applyComputedStats(tool, level.registryAccess());
+            if (!ItemStack.matches(before, tool)) {
+                blockEntity.getItemHandler().set(0, ItemResource.of(tool), Math.max(1, tool.getCount()));
+            }
+            return;
+        }
         if (isTool(tool)) {
             // peekRealItem() returns a COPY (the resource API exposes copies, not the live backing
             // stack), so edits to the crystal inventory must be written back into the center slot or
@@ -545,7 +595,7 @@ public class JewelryTableMenu extends AbstractContainerMenu {
             // CrystalStats 未解決の結晶（例: minecraft:raw_iron 等、Crystal クラスでない、あるいは
             // onCraftedPostProcess/クラック経由でない手段で入手したもの）をここで解決しておく。
             // buildStats/reconcileLoadouts は CrystalStats が無いと hardness 等を 0 扱いしてしまう。
-            resolveUnresolvedCrystalStats();
+            resolveUnresolvedCrystalStats(ToolBase.crystalSlotCount(getToolTier()));
             // 初回バインド時にも一度 reconcile を実行する。これがないと、以前のビルドや
             // 旧フォーミュラで登録された stale な ToolStats が触らない限り更新されない。
             // tool は peekRealItem() のコピーなので直接書き換え可。差分があれば BE に書き戻す。
@@ -561,9 +611,8 @@ public class JewelryTableMenu extends AbstractContainerMenu {
     }
 
     /** backingCrystals 内の各結晶に CrystalStats が未解決なら解決して書き戻す。 */
-    private void resolveUnresolvedCrystalStats() {
+    private void resolveUnresolvedCrystalStats(int count) {
         var statsType = DataComponentsRegistry.CRYSTAL_STATS.get();
-        int count = ToolBase.crystalSlotCount(getToolTier());
         for (int i = 0; i < count && i < backingCrystals.size(); i++) {
             ItemStack crystal = backingCrystals.getResource(i).toStack(backingCrystals.getAmountAsInt(i));
             if (crystal.isEmpty() || crystal.get(statsType) != null) continue;
@@ -576,7 +625,7 @@ public class JewelryTableMenu extends AbstractContainerMenu {
 
     /* ---------- クリスタル backing アクセサ ---------- */
     public int crystalBackingOf(int vi) {
-        return vi % Math.max(1, ToolBase.crystalSlotCount(getToolTier()));
+        return vi % Math.max(1, crystalCapacity());
     }
 
     /* ---------- 同期 ---------- */
@@ -632,9 +681,9 @@ public class JewelryTableMenu extends AbstractContainerMenu {
         if (fromCenter || fromCrystals) {
             if (!this.moveItemStackTo(in, playerStartIndex, playerEndIndex, true)) return ItemStack.EMPTY;
         } else if (fromPlayer) {
-            if (isTool(in)) {
+            if (isTool(in) || isAmulet(in)) {
                 if (!this.moveItemStackTo(in, centerFirst, centerFirst + 1, false)) return ItemStack.EMPTY;
-            } else if (in.getItem() instanceof Crystal && uiState == UiState.EDIT_CRYSTALS) {
+            } else if (in.getItem() instanceof Crystal && (uiState == UiState.EDIT_CRYSTALS || uiState == UiState.AMULET)) {
                 if (!this.moveItemStackTo(in, crystalsFirst, crystalsEnd, false)) return ItemStack.EMPTY;
             } else {
                 return ItemStack.EMPTY;

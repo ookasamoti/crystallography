@@ -58,6 +58,11 @@
   "item.crystallography.sigil_pierce": "Sigil of Pierce",
   "item.crystallography.sigil_unbreaking": "Sigil of Unbreaking",
 
+  "item.crystallography.amulet_head": "Amulet Charm (Head)",
+  "item.crystallography.amulet_body": "Amulet Charm (Body)",
+  "item.crystallography.amulet_leg": "Amulet Charm (Leg)",
+  "item.crystallography.amulet_foot": "Amulet Charm (Foot)",
+
   "container.jewelry_table": "Jewelry Table",
   "block.crystallography.lapidary_anvil": "Lapidary Anvil",
 

@@ -1,10 +1,18 @@
 package net.ookasamoti.crystallography.setup;
 
+import net.minecraft.core.component.DataComponents;
+import net.minecraft.resources.Identifier;
+import net.minecraft.resources.ResourceKey;
+import net.minecraft.world.entity.EquipmentSlot;
 import net.minecraft.world.item.Item;
+import net.minecraft.world.item.equipment.EquipmentAsset;
+import net.minecraft.world.item.equipment.EquipmentAssets;
+import net.minecraft.world.item.equipment.Equippable;
 import net.neoforged.bus.api.IEventBus;
 import net.neoforged.neoforge.registries.DeferredRegister;
 import net.neoforged.neoforge.registries.DeferredItem;
 import net.ookasamoti.crystallography.CrystallographyMod;
+import net.ookasamoti.crystallography.common.item.armor.AmuletItem;
 import net.ookasamoti.crystallography.common.item.crystal.Crystal;
 import net.ookasamoti.crystallography.common.item.tool.ToolRod;
 import net.ookasamoti.crystallography.common.item.tool.ToolWand;
@@ -135,6 +143,31 @@ public class ItemRegistry {
     public static final DeferredItem<Item> SIGIL_FLAME = ITEMS.registerSimpleItem("sigil_flame");
     public static final DeferredItem<Item> SIGIL_PIERCE = ITEMS.registerSimpleItem("sigil_pierce");
     public static final DeferredItem<Item> SIGIL_UNBREAKING = ITEMS.registerSimpleItem("sigil_unbreaking");
+
+    // ---- 防具（試作: アミュレット4部位） ----
+    // EquipmentAsset キーはレジストリ登録不要。クライアントが assets/<ns>/equipment/<path>.json を
+    // 読み、その中の "texture" から textures/entity/equipment/<layerType>/<texture>.png を解決する。
+    // 鎖付きの独自ジオメトリは AmuletArmorClientExtensions 経由で HumanoidArmorLayer に差し込む
+    // （各 Amulet*Model 参照）。
+    private static ResourceKey<EquipmentAsset> amuletAsset(String name) {
+        return ResourceKey.create(EquipmentAssets.ROOT_ID, Identifier.fromNamespaceAndPath(CrystallographyMod.MOD_ID, name));
+    }
+
+    public static final ResourceKey<EquipmentAsset> AMULET_HEAD_ASSET = amuletAsset("amulet_head");
+    public static final ResourceKey<EquipmentAsset> AMULET_BODY_ASSET = amuletAsset("amulet_body");
+    public static final ResourceKey<EquipmentAsset> AMULET_LEG_ASSET = amuletAsset("amulet_leg");
+    public static final ResourceKey<EquipmentAsset> AMULET_FOOT_ASSET = amuletAsset("amulet_foot");
+
+    private static DeferredItem<Item> amulet(String name, EquipmentSlot slot, ResourceKey<EquipmentAsset> asset) {
+        return ITEMS.registerItem(name, props ->
+                new AmuletItem(props.stacksTo(1).component(DataComponents.EQUIPPABLE,
+                        Equippable.builder(slot).setAsset(asset).build())));
+    }
+
+    public static final DeferredItem<Item> AMULET_HEAD = amulet("amulet_head", EquipmentSlot.HEAD, AMULET_HEAD_ASSET);
+    public static final DeferredItem<Item> AMULET_BODY = amulet("amulet_body", EquipmentSlot.CHEST, AMULET_BODY_ASSET);
+    public static final DeferredItem<Item> AMULET_LEG = amulet("amulet_leg", EquipmentSlot.LEGS, AMULET_LEG_ASSET);
+    public static final DeferredItem<Item> AMULET_FOOT = amulet("amulet_foot", EquipmentSlot.FEET, AMULET_FOOT_ASSET);
 
     public static void register(IEventBus bus) {
         ITEMS.register(bus);

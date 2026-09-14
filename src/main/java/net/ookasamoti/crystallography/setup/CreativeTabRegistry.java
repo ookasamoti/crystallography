@@ -78,6 +78,10 @@ public class CreativeTabRegistry {
                         output.accept(ItemRegistry.SIGIL_FLAME.get());
                         output.accept(ItemRegistry.SIGIL_PIERCE.get());
                         output.accept(ItemRegistry.SIGIL_UNBREAKING.get());
+                        output.accept(ItemRegistry.AMULET_HEAD.get());
+                        output.accept(ItemRegistry.AMULET_BODY.get());
+                        output.accept(ItemRegistry.AMULET_LEG.get());
+                        output.accept(ItemRegistry.AMULET_FOOT.get());
                     }).build()
     );
 
