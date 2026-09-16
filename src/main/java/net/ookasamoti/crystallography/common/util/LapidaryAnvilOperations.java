@@ -21,6 +21,7 @@ import net.neoforged.neoforge.transfer.transaction.Transaction;
 import net.ookasamoti.crystallography.common.block.entity.LapidaryAnvilBlockEntity;
 import net.ookasamoti.crystallography.common.item.crystal.AttachedSigils;
 import net.ookasamoti.crystallography.common.item.crystal.Crystal;
+import net.ookasamoti.crystallography.common.item.tool.CrystalTraitLogic;
 import net.ookasamoti.crystallography.data.CrystalRollsRegistry;
 import net.ookasamoti.crystallography.data.CrystalStatsRegistry;
 import net.ookasamoti.crystallography.data.SigilRegistry;
@@ -129,7 +130,9 @@ public final class LapidaryAnvilOperations {
             if (stats == null) continue;
 
             var attached = st.getOrDefault(DataComponentsRegistry.ATTACHED_SIGILS.get(), AttachedSigils.EMPTY);
-            if (usedCarat(attached) + def.cost() > stats.carat()) continue;
+            // ward/pinky トレイト：この結晶自身の carat 予算（シジル付与コストの上限）を底上げする。
+            int effectiveCarat = Math.round(stats.carat()) + CrystalTraitLogic.caratBonusFor(st);
+            if (usedCarat(attached) + def.cost() > effectiveCarat) continue;
 
             crystalSlot = i;
             break;

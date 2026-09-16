@@ -29,6 +29,13 @@ public final class AttachmentTypeRegistry {
                             .build()
             );
 
+    // blazing トレイト：攻撃がヒットした直後、次tickで着火判定を行うまでの「保留」フラグ。
+    // サーバー側のみで完結する短命な値のため同期・永続化ともに不要（詳細は CrystalTraitFireHooks）。
+    public static final DeferredHolder<AttachmentType<?>, AttachmentType<Boolean>> BLAZING_PENDING =
+            ATTACHMENT_TYPES.register("blazing_pending", () ->
+                    AttachmentType.builder(() -> Boolean.FALSE).build()
+            );
+
     public static void register(IEventBus bus) {
         ATTACHMENT_TYPES.register(bus);
     }

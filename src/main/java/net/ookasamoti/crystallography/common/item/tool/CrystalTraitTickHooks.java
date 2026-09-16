@@ -1,0 +1,75 @@
+package net.ookasamoti.crystallography.common.item.tool;
+
+import net.minecraft.world.entity.Entity;
+import net.minecraft.world.entity.ExperienceOrb;
+import net.minecraft.world.entity.item.ItemEntity;
+import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.phys.AABB;
+import net.minecraft.world.phys.Vec3;
+import net.neoforged.bus.api.IEventBus;
+import net.neoforged.neoforge.common.NeoForge;
+import net.neoforged.neoforge.event.tick.PlayerTickEvent;
+
+import java.util.List;
+
+/**
+ * 結晶の固有アビリティのうち、常時（毎tick）発動するもの（{@link CrystalTraitLogic} の
+ * 「常時効果系」）の実際の適用箇所。手に持っている（メイン/オフハンド問わず）だけで発動する点が
+ * 他の戦闘・採掘フック（アクティブロードアウトが「そのフォームで使われた瞬間」にのみ発動）と異なる。
+ * <p>
+ * magnetism は Wiki 上も想定効果の記載が無かったトレイトのため、一般的な「磁力」のイメージ
+ * （周囲のドロップアイテム・経験値玉を引き寄せる）で暫定的に実装している。
+ */
+public final class CrystalTraitTickHooks {
+    private CrystalTraitTickHooks() {}
+
+    private static final double MAGNETISM_RADIUS = 6.0;
+    private static final double MAGNETISM_PULL_SPEED = 0.35;
+
+    public static void register(IEventBus modBus) {
+        NeoForge.EVENT_BUS.addListener(CrystalTraitTickHooks::onPlayerTick);
+    }
+
+    private static void onPlayerTick(PlayerTickEvent.Post event) {
+        Player player = event.getEntity();
+        if (player.level().isClientSide()) return;
+
+        boolean magnetism = false;
+        boolean turtle = false;
+        for (ItemStack held : List.of(player.getMainHandItem(), player.getOffhandItem())) {
+            if (!(held.getItem() instanceof ICrystalTool)) continue;
+            var lo = CrystalToolLogic.getActiveLoadout(held);
+            if (lo == null || lo.unusable()) continue;
+
+            int tier = CrystalToolLogic.getTier(held);
+            var crystalInv = ToolInventory.get(held, CrystalToolLogic.crystalSlotCount(tier), player.level().registryAccess());
+            if (CrystalTraitLogic.loadoutHasTrait(lo, crystalInv, CrystalTraitLogic.MAGNETISM)) magnetism = true;
+            if (CrystalTraitLogic.loadoutHasTrait(lo, crystalInv, CrystalTraitLogic.TURTLE)) turtle = true;
+        }
+
+        if (magnetism) pullNearbyPickups(player);
+        if (turtle && player.isUnderWater() && player.getAirSupply() < player.getMaxAirSupply()) {
+            player.setAirSupply(player.getMaxAirSupply());
+        }
+    }
+
+    private static void pullNearbyPickups(Player player) {
+        AABB area = player.getBoundingBox().inflate(MAGNETISM_RADIUS);
+        for (ItemEntity item : player.level().getEntitiesOfClass(ItemEntity.class, area)) {
+            pullToward(player, item);
+        }
+        for (ExperienceOrb orb : player.level().getEntitiesOfClass(ExperienceOrb.class, area)) {
+            pullToward(player, orb);
+        }
+    }
+
+    private static void pullToward(Player player, Entity target) {
+        Vec3 toPlayer = player.position().subtract(target.position());
+        double dist = toPlayer.length();
+        if (dist < 0.5) return;
+        Vec3 pull = toPlayer.scale(MAGNETISM_PULL_SPEED / dist);
+        target.setDeltaMovement(target.getDeltaMovement().add(pull));
+        target.hurtMarked = true;
+    }
+}

@@ -10,6 +10,10 @@ import net.neoforged.neoforge.event.server.ServerStoppingEvent;
 import net.ookasamoti.crystallography.common.entity.SoulFireIgnitionHooks;
 import net.ookasamoti.crystallography.common.entity.TridentVisualData;
 import net.ookasamoti.crystallography.common.item.tool.AttackAttributeTooltipHooks;
+import net.ookasamoti.crystallography.common.item.tool.CrystalTraitCombatHooks;
+import net.ookasamoti.crystallography.common.item.tool.CrystalTraitFireHooks;
+import net.ookasamoti.crystallography.common.item.tool.CrystalTraitMiningHooks;
+import net.ookasamoti.crystallography.common.item.tool.CrystalTraitTickHooks;
 import net.ookasamoti.crystallography.common.item.tool.SigilCombatHooks;
 import net.ookasamoti.crystallography.data.CrystalRollsReloader;
 import net.ookasamoti.crystallography.data.CrystalStatsReloader;
@@ -50,6 +54,10 @@ public class CrystallographyMod {
         AttackAttributeTooltipHooks.register(modEventBus);
         SigilCombatHooks.register(modEventBus);
         SoulFireIgnitionHooks.register(modEventBus);
+        CrystalTraitCombatHooks.register(modEventBus);
+        CrystalTraitFireHooks.register(modEventBus);
+        CrystalTraitMiningHooks.register(modEventBus);
+        CrystalTraitTickHooks.register(modEventBus);
     }
 
     /**

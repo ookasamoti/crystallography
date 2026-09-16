@@ -54,6 +54,7 @@ import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.block.state.properties.ChestType;
 import net.minecraft.world.level.gameevent.GameEvent;
 import net.neoforged.neoforge.common.ItemAbilities;
+import net.ookasamoti.crystallography.common.item.crystal.CrystalStatsRange;
 import net.neoforged.neoforge.common.ItemAbility;
 import net.neoforged.neoforge.transfer.ResourceHandler;
 import net.neoforged.neoforge.transfer.item.ItemResource;
@@ -283,21 +284,28 @@ public final class CrystalToolLogic {
         int crystalCount = 0;
         int tierCount    = 0;
         float sigilAtkBonus = 0f; // 結晶に付与されたシジル由来の攻撃力ボーナス合計（form一致分のみ）
+        float traitAtkBonus = 0f; // 結晶の固有アビリティ（bandit＝AXE限定）由来の攻撃力ボーナス合計
 
         for (int idx : crystalIndices) {
             if (idx < 0 || idx >= crystalInv.size()) continue;
             ItemStack crystal = crystalInv.getResource(idx).toStack(crystalInv.getAmountAsInt(idx));
             if (crystal.isEmpty()) continue;
 
+            var rangeOpt = CrystalStatsRegistry.get(crystal);
+            Set<String> traits = rangeOpt.map(CrystalStatsRange::traits).orElse(Set.of());
+
             var cs = crystal.get(statsType);
             if (cs != null) {
                 hardnessSum += cs.hardness();
+                if (traits.contains(CrystalTraitLogic.DIAMOND)) hardnessSum += CrystalTraitLogic.DIAMOND_DURABILITY_BONUS;
                 cutSum      += cs.cut();
-                claritySum  += cs.clarity();
+                if (traits.contains(CrystalTraitLogic.BANDIT) && form == ToolForm.AXE) {
+                    traitAtkBonus += CrystalTraitLogic.BANDIT_AXE_DAMAGE_BONUS;
+                }
+                claritySum  += cs.clarity() * (traits.contains(CrystalTraitLogic.PURE) ? CrystalTraitLogic.PURE_CLARITY_MULTIPLIER : 1f);
                 crystalCount++;
             }
 
-            var rangeOpt = CrystalStatsRegistry.get(crystal);
             if (rangeOpt.isPresent()) {
                 tierSum += rangeOpt.get().tier();
                 tierCount++;
@@ -322,7 +330,7 @@ public final class CrystalToolLogic {
         // ただし HOE はバニラ仕様に倣い、全ティア固定で攻撃修飾子 = 0。
         // attackSpeed = form.baseAttackSpeed + (Σclarity − 20)×0.1（小数点二桁未満切り捨て）。
         // miningSpeed = form.baseMiningSpeed × avg(clarity)（現状 baseMiningSpeed=1.0 なので実質 avg(clarity)）。
-        float attackDmg = (form == ToolForm.HOE) ? 0f : (form.baseAttack() + cutSum + sigilAtkBonus);
+        float attackDmg = (form == ToolForm.HOE) ? 0f : (form.baseAttack() + cutSum + sigilAtkBonus + traitAtkBonus);
         float clarityAtkSpeedBonus = truncateTo2((claritySum - 20f) * 0.1f);
 
         // 原石バッテリーモード：3枠のいずれかが原石系(category=raw_ore)なら、通常の
@@ -537,6 +545,11 @@ public final class CrystalToolLogic {
             if (idx < 0 || idx >= crystalInv.size()) continue;
             var crystal = crystalInv.getResource(idx).toStack(crystalInv.getAmountAsInt(idx));
             if (crystal.isEmpty()) continue;
+
+            // 結晶の固有アビリティ（sharp/conduction/golden/fools_gold）由来のエンチャント付与。
+            // シジル付与の有無に関わらず必ず見る（下の attached==null continue の影響を受けない）。
+            CrystalStatsRegistry.get(crystal).ifPresent(range ->
+                    CrystalTraitLogic.mergeEnchantGrants(range.traits(), lo.form(), granted));
 
             var attached = crystal.get(DataComponentsRegistry.ATTACHED_SIGILS.get());
             if (attached == null) continue;
@@ -857,7 +870,7 @@ public final class CrystalToolLogic {
         // このままだとエンチャントの Unbreaking が全く効かない。ここで自前計算に差し替える：
         // 実際の Unbreaking レベルに tier 固有アビリティ分（tier2:+1, tier3:+2）を加算した
         // 実効レベルで、バニラと同じ確率(実効レベル/(実効レベル+1))の per-point 判定を行う。
-        amount = applyUnbreaking(stack, amount, entity);
+        amount = applyUnbreaking(stack, amount, entity, lo);
         if (amount <= 0) return 0;
 
         int newCurrent = lo.currentDurability() - amount;
@@ -880,14 +893,20 @@ public final class CrystalToolLogic {
      * バニラ処理を呼ぶことで、データパック側の計算式変更や他エンチャントの耐久修正効果にも
      * 自動的に追従する。ServerLevel が取れない場合は素通しにフォールバックする。
      */
-    private static int applyUnbreaking(ItemStack stack, int amount, @Nullable LivingEntity entity) {
+    private static int applyUnbreaking(ItemStack stack, int amount, @Nullable LivingEntity entity, ToolLoadout lo) {
         if (!(entity != null && entity.level() instanceof ServerLevel serverLevel)) return amount;
 
-        int tierBonus = switch (getTier(stack)) {
+        int tier = getTier(stack);
+        int tierBonus = switch (tier) {
             case 2 -> 1;
             case 3 -> 2;
             default -> 0;
         };
+        // boltz トレイト：tier由来のUnbreaking実効レベル底上げにさらに+1する。
+        var crystalInv = ToolInventory.get(stack, crystalSlotCount(tier), serverLevel.registryAccess());
+        if (CrystalTraitLogic.loadoutHasTrait(lo, crystalInv, CrystalTraitLogic.BOLTZ)) {
+            tierBonus += CrystalTraitLogic.BOLTZ_UNBREAKING_BONUS;
+        }
         if (tierBonus <= 0) return EnchantmentHelper.processDurabilityChange(serverLevel, stack, amount);
 
         Holder<Enchantment> unbreaking;
