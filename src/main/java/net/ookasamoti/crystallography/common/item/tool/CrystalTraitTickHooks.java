@@ -1,5 +1,6 @@
 package net.ookasamoti.crystallography.common.item.tool;
 
+import net.minecraft.world.entity.EquipmentSlot;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.ExperienceOrb;
 import net.minecraft.world.entity.item.ItemEntity;
@@ -10,14 +11,20 @@ import net.minecraft.world.phys.Vec3;
 import net.neoforged.bus.api.IEventBus;
 import net.neoforged.neoforge.common.NeoForge;
 import net.neoforged.neoforge.event.tick.PlayerTickEvent;
+import net.ookasamoti.crystallography.common.item.armor.AmuletStatLogic;
+import net.ookasamoti.crystallography.common.item.armor.IAmuletItem;
 
 import java.util.List;
 
 /**
- * 結晶の固有アビリティのうち、常時（毎tick）発動するもの（{@link CrystalTraitLogic} の
- * 「常時効果系」）の実際の適用箇所。手に持っている（メイン/オフハンド問わず）だけで発動する点が
- * 他の戦闘・採掘フック（アクティブロードアウトが「そのフォームで使われた瞬間」にのみ発動）と異なる。
- * <p>
+ * 毎tick発動する効果の適用箇所。2種類ある：
+ * <ul>
+ *   <li>結晶の固有アビリティのうち常時発動するもの（{@link CrystalTraitLogic} の「常時効果系」）。
+ *       手に持っている（メイン/オフハンド問わず）だけで発動する点が他の戦闘・採掘フック
+ *       （アクティブロードアウトが「そのフォームで使われた瞬間」にのみ発動）と異なる。</li>
+ *   <li>アミュレット（防具）に付与されたシジルの {@code worn_effect}（水棲の水中呼吸等）。
+ *       装備スロットに装着されているだけで発動する（{@link AmuletStatLogic#applyWornEffects}）。</li>
+ * </ul>
  * magnetism は Wiki 上も想定効果の記載が無かったトレイトのため、一般的な「磁力」のイメージ
  * （周囲のドロップアイテム・経験値玉を引き寄せる）で暫定的に実装している。
  */
@@ -26,6 +33,8 @@ public final class CrystalTraitTickHooks {
 
     private static final double MAGNETISM_RADIUS = 6.0;
     private static final double MAGNETISM_PULL_SPEED = 0.35;
+    private static final EquipmentSlot[] ARMOR_SLOTS =
+            {EquipmentSlot.HEAD, EquipmentSlot.CHEST, EquipmentSlot.LEGS, EquipmentSlot.FEET};
 
     public static void register(IEventBus modBus) {
         NeoForge.EVENT_BUS.addListener(CrystalTraitTickHooks::onPlayerTick);
@@ -51,6 +60,13 @@ public final class CrystalTraitTickHooks {
         if (magnetism) pullNearbyPickups(player);
         if (turtle && player.isUnderWater() && player.getAirSupply() < player.getMaxAirSupply()) {
             player.setAirSupply(player.getMaxAirSupply());
+        }
+
+        for (EquipmentSlot slot : ARMOR_SLOTS) {
+            ItemStack worn = player.getItemBySlot(slot);
+            if (worn.getItem() instanceof IAmuletItem) {
+                AmuletStatLogic.applyWornEffects(worn, slot, player);
+            }
         }
     }
 

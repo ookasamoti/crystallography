@@ -8,5 +8,8 @@
     { "form": "TRIDENT", "enchantment": "minecraft:knockback", "level": 2 },
     { "form": "BOW", "enchantment": "minecraft:punch", "level": 2 },
     { "form": "MACE", "enchantment": "minecraft:wind_burst", "level": 3 }
+  ],
+  "armor_grants": [
+    { "enchantment": "minecraft:projectile_protection", "level": 4 }
   ]
 }

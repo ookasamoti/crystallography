@@ -5,5 +5,8 @@
     { "form": "MACE", "enchantment": "minecraft:breach", "level": 4 },
     { "form": "CROSSBOW", "enchantment": "minecraft:piercing", "level": 4 },
     { "form": "SPEAR", "enchantment": "minecraft:impaling", "level": 5 }
+  ],
+  "armor_grants": [
+    { "enchantment": "minecraft:thorns", "level": 3 }
   ]
 }

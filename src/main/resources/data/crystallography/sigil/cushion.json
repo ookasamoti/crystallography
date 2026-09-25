@@ -1,0 +1,7 @@
+{
+  "item": "crystallography:sigil_cushion",
+  "cost": 1,
+  "armor_grants": [
+    { "slot": "FEET", "enchantment": "minecraft:feather_falling", "level": 4 }
+  ]
+}

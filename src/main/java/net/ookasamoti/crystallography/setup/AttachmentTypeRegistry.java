@@ -29,11 +29,13 @@ public final class AttachmentTypeRegistry {
                             .build()
             );
 
-    // blazing トレイト：攻撃がヒットした直後、次tickで着火判定を行うまでの「保留」フラグ。
-    // サーバー側のみで完結する短命な値のため同期・永続化ともに不要（詳細は CrystalTraitFireHooks）。
-    public static final DeferredHolder<AttachmentType<?>, AttachmentType<Boolean>> BLAZING_PENDING =
-            ATTACHMENT_TYPES.register("blazing_pending", () ->
-                    AttachmentType.builder(() -> Boolean.FALSE).build()
+    // blazing トレイト／flame シジルの弓・クロスボウ部分：攻撃がヒットした直後、次tickで着火判定を
+    // 行うまでの間だけ保持する「保留倍率」（1.0=保留無し）。同じtickに両方の効果が重なった場合は
+    // 大きい方の倍率を採用する。サーバー側のみで完結する短命な値のため同期・永続化ともに不要
+    // （詳細は CrystalTraitFireHooks）。
+    public static final DeferredHolder<AttachmentType<?>, AttachmentType<Float>> FIRE_DURATION_PENDING_MULTIPLIER =
+            ATTACHMENT_TYPES.register("fire_duration_pending_multiplier", () ->
+                    AttachmentType.builder(() -> Float.valueOf(1.0f)).build()
             );
 
     public static void register(IEventBus bus) {

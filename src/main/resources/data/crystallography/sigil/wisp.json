@@ -1,0 +1,9 @@
+{
+  "item": "crystallography:sigil_wisp",
+  "cost": 2,
+  "forms": ["SWORD", "AXE", "SPEAR", "TRIDENT", "BOW", "CROSSBOW"],
+  "soul_flame_ignite_seconds": 5,
+  "armor_grants": [
+    { "slot": "FEET", "enchantment": "minecraft:soul_speed", "level": 3 }
+  ]
+}

@@ -143,6 +143,13 @@ public class ItemRegistry {
     public static final DeferredItem<Item> SIGIL_FLAME = ITEMS.registerSimpleItem("sigil_flame");
     public static final DeferredItem<Item> SIGIL_PIERCE = ITEMS.registerSimpleItem("sigil_pierce");
     public static final DeferredItem<Item> SIGIL_UNBREAKING = ITEMS.registerSimpleItem("sigil_unbreaking");
+    // 防具ソケット(アミュレット)実装に伴い新規実装した6種
+    public static final DeferredItem<Item> SIGIL_QUELL = ITEMS.registerSimpleItem("sigil_quell");
+    public static final DeferredItem<Item> SIGIL_WISP = ITEMS.registerSimpleItem("sigil_wisp");
+    public static final DeferredItem<Item> SIGIL_AQUATIC = ITEMS.registerSimpleItem("sigil_aquatic");
+    public static final DeferredItem<Item> SIGIL_CUSHION = ITEMS.registerSimpleItem("sigil_cushion");
+    public static final DeferredItem<Item> SIGIL_GUARD = ITEMS.registerSimpleItem("sigil_guard");
+    public static final DeferredItem<Item> SIGIL_CREEP = ITEMS.registerSimpleItem("sigil_creep");
 
     // ---- 防具（試作: アミュレット4部位） ----
     // EquipmentAsset キーはレジストリ登録不要。クライアントが assets/<ns>/equipment/<path>.json を

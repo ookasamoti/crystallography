@@ -2,6 +2,7 @@
   "item": "crystallography:sigil_infinity",
   "cost": 3,
   "grants": [
-    { "form": "BOW", "enchantment": "minecraft:infinity", "level": 1 }
+    { "form": "BOW", "enchantment": "minecraft:infinity", "level": 1 },
+    { "form": "CROSSBOW", "enchantment": "minecraft:infinity", "level": 1 }
   ]
 }

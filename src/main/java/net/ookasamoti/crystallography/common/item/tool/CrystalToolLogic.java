@@ -577,6 +577,24 @@ public final class CrystalToolLogic {
     }
 
     /**
+     * アクティブロードアウトが参照する結晶のうち、指定した id のシジルが付与されているものの個数。
+     * {@code haste} 弓の引き絞り速度補正のように、フォーム別 Item クラス側から直接シジルの
+     * 付与数を数えたい場合に使う（{@code grants}/{@code on_hit_effect} 等では表現しづらい、
+     * バニラの機構に乗らない独自効果向け）。
+     */
+    public static int countAttachedSigil(ToolLoadout lo, ResourceHandler<ItemResource> crystalInv, Identifier sigilId) {
+        int n = 0;
+        for (int idx : lo.crystalIndices()) {
+            if (idx < 0 || idx >= crystalInv.size()) continue;
+            ItemStack crystal = crystalInv.getResource(idx).toStack(crystalInv.getAmountAsInt(idx));
+            if (crystal.isEmpty()) continue;
+            var attached = crystal.get(DataComponentsRegistry.ATTACHED_SIGILS.get());
+            if (attached != null && attached.sigils().contains(sigilId)) n++;
+        }
+        return n;
+    }
+
+    /**
      * バニラの木/石/鉄/ダイヤ/ネザライト槍が持つ {@code Item.Properties#spear(...)} 引数一式
      * （attackDuration, damageMultiplier, delay, dismountTime, dismountThreshold, knockbackTime,
      * knockbackThreshold, damageTime, damageThreshold）。他フォームの {@code incorrectTagFor}/

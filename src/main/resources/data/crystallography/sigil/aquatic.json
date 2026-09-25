@@ -1,0 +1,7 @@
+{
+  "item": "crystallography:sigil_aquatic",
+  "cost": 2,
+  "worn_effect_slot": "HEAD",
+  "worn_effect": "minecraft:water_breathing",
+  "worn_effect_amplifier": 0
+}

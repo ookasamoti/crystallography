@@ -4,5 +4,8 @@
   "forms": ["SWORD", "AXE", "SPEAR", "TRIDENT"],
   "on_hit_effect": "minecraft:slowness",
   "on_hit_duration": 60,
-  "on_hit_amplifier": 1
+  "on_hit_amplifier": 1,
+  "armor_grants": [
+    { "slot": "FEET", "enchantment": "minecraft:frost_walker", "level": 2 }
+  ]
 }

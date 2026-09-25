@@ -8,5 +8,8 @@
     { "form": "SHOVEL", "enchantment": "minecraft:efficiency", "level": 5 },
     { "form": "FISHING_ROD", "enchantment": "minecraft:lure", "level": 3 },
     { "form": "CROSSBOW", "enchantment": "minecraft:quick_charge", "level": 3 }
+  ],
+  "armor_grants": [
+    { "slot": "HEAD", "enchantment": "minecraft:aqua_affinity", "level": 1 }
   ]
 }

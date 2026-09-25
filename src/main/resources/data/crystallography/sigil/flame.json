@@ -6,6 +6,10 @@
     { "form": "AXE", "enchantment": "minecraft:fire_aspect", "level": 2 },
     { "form": "SPEAR", "enchantment": "minecraft:fire_aspect", "level": 2 },
     { "form": "TRIDENT", "enchantment": "minecraft:fire_aspect", "level": 2 },
-    { "form": "BOW", "enchantment": "minecraft:flame", "level": 1 }
+    { "form": "BOW", "enchantment": "minecraft:flame", "level": 1 },
+    { "form": "CROSSBOW", "enchantment": "minecraft:flame", "level": 1 }
+  ],
+  "armor_grants": [
+    { "slot": "CHEST", "enchantment": "minecraft:fire_protection", "level": 4 }
   ]
 }

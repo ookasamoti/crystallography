@@ -14,6 +14,7 @@ import net.minecraft.util.ExtraCodecs;
 import net.minecraft.util.profiling.ProfilerFiller;
 import net.minecraft.world.effect.MobEffect;
 import net.minecraft.world.entity.EntityType;
+import net.minecraft.world.entity.EquipmentSlot;
 import net.minecraft.world.item.enchantment.Enchantment;
 import net.ookasamoti.crystallography.CrystallographyMod;
 import net.ookasamoti.crystallography.common.item.tool.component.ToolForm;
@@ -49,6 +50,7 @@ public final class SigilReloader extends SimpleJsonResourceReloadListener<JsonEl
                 int cost = root.has("cost") ? root.get("cost").getAsInt() : 1;
                 float atkBonus = root.has("attack_damage_bonus") ? root.get("attack_damage_bonus").getAsFloat() : 0f;
                 float condAtkBonus = root.has("conditional_damage_bonus") ? root.get("conditional_damage_bonus").getAsFloat() : 0f;
+                int soulFlameIgniteSeconds = root.has("soul_flame_ignite_seconds") ? root.get("soul_flame_ignite_seconds").getAsInt() : 0;
 
                 Optional<TagKey<EntityType<?>>> targetTag = Optional.empty();
                 if (root.has("target_tag")) {
@@ -101,9 +103,51 @@ public final class SigilReloader extends SimpleJsonResourceReloadListener<JsonEl
                     }
                 }
 
+                List<SigilRegistry.ArmorGrant> armorGrants = new ArrayList<>();
+                if (root.has("armor_grants")) {
+                    for (var gEl : root.getAsJsonArray("armor_grants")) {
+                        var g = gEl.getAsJsonObject();
+                        try {
+                            Optional<EquipmentSlot> slot = Optional.empty();
+                            if (g.has("slot")) {
+                                slot = Optional.of(EquipmentSlot.valueOf(g.get("slot").getAsString()));
+                            }
+                            var enchId = Identifier.tryParse(g.get("enchantment").getAsString());
+                            if (enchId == null) {
+                                CrystallographyMod.LOGGER.warn("[Sigil] {} has invalid armor_grants[].enchantment '{}'", id, g.get("enchantment").getAsString());
+                                continue;
+                            }
+                            int level = g.has("level") ? g.get("level").getAsInt() : 1;
+                            armorGrants.add(new SigilRegistry.ArmorGrant(slot, ResourceKey.create(Registries.ENCHANTMENT, enchId), level));
+                        } catch (IllegalArgumentException ex) {
+                            CrystallographyMod.LOGGER.warn("[Sigil] {} has unknown armor_grants[].slot '{}'", id, g.has("slot") ? g.get("slot").getAsString() : "?");
+                        }
+                    }
+                }
+
+                Optional<EquipmentSlot> wornEffectSlot = Optional.empty();
+                Optional<Holder<MobEffect>> wornEffect = Optional.empty();
+                int wornEffectAmplifier = 0;
+                if (root.has("worn_effect")) {
+                    var effectId = Identifier.tryParse(root.get("worn_effect").getAsString());
+                    var holderOpt = effectId != null ? BuiltInRegistries.MOB_EFFECT.get(effectId) : Optional.<Holder.Reference<MobEffect>>empty();
+                    if (holderOpt.isPresent() && root.has("worn_effect_slot")) {
+                        try {
+                            wornEffectSlot = Optional.of(EquipmentSlot.valueOf(root.get("worn_effect_slot").getAsString()));
+                            wornEffect = Optional.of(holderOpt.get());
+                            wornEffectAmplifier = root.has("worn_effect_amplifier") ? root.get("worn_effect_amplifier").getAsInt() : 0;
+                        } catch (IllegalArgumentException ex) {
+                            CrystallographyMod.LOGGER.warn("[Sigil] {} has unknown worn_effect_slot '{}'", id, root.get("worn_effect_slot").getAsString());
+                        }
+                    } else if (holderOpt.isEmpty()) {
+                        CrystallographyMod.LOGGER.warn("[Sigil] {} has unknown worn_effect '{}'", id, root.get("worn_effect").getAsString());
+                    }
+                }
+
                 SigilRegistry.put(itemRL, new SigilRegistry.Definition(
                         cost, atkBonus, List.copyOf(forms), targetTag, condAtkBonus,
-                        onHitEffect, onHitDuration, onHitAmplifier, List.copyOf(grants)));
+                        onHitEffect, onHitDuration, onHitAmplifier, List.copyOf(grants), List.copyOf(armorGrants),
+                        wornEffectSlot, wornEffect, wornEffectAmplifier, soulFlameIgniteSeconds));
             } catch (Exception ex) {
                 CrystallographyMod.LOGGER.error("[Sigil] failed to load {}: {}", id, ex.toString());
             }

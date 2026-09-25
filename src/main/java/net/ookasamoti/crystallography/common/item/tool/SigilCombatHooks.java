@@ -7,6 +7,7 @@ import net.neoforged.bus.api.IEventBus;
 import net.neoforged.neoforge.common.NeoForge;
 import net.neoforged.neoforge.event.entity.living.LivingIncomingDamageEvent;
 import net.ookasamoti.crystallography.data.SigilRegistry;
+import net.ookasamoti.crystallography.setup.AttachmentTypeRegistry;
 import net.ookasamoti.crystallography.setup.DataComponentsRegistry;
 
 import java.util.ArrayList;
@@ -39,6 +40,7 @@ public final class SigilCombatHooks {
         var crystalInv = ToolInventory.get(weapon, CrystalToolLogic.crystalSlotCount(tier), attacker.level().registryAccess());
 
         float bonus = 0f;
+        int soulFlameSeconds = 0;
         List<MobEffectInstance> onHitEffects = new ArrayList<>();
         for (int idx : lo.crystalIndices()) {
             if (idx < 0 || idx >= crystalInv.size()) continue;
@@ -58,11 +60,19 @@ public final class SigilCombatHooks {
                     bonus += def.conditionalDamageBonus();
                     def.onHitEffect().ifPresent(effect ->
                             onHitEffects.add(new MobEffectInstance(effect, def.onHitDuration(), def.onHitAmplifier())));
+                    // 蒼炎(wisp)：ソウルフレイム。着火のみここで行い、見た目(青い炎)・継続燃焼2倍
+                    // ダメージは既存の SoulFireIgnitionHooks がブロック判定に代えて
+                    // SOUL_FIRE_IGNITED を見て自動的に処理する。
+                    soulFlameSeconds = Math.max(soulFlameSeconds, def.soulFlameIgniteSeconds());
                 }
             }
         }
 
         if (bonus > 0f) event.setAmount(event.getAmount() + bonus);
         for (var effect : onHitEffects) victim.addEffect(effect, attacker);
+        if (soulFlameSeconds > 0) {
+            victim.igniteForSeconds(soulFlameSeconds);
+            victim.setData(AttachmentTypeRegistry.SOUL_FIRE_IGNITED, true);
+        }
     }
 }

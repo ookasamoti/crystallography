@@ -1,0 +1,7 @@
+{
+  "item": "crystallography:sigil_quell",
+  "cost": 1,
+  "forms": ["SWORD", "AXE", "SPEAR", "TRIDENT"],
+  "target_tag": "minecraft:raiders",
+  "conditional_damage_bonus": 12.5
+}

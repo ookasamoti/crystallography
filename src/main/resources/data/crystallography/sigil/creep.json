@@ -1,0 +1,7 @@
+{
+  "item": "crystallography:sigil_creep",
+  "cost": 2,
+  "armor_grants": [
+    { "slot": "LEGS", "enchantment": "minecraft:swift_sneak", "level": 3 }
+  ]
+}

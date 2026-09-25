@@ -1,0 +1,7 @@
+{
+  "item": "crystallography:sigil_guard",
+  "cost": 1,
+  "armor_grants": [
+    { "enchantment": "minecraft:protection", "level": 4 }
+  ]
+}
