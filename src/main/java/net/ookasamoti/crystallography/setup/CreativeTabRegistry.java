@@ -84,6 +84,7 @@ public class CreativeTabRegistry {
                         output.accept(ItemRegistry.SIGIL_CUSHION.get());
                         output.accept(ItemRegistry.SIGIL_GUARD.get());
                         output.accept(ItemRegistry.SIGIL_CREEP.get());
+                        output.accept(ItemRegistry.SIGIL_MENDING.get());
                         output.accept(ItemRegistry.AMULET_HEAD.get());
                         output.accept(ItemRegistry.AMULET_BODY.get());
                         output.accept(ItemRegistry.AMULET_LEG.get());

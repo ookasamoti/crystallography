@@ -1,0 +1,20 @@
+{
+  "item": "crystallography:sigil_mending",
+  "cost": 3,
+  "grants": [
+    { "form": "PICKAXE", "enchantment": "minecraft:mending", "level": 1 },
+    { "form": "SHOVEL", "enchantment": "minecraft:mending", "level": 1 },
+    { "form": "HOE", "enchantment": "minecraft:mending", "level": 1 },
+    { "form": "AXE", "enchantment": "minecraft:mending", "level": 1 },
+    { "form": "SWORD", "enchantment": "minecraft:mending", "level": 1 },
+    { "form": "SPEAR", "enchantment": "minecraft:mending", "level": 1 },
+    { "form": "TRIDENT", "enchantment": "minecraft:mending", "level": 1 },
+    { "form": "MACE", "enchantment": "minecraft:mending", "level": 1 },
+    { "form": "BOW", "enchantment": "minecraft:mending", "level": 1 },
+    { "form": "CROSSBOW", "enchantment": "minecraft:mending", "level": 1 },
+    { "form": "SHEARS", "enchantment": "minecraft:mending", "level": 1 },
+    { "form": "SPYGLASS", "enchantment": "minecraft:mending", "level": 1 },
+    { "form": "FISHING_ROD", "enchantment": "minecraft:mending", "level": 1 },
+    { "form": "SHIELD", "enchantment": "minecraft:mending", "level": 1 }
+  ]
+}

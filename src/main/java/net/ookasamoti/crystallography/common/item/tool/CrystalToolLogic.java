@@ -442,6 +442,31 @@ public final class CrystalToolLogic {
     }
 
     /**
+     * 修繕(mending)シジル対応：{@code DataComponents.DAMAGE} が、このメソッドが最後に書き込んだ
+     * はずの値より減っていたら、それを「currentDurability から独立して外部から回復された分」と
+     * みなして {@link #updateActiveCurrentDurability} に反映する。
+     * <p>
+     * この mod の耐久値は{@link ToolLoadout#currentDurability}でロードアウト単位に独自管理して
+     * おり、{@link #applyComputedStats} が呼ばれるたびに {@code stats.durability() -
+     * currentDurability} から DAMAGE を再計算・上書きしてしまう。バニラの修繕エンチャントは
+     * 経験値玉取得時に {@code ItemStack#setDamageValue} で DAMAGE を直接減らすだけ
+     * （{@code ExperienceOrb#repairPlayerItems}）で、この mod の耐久管理を経由しないため、
+     * 何もしなければ次回の {@code applyComputedStats} でその場で元通りに上書きされてしまう。
+     * ここで「DAMAGE が期待値より減っている＝外部から repair された」と検知し、その分を
+     * currentDurability の回復として吸収することで、修繕を素の vanilla エンチャント付与
+     * （{@code CrystalToolLogic#applyGrantedEnchantments} の grants）だけで機能させられる。
+     */
+    private static void reconcileExternalDamageChange(ItemStack stack, ToolLoadout lo, ToolStats s) {
+        int maxDmg = Math.max(1, s.durability());
+        int expectedDamage = Math.max(0, Math.min(maxDmg, s.durability() - lo.currentDurability()));
+        int actualDamage = stack.getOrDefault(DataComponents.DAMAGE, expectedDamage);
+        if (actualDamage < expectedDamage) {
+            int repaired = expectedDamage - actualDamage;
+            updateActiveCurrentDurability(stack, lo.currentDurability() + repaired);
+        }
+    }
+
+    /**
      * アクティブロードアウトの ToolStats を Minecraft DataComponent に反映する。
      * ロードアウト切り替え時・登録時・耐久値変化時に呼び出す。
      * - 通常: MAX_DAMAGE/DAMAGE/ATTRIBUTE_MODIFIERS/Tool/モデルヒントを設定。
@@ -451,6 +476,10 @@ public final class CrystalToolLogic {
         var lo = getActiveLoadout(stack);
         if (lo == null) return;
         var s = lo.stats();
+
+        reconcileExternalDamageChange(stack, lo, s);
+        lo = getActiveLoadout(stack);
+        if (lo == null) return;
 
         // MAX_DAMAGE と DAMAGE は常に同期（耐久バー表示用）。
         int maxDmg = Math.max(1, s.durability());

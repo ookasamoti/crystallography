@@ -150,6 +150,7 @@ public class ItemRegistry {
     public static final DeferredItem<Item> SIGIL_CUSHION = ITEMS.registerSimpleItem("sigil_cushion");
     public static final DeferredItem<Item> SIGIL_GUARD = ITEMS.registerSimpleItem("sigil_guard");
     public static final DeferredItem<Item> SIGIL_CREEP = ITEMS.registerSimpleItem("sigil_creep");
+    public static final DeferredItem<Item> SIGIL_MENDING = ITEMS.registerSimpleItem("sigil_mending");
 
     // ---- 防具（試作: アミュレット4部位） ----
     // EquipmentAsset キーはレジストリ登録不要。クライアントが assets/<ns>/equipment/<path>.json を
