@@ -32,7 +32,8 @@ import net.ookasamoti.crystallography.setup.AttachmentTypeRegistry;
 public final class CrystalTraitFireHooks {
     private CrystalTraitFireHooks() {}
 
-    private static final float BLAZING_FIRE_DURATION_MULTIPLIER = 1.5f;
+    /** blazing（効果時間延長グループ）：Lvごとの延焼時間倍率の増分。 */
+    private static final float BLAZING_FIRE_DURATION_BONUS_PER_LEVEL = 0.5f;
     /** flame シジル：バニラのFlame(弓/クロスボウ)は着火時間固定のため、Lv2相当として2倍にする。 */
     private static final float FLAME_SIGIL_FIRE_DURATION_MULTIPLIER = 2.0f;
     private static final Identifier SIGIL_FLAME_ID = Identifier.fromNamespaceAndPath(CrystallographyMod.MOD_ID, "sigil_flame");
@@ -55,8 +56,9 @@ public final class CrystalTraitFireHooks {
         var crystalInv = ToolInventory.get(weapon, CrystalToolLogic.crystalSlotCount(tier), attacker.level().registryAccess());
 
         float multiplier = 1.0f;
-        if (CrystalTraitLogic.loadoutHasTrait(lo, crystalInv, CrystalTraitLogic.BLAZING)) {
-            multiplier = Math.max(multiplier, BLAZING_FIRE_DURATION_MULTIPLIER);
+        int blazingLevel = CrystalTraitLogic.traitLevel(lo, crystalInv, CrystalTraitLogic.BLAZING, CrystalTraitLogic.SCALING_MAX_LEVEL);
+        if (blazingLevel > 0) {
+            multiplier = Math.max(multiplier, 1.0f + BLAZING_FIRE_DURATION_BONUS_PER_LEVEL * blazingLevel);
         }
         if ((lo.form() == ToolForm.BOW || lo.form() == ToolForm.CROSSBOW)
                 && CrystalToolLogic.countAttachedSigil(lo, crystalInv, SIGIL_FLAME_ID) > 0) {

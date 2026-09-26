@@ -6,7 +6,7 @@
   "carat":   { "min": 4, "max": 8 },
   "clarity": { "min": 5.0, "max": 6.0 },
   "category": "metal",
-  "traits": [ "conduction", "fire" ],
+  "traits": [ "conduction", "fools_gold" ],
   "crack_result": { "item": "minecraft:raw_copper", "count": 1 },
   "color": "#C7A24A"
 }

@@ -13,6 +13,7 @@ import net.ookasamoti.crystallography.common.item.tool.AttackAttributeTooltipHoo
 import net.ookasamoti.crystallography.common.item.tool.CrystalTraitCombatHooks;
 import net.ookasamoti.crystallography.common.item.tool.CrystalTraitFireHooks;
 import net.ookasamoti.crystallography.common.item.tool.CrystalTraitMiningHooks;
+import net.ookasamoti.crystallography.common.item.tool.CrystalTraitProjectileHooks;
 import net.ookasamoti.crystallography.common.item.tool.CrystalTraitTickHooks;
 import net.ookasamoti.crystallography.common.item.tool.SigilCombatHooks;
 import net.ookasamoti.crystallography.data.CrystalRollsReloader;
@@ -58,6 +59,7 @@ public class CrystallographyMod {
         CrystalTraitFireHooks.register(modEventBus);
         CrystalTraitMiningHooks.register(modEventBus);
         CrystalTraitTickHooks.register(modEventBus);
+        CrystalTraitProjectileHooks.register(modEventBus);
     }
 
     /**

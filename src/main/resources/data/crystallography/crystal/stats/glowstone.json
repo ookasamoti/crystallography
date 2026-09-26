@@ -6,6 +6,6 @@
   "carat":   { "min": 5, "max": 9 },
   "clarity": { "min": 7.0, "max": 8.4 },
   "category": "stone",
-  "traits": [ "potion_amplify" ],
+  "traits": [ "amplify" ],
   "color": "#FFD34D"
 }

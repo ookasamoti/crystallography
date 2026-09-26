@@ -8,6 +8,7 @@ import net.minecraft.resources.Identifier;
 import net.minecraft.resources.ResourceKey;
 import net.minecraft.world.effect.MobEffect;
 import net.minecraft.world.effect.MobEffectInstance;
+import net.minecraft.world.effect.MobEffects;
 import net.minecraft.world.entity.EquipmentSlot;
 import net.minecraft.world.entity.EquipmentSlotGroup;
 import net.minecraft.world.entity.LivingEntity;
@@ -16,10 +17,12 @@ import net.minecraft.world.entity.ai.attributes.Attributes;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.component.ItemAttributeModifiers;
 import net.minecraft.world.item.enchantment.Enchantment;
+import net.minecraft.world.item.enchantment.Enchantments;
 import net.minecraft.world.item.enchantment.ItemEnchantments;
 import net.minecraft.world.item.equipment.Equippable;
 import net.neoforged.neoforge.transfer.item.ItemStacksResourceHandler;
 import net.ookasamoti.crystallography.CrystallographyMod;
+import net.ookasamoti.crystallography.common.item.tool.CrystalTraitLogic;
 import net.ookasamoti.crystallography.common.item.tool.ToolInventory;
 import net.ookasamoti.crystallography.data.SigilRegistry;
 import net.ookasamoti.crystallography.setup.DataComponentsRegistry;
@@ -61,6 +64,8 @@ public final class AmuletStatLogic {
     /** 残り時間がこれを下回ったら worn_effect を再付与する（付与のたびにパーティクルが再生されないよう、
      * 切れる直前まで再付与しない）。 */
     private static final int WORN_EFFECT_REFRESH_THRESHOLD = 40;
+    /** turtle トレイト：ブーツに付いているとき水中歩行+1（本物の vanilla エンチャント）。 */
+    private static final int TURTLE_DEPTH_STRIDER_BONUS = 1;
 
     private static final Identifier ARMOR_ID = id("amulet_armor");
     private static final Identifier TOUGHNESS_ID = id("amulet_toughness");
@@ -168,6 +173,12 @@ public final class AmuletStatLogic {
             }
         }
 
+        // turtle：ブーツに付いているとき水中歩行+1（亀の甲羅の水中歩行と同種の恩恵を、
+        // 本物のエンチャントとして付与する）。
+        if (slot == EquipmentSlot.FEET && hasTraitInSocketedCrystals(inv, CrystalTraitLogic.TURTLE)) {
+            granted.merge(Enchantments.DEPTH_STRIDER, TURTLE_DEPTH_STRIDER_BONUS, Math::max);
+        }
+
         if (granted.isEmpty()) {
             stack.remove(DataComponents.ENCHANTMENTS);
             return;
@@ -192,6 +203,17 @@ public final class AmuletStatLogic {
         if (equippable == null || equippable.slot() != slot) return;
 
         var inv = ToolInventory.get(stack, IAmuletItem.CRYSTAL_SLOTS, wearer.level().registryAccess());
+
+        // turtle：ヘルメットに付いているとき、亀の甲羅ヘルメットと同じ水中呼吸を常時付与する
+        // （Player#turtleHelmetTick は Items.TURTLE_HELMET への同一性チェック固定で
+        // オーバーライドできないため、ここで独自に同等の効果を再現する）。
+        if (slot == EquipmentSlot.HEAD && hasTraitInSocketedCrystals(inv, CrystalTraitLogic.TURTLE)) {
+            var current = wearer.getEffect(MobEffects.WATER_BREATHING);
+            if (current == null || current.getDuration() < WORN_EFFECT_REFRESH_THRESHOLD) {
+                wearer.addEffect(new MobEffectInstance(MobEffects.WATER_BREATHING, WORN_EFFECT_DURATION_TICKS, 0, false, false, true));
+            }
+        }
+
         for (int i = 0; i < inv.size(); i++) {
             ItemStack crystal = inv.getResource(i).toStack(inv.getAmountAsInt(i));
             if (crystal.isEmpty()) continue;
@@ -211,5 +233,20 @@ public final class AmuletStatLogic {
                 }
             }
         }
+    }
+
+    /** {@code stack} に装着中の結晶3枠のうち、指定トレイトを持つものが1つでもあるか。 */
+    public static boolean hasSocketedTrait(ItemStack stack, HolderLookup.Provider lookup, String trait) {
+        return hasTraitInSocketedCrystals(ToolInventory.get(stack, IAmuletItem.CRYSTAL_SLOTS, lookup), trait);
+    }
+
+    /** {@code inv} の3枠のうち、指定トレイトを持つ結晶が1つでも装着されているか。 */
+    private static boolean hasTraitInSocketedCrystals(ItemStacksResourceHandler inv, String trait) {
+        for (int i = 0; i < inv.size(); i++) {
+            ItemStack crystal = inv.getResource(i).toStack(inv.getAmountAsInt(i));
+            if (crystal.isEmpty()) continue;
+            if (CrystalTraitLogic.stackHasTrait(crystal, trait)) return true;
+        }
+        return false;
     }
 }

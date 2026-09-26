@@ -31,7 +31,8 @@ import java.util.List;
 public final class CrystalTraitTickHooks {
     private CrystalTraitTickHooks() {}
 
-    private static final double MAGNETISM_RADIUS = 6.0;
+    /** magnetism（効果範囲拡張グループ）：Lvごとの基礎半径。 */
+    private static final double MAGNETISM_BASE_RADIUS = 6.0;
     private static final double MAGNETISM_PULL_SPEED = 0.35;
     private static final EquipmentSlot[] ARMOR_SLOTS =
             {EquipmentSlot.HEAD, EquipmentSlot.CHEST, EquipmentSlot.LEGS, EquipmentSlot.FEET};
@@ -44,8 +45,7 @@ public final class CrystalTraitTickHooks {
         Player player = event.getEntity();
         if (player.level().isClientSide()) return;
 
-        boolean magnetism = false;
-        boolean turtle = false;
+        int magnetismLevel = 0;
         for (ItemStack held : List.of(player.getMainHandItem(), player.getOffhandItem())) {
             if (!(held.getItem() instanceof ICrystalTool)) continue;
             var lo = CrystalToolLogic.getActiveLoadout(held);
@@ -53,14 +53,11 @@ public final class CrystalTraitTickHooks {
 
             int tier = CrystalToolLogic.getTier(held);
             var crystalInv = ToolInventory.get(held, CrystalToolLogic.crystalSlotCount(tier), player.level().registryAccess());
-            if (CrystalTraitLogic.loadoutHasTrait(lo, crystalInv, CrystalTraitLogic.MAGNETISM)) magnetism = true;
-            if (CrystalTraitLogic.loadoutHasTrait(lo, crystalInv, CrystalTraitLogic.TURTLE)) turtle = true;
+            magnetismLevel = Math.max(magnetismLevel,
+                    CrystalTraitLogic.traitLevel(lo, crystalInv, CrystalTraitLogic.MAGNETISM, CrystalTraitLogic.SCALING_MAX_LEVEL));
         }
 
-        if (magnetism) pullNearbyPickups(player);
-        if (turtle && player.isUnderWater() && player.getAirSupply() < player.getMaxAirSupply()) {
-            player.setAirSupply(player.getMaxAirSupply());
-        }
+        if (magnetismLevel > 0) pullNearbyPickups(player, MAGNETISM_BASE_RADIUS * magnetismLevel);
 
         for (EquipmentSlot slot : ARMOR_SLOTS) {
             ItemStack worn = player.getItemBySlot(slot);
@@ -70,8 +67,8 @@ public final class CrystalTraitTickHooks {
         }
     }
 
-    private static void pullNearbyPickups(Player player) {
-        AABB area = player.getBoundingBox().inflate(MAGNETISM_RADIUS);
+    private static void pullNearbyPickups(Player player, double radius) {
+        AABB area = player.getBoundingBox().inflate(radius);
         for (ItemEntity item : player.level().getEntitiesOfClass(ItemEntity.class, area)) {
             pullToward(player, item);
         }

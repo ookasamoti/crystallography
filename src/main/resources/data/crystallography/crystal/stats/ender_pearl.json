@@ -6,6 +6,6 @@
   "carat":   { "min": 6, "max": 10 },
   "clarity": { "min": 5.0, "max": 6.0 },
   "category": "pearl",
-  "traits": [ "swap" ],
+  "traits": [ "ender" ],
   "color": "#19A38C"
 }

@@ -1,15 +1,16 @@
 package net.ookasamoti.crystallography.common.item.tool;
 
 import net.minecraft.resources.ResourceKey;
+import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.enchantment.Enchantment;
 import net.minecraft.world.item.enchantment.Enchantments;
-import net.neoforged.neoforge.transfer.ResourceHandler;
-import net.neoforged.neoforge.transfer.item.ItemResource;
+import net.neoforged.neoforge.transfer.item.ItemStacksResourceHandler;
 import net.ookasamoti.crystallography.common.item.tool.component.ToolForm;
 import net.ookasamoti.crystallography.common.item.tool.component.ToolLoadout;
 import net.ookasamoti.crystallography.data.CrystalStatsRegistry;
 
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -17,45 +18,43 @@ import java.util.Set;
 /**
  * 結晶の「固有アビリティ」＝ stats JSON の {@code traits} フィールド（{@link CrystalStatsRegistry}
  * 経由）の実装本体。シジル（{@link SigilRegistry}、プレイヤーが後付けする）と違い、traits は
- * 結晶そのものに最初から備わっている固定の特性で、コストも消費しない。Wiki の各結晶ページに
- * 「想定効果」として書かれていたものを実装する（2026-09-17）。
+ * 結晶そのものに最初から備わっている固定の特性で、コストも消費しない。
  * <p>
- * 効果の適用箇所は種類によって異なる：
+ * 複数の結晶が同じトレイトを持つ場合の「Lv」の数え方は2種類ある：
  * <ul>
- *   <li>数値ステータスへの折り込み（diamond/pure/bandit）→ {@link CrystalToolLogic#buildStats}</li>
- *   <li>vanilla エンチャント付与（sharp/conduction/golden/fools_gold）→
- *       {@link CrystalToolLogic}（applyGrantedEnchantments。シジルの grants と同じマップに合流し、
- *       同じエンチャントならレベルの大きい方が勝つ）</li>
- *   <li>耐久力エンチャント実効レベルへの加算（boltz）→ {@link CrystalToolLogic}（applyUnbreaking）</li>
- *   <li>シジル付与コストの予算＝carat の底上げ（ward/pinky）→
- *       {@link net.ookasamoti.crystallography.common.util.LapidaryAnvilOperations}</li>
- *   <li>戦闘時の条件付き効果（order/lifesteal/wither/levitation/potion_amplify/potion_duration/
- *       breezing/sonic）→ {@link CrystalTraitCombatHooks}</li>
- *   <li>着火継続時間の延長（blazing）→ {@link CrystalTraitFireHooks}</li>
- *   <li>採掘関連（obsidian_mining/aquatic/smelting/freezing）→ {@link CrystalTraitMiningHooks}</li>
- *   <li>常時効果（magnetism/turtle）→ {@link CrystalTraitTickHooks}</li>
+ *   <li><b>個数ベース</b>（{@link #countTrait}）：そのトレイトを持つ結晶の枚数（同じ結晶を複数
+ *       積んでも増える）。効果範囲拡張・効果時間延長・補正強化グループの大半がこちら。</li>
+ *   <li><b>種類ベース</b>（{@link #distinctCrystalTypesWithTrait}）：そのトレイトを持つ「異なる
+ *       結晶アイテム」の種類数（同じ結晶を複数積んでも増えない）。golden/fools_gold 専用の特例
+ *       （例：金を2〜3個積んでも幸運は上がらないが、金+ブルートゴールドの組み合わせでLv2になる）。</li>
  * </ul>
- * {@code resonance}（採掘時、周囲の同系統ブロックへソナーをリレー）と {@code swap}（遠距離攻撃が
- * ヒットした敵と位置を入れ替える）は、前者は具体的な結果が仕様上定義しきれず、後者は「どの武器が
- * この飛翔体を発射したか」を辿る基盤がまだ無く安全に実装できないため、このクラスでは未実装のまま
- * 残している。{@code mace}/{@code trident} は既存の {@link CrystalToolLogic#upgradeFormForCrystals}
- * が担うフォーム昇格トリガーそのものなので、ここでは何もしない。{@code fire}（黄銅鉱の副特性）は
- * Wiki 上も元々効果の記載が無い。
+ * 上限（maxLevel）は特に記載の無いものはLv1（複数積んでも効果は変わらない）、下記の3グループに
+ * 属するものだけLv3（個別に上限が定められているものを除く）。
+ * <ul>
+ *   <li>効果範囲拡張：resonance / freezing / magnetism</li>
+ *   <li>効果時間延長：blazing / levitation / wither</li>
+ *   <li>補正強化：diamond / breezing / conduction / lifesteal / amplify</li>
+ * </ul>
  */
 public final class CrystalTraitLogic {
+
+    /** 特に記載の無いトレイトの上限Lv（複数積んでも効果は変わらない）。 */
+    public static final int DEFAULT_MAX_LEVEL = 1;
+    /** 効果範囲拡張・効果時間延長・補正強化グループの上限Lv。 */
+    public static final int SCALING_MAX_LEVEL = 3;
 
     // ---- 数値折り込み系（buildStats） ----
     public static final String DIAMOND = "diamond";
     public static final String PURE = "pure";
     public static final String BANDIT = "bandit";
-    /** diamond トレイト1個あたりの耐久値ボーナス（tier0/1結晶の基礎hardnessと同程度の値）。 */
+    /** diamond トレイト1個あたりの耐久値ボーナス（tier0/1結晶の基礎hardnessと同程度の値）。補正強化。 */
     public static final int DIAMOND_DURABILITY_BONUS = 64;
     /** pure トレイトを持つ結晶自身の clarity 寄与に掛かる倍率。 */
     public static final float PURE_CLARITY_MULTIPLIER = 1.2f;
-    /** bandit トレイト1個あたりの、AXE フォーム限定の追加攻撃力。 */
+    /** bandit トレイト1個あたりの、AXE フォーム限定の追加攻撃力。Lv上限1＝複数積んでも+2固定。 */
     public static final float BANDIT_AXE_DAMAGE_BONUS = 2.0f;
 
-    // ---- vanilla エンチャント付与系（applyGrantedEnchantments） ----
+    // ---- vanilla エンチャント付与系（CrystalToolLogic#applyGrantedEnchantments） ----
     public static final String SHARP = "sharp";
     public static final String CONDUCTION = "conduction";
     public static final String GOLDEN = "golden";
@@ -72,27 +71,37 @@ public final class CrystalTraitLogic {
     public static final int WARD_CARAT_BONUS = 2;
     public static final int PINKY_CARAT_BONUS = 1;
 
-    // ---- 戦闘フック系（CrystalTraitCombatHooks） ----
+    // ---- 戦闘フック系（CrystalTraitCombatHooks / SigilCombatHooks） ----
     public static final String ORDER = "order";
     public static final String LIFESTEAL = "lifesteal";
     public static final String WITHER = "wither";
     public static final String LEVITATION = "levitation";
-    public static final String POTION_AMPLIFY = "potion_amplify";
-    public static final String POTION_DURATION = "potion_duration";
+    /** 旧 potion_amplify。シジル由来の命中時効果にも適用される。 */
+    public static final String AMPLIFY = "amplify";
+    /** 旧 potion_duration。シジル由来の命中時効果にも適用される。Lv上限1（時間延長率は固定）。 */
+    public static final String DURATION = "duration";
     public static final String BREEZING = "breezing";
     public static final String SONIC = "sonic";
+    /** 旧 swap。遠距離攻撃：地形にヒットでエンダーパール移動、mobにヒットで位置入れ替え。 */
+    public static final String ENDER = "ender";
 
     // ---- 着火フック系（CrystalTraitFireHooks） ----
     public static final String BLAZING = "blazing";
 
     // ---- 採掘フック系（CrystalTraitMiningHooks） ----
-    public static final String OBSIDIAN_MINING = "obsidian_mining";
+    /** 旧 obsidian_mining。 */
+    public static final String OBSIDIAN_TEAR = "obsidian_tear";
+    /** 新規：深層岩グループの採掘速度に補正。 */
+    public static final String DEPBORN = "depborn";
     public static final String AQUATIC = "aquatic";
     public static final String SMELTING = "smelting";
     public static final String FREEZING = "freezing";
+    /** 新規：採掘時、周囲の同系統ブロックも採掘する（対象はフォームごとに異なる）。 */
+    public static final String RESONANCE = "resonance";
 
-    // ---- 常時効果系（CrystalTraitTickHooks） ----
+    // ---- 常時効果系（CrystalTraitTickHooks / AmuletStatLogic） ----
     public static final String MAGNETISM = "magnetism";
+    /** ツールでは aquatic の効果を強化、防具では亀の甲羅ヘルメット効果／水中歩行+1。 */
     public static final String TURTLE = "turtle";
 
     private CrystalTraitLogic() {}
@@ -103,12 +112,12 @@ public final class CrystalTraitLogic {
     }
 
     /** アクティブロードアウトが参照する結晶（最大3個）の中に、指定トレイトを持つものが1つでもあるか。 */
-    public static boolean loadoutHasTrait(ToolLoadout lo, ResourceHandler<ItemResource> crystalInv, String trait) {
+    public static boolean loadoutHasTrait(ToolLoadout lo, ItemStacksResourceHandler crystalInv, String trait) {
         return countTrait(lo, crystalInv, trait) > 0;
     }
 
     /** アクティブロードアウトが参照する結晶のうち、指定トレイトを持つものの個数。 */
-    public static int countTrait(ToolLoadout lo, ResourceHandler<ItemResource> crystalInv, String trait) {
+    public static int countTrait(ToolLoadout lo, ItemStacksResourceHandler crystalInv, String trait) {
         int n = 0;
         for (int idx : lo.crystalIndices()) {
             if (idx < 0 || idx >= crystalInv.size()) continue;
@@ -119,6 +128,26 @@ public final class CrystalTraitLogic {
         return n;
     }
 
+    /**
+     * アクティブロードアウトが参照する結晶のうち、指定トレイトを持つ「異なる結晶アイテム」の
+     * 種類数。golden/fools_gold の特例判定用（同じ結晶を複数積んでも増えない）。
+     */
+    public static int distinctCrystalTypesWithTrait(ToolLoadout lo, ItemStacksResourceHandler crystalInv, String trait) {
+        Set<Item> distinct = new HashSet<>();
+        for (int idx : lo.crystalIndices()) {
+            if (idx < 0 || idx >= crystalInv.size()) continue;
+            ItemStack crystal = crystalInv.getResource(idx).toStack(crystalInv.getAmountAsInt(idx));
+            if (crystal.isEmpty()) continue;
+            if (stackHasTrait(crystal, trait)) distinct.add(crystal.getItem());
+        }
+        return distinct.size();
+    }
+
+    /** 個数ベースのLv（{@link #countTrait} を {@code maxLevel} でクランプしたもの）。 */
+    public static int traitLevel(ToolLoadout lo, ItemStacksResourceHandler crystalInv, String trait, int maxLevel) {
+        return Math.min(countTrait(lo, crystalInv, trait), maxLevel);
+    }
+
     /** {@code crystal} 単体の carat 予算ボーナス（宝石彫刻台でのシジル付与コスト判定用）。 */
     public static int caratBonusFor(ItemStack crystal) {
         int bonus = 0;
@@ -127,51 +156,60 @@ public final class CrystalTraitLogic {
         return bonus;
     }
 
-    /** トレイトによる vanilla エンチャント付与1件。{@code SigilRegistry.GrantedEnchantment} と同形。 */
-    private record TraitGrant(ToolForm form, ResourceKey<Enchantment> enchantment, int level) {}
+    /** amplify（旧 potion_amplify、補正強化グループ）：Lvぶんの増幅レベル加算。 */
+    public static int amplifyBonus(ToolLoadout lo, ItemStacksResourceHandler crystalInv) {
+        return traitLevel(lo, crystalInv, AMPLIFY, SCALING_MAX_LEVEL);
+    }
 
-    private static final Map<String, List<TraitGrant>> ENCHANT_GRANTS = Map.of(
-            SHARP, List.of(
-                    new TraitGrant(ToolForm.SWORD, Enchantments.SHARPNESS, 1),
-                    new TraitGrant(ToolForm.AXE, Enchantments.SHARPNESS, 1),
-                    new TraitGrant(ToolForm.SPEAR, Enchantments.SHARPNESS, 1),
-                    new TraitGrant(ToolForm.TRIDENT, Enchantments.SHARPNESS, 1),
-                    new TraitGrant(ToolForm.MACE, Enchantments.SHARPNESS, 1)
-            ),
-            CONDUCTION, List.of(
-                    new TraitGrant(ToolForm.SWORD, Enchantments.FIRE_ASPECT, 1),
-                    new TraitGrant(ToolForm.AXE, Enchantments.FIRE_ASPECT, 1),
-                    new TraitGrant(ToolForm.SPEAR, Enchantments.FIRE_ASPECT, 1),
-                    new TraitGrant(ToolForm.TRIDENT, Enchantments.FIRE_ASPECT, 1)
-            ),
-            GOLDEN, List.of(
-                    new TraitGrant(ToolForm.PICKAXE, Enchantments.FORTUNE, 1),
-                    new TraitGrant(ToolForm.AXE, Enchantments.FORTUNE, 1),
-                    new TraitGrant(ToolForm.HOE, Enchantments.FORTUNE, 1),
-                    new TraitGrant(ToolForm.SHOVEL, Enchantments.FORTUNE, 1),
-                    new TraitGrant(ToolForm.SWORD, Enchantments.LOOTING, 1),
-                    new TraitGrant(ToolForm.AXE, Enchantments.LOOTING, 1),
-                    new TraitGrant(ToolForm.SPEAR, Enchantments.LOOTING, 1)
-            ),
-            FOOLS_GOLD, List.of(
-                    new TraitGrant(ToolForm.PICKAXE, Enchantments.FORTUNE, 2),
-                    new TraitGrant(ToolForm.AXE, Enchantments.FORTUNE, 2),
-                    new TraitGrant(ToolForm.HOE, Enchantments.FORTUNE, 2),
-                    new TraitGrant(ToolForm.SHOVEL, Enchantments.FORTUNE, 2)
-            )
-    );
+    /** duration（旧 potion_duration、Lv上限1＝倍率は固定）：あれば1.5倍、無ければ1倍。 */
+    public static float durationMultiplier(ToolLoadout lo, ItemStacksResourceHandler crystalInv) {
+        return loadoutHasTrait(lo, crystalInv, DURATION) ? DURATION_MULTIPLIER : 1f;
+    }
+
+    private static final float DURATION_MULTIPLIER = 1.5f;
+
+    // ---- vanilla エンチャント付与（applyGrantedEnchantments から呼ばれる） ----
+
+    private static final List<ToolForm> SHARP_FORMS = List.of(ToolForm.SWORD, ToolForm.AXE, ToolForm.SPEAR, ToolForm.TRIDENT, ToolForm.MACE);
+    private static final List<ToolForm> CONDUCTION_FORMS = List.of(ToolForm.SWORD, ToolForm.AXE, ToolForm.SPEAR, ToolForm.TRIDENT);
+    private static final List<ToolForm> MINING_FORMS = List.of(ToolForm.PICKAXE, ToolForm.AXE, ToolForm.HOE, ToolForm.SHOVEL);
+    private static final List<ToolForm> MELEE_FORMS = List.of(ToolForm.SWORD, ToolForm.AXE, ToolForm.SPEAR);
+    /** conduction（補正強化グループ）：結晶の個数でLv1〜3（=火属性I〜III）にスケール。 */
+    public static final int CONDUCTION_MAX_LEVEL = SCALING_MAX_LEVEL;
+
+    private static void mergeIfFormMatches(Map<ResourceKey<Enchantment>, Integer> granted, ToolForm form,
+                                           List<ToolForm> matchForms, ResourceKey<Enchantment> enchant, int level) {
+        if (level > 0 && matchForms.contains(form)) granted.merge(enchant, level, Math::max);
+    }
 
     /**
-     * {@code traits} が持つ全トレイトぶんの vanilla エンチャント付与を、フォーム一致分だけ
-     * {@code granted} マップへ合流させる（既存キーがあればレベルは大きい方を採用）。
+     * ロードアウト全体の結晶構成から、複数結晶にまたがる判定が必要なトレイト
+     * （sharp＝結晶数に関わらずLv1固定、conduction＝結晶の個数でLv1〜3、golden/fools_gold＝
+     * 異なる結晶種の数でLv1〜2）の vanilla エンチャント付与を計算し、{@code granted} マップへ
+     * 合流させる（既存キーがあればレベルは大きい方を採用）。
      * {@link CrystalToolLogic#applyGrantedEnchantments} のシジル分の集計と同じマップに対して
      * 追加で呼び出すことで、シジルとトレイトどちらか強い方が反映される。
      */
-    public static void mergeEnchantGrants(Set<String> traits, ToolForm form, Map<ResourceKey<Enchantment>, Integer> granted) {
-        for (String trait : traits) {
-            for (TraitGrant g : ENCHANT_GRANTS.getOrDefault(trait, List.of())) {
-                if (g.form() == form) granted.merge(g.enchantment(), g.level(), Math::max);
-            }
+    public static void mergeLoadoutEnchantGrants(ToolLoadout lo, ItemStacksResourceHandler crystalInv,
+                                                 Map<ResourceKey<Enchantment>, Integer> granted) {
+        ToolForm form = lo.form();
+
+        if (countTrait(lo, crystalInv, SHARP) > 0) {
+            mergeIfFormMatches(granted, form, SHARP_FORMS, Enchantments.SHARPNESS, 1);
         }
+
+        int conductionLevel = traitLevel(lo, crystalInv, CONDUCTION, CONDUCTION_MAX_LEVEL);
+        mergeIfFormMatches(granted, form, CONDUCTION_FORMS, Enchantments.FIRE_ASPECT, conductionLevel);
+
+        // golden/fools_gold：どちらも「幸運(採掘系)＋ドロップ増加(近接系)」を、異なる結晶種の
+        // 数（1個なら片方のみでもLv1、2種類揃えばLv2）ぶん付与する。同じ形の効果を持つ別トレイト
+        // なので、両方が同時に成立していても Math.max マージにより強い方だけが反映される。
+        int goldenLevel = distinctCrystalTypesWithTrait(lo, crystalInv, GOLDEN);
+        mergeIfFormMatches(granted, form, MINING_FORMS, Enchantments.FORTUNE, goldenLevel);
+        mergeIfFormMatches(granted, form, MELEE_FORMS, Enchantments.LOOTING, goldenLevel);
+
+        int foolsGoldLevel = distinctCrystalTypesWithTrait(lo, crystalInv, FOOLS_GOLD);
+        mergeIfFormMatches(granted, form, MINING_FORMS, Enchantments.FORTUNE, foolsGoldLevel);
+        mergeIfFormMatches(granted, form, MELEE_FORMS, Enchantments.LOOTING, foolsGoldLevel);
     }
 }

@@ -58,8 +58,13 @@ public final class SigilCombatHooks {
                         || victim.getType().builtInRegistryHolder().is(def.targetTag().get());
                 if (applies) {
                     bonus += def.conditionalDamageBonus();
+                    // amplify/duration トレイト：この武器のシジル由来オンヒット効果にも適用する。
+                    int amplifyBonus = CrystalTraitLogic.amplifyBonus(lo, crystalInv);
+                    float durationMultiplier = CrystalTraitLogic.durationMultiplier(lo, crystalInv);
                     def.onHitEffect().ifPresent(effect ->
-                            onHitEffects.add(new MobEffectInstance(effect, def.onHitDuration(), def.onHitAmplifier())));
+                            onHitEffects.add(new MobEffectInstance(effect,
+                                    (int) (def.onHitDuration() * durationMultiplier),
+                                    def.onHitAmplifier() + amplifyBonus)));
                     // 蒼炎(wisp)：ソウルフレイム。着火のみここで行い、見た目(青い炎)・継続燃焼2倍
                     // ダメージは既存の SoulFireIgnitionHooks がブロック判定に代えて
                     // SOUL_FIRE_IGNITED を見て自動的に処理する。

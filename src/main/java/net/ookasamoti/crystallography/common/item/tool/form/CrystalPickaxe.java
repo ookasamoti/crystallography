@@ -48,6 +48,11 @@ public class CrystalPickaxe extends Item implements ICrystalTool {
     }
 
     @Override
+    public float getXpRepairRatio(@NotNull ItemStack stack) {
+        return CrystalToolLogic.getXpRepairRatio(stack);
+    }
+
+    @Override
     public void hurtEnemy(@NotNull ItemStack stack, @NotNull LivingEntity mob, @NotNull LivingEntity attacker) {
         if (CrystalToolLogic.isUnusable(stack)) return;
         super.hurtEnemy(stack, mob, attacker);

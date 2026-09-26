@@ -6,7 +6,7 @@
   "carat":   { "min": 7, "max": 11 },
   "clarity": { "min": 6.0, "max": 7.2 },
   "category": "stone",
-  "traits": [ "potion_duration" ],
+  "traits": [ "duration" ],
   "crack_result": { "item": "minecraft:redstone", "count": 1 },
   "color": "#D32F2F"
 }

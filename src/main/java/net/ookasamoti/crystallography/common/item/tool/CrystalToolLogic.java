@@ -284,7 +284,8 @@ public final class CrystalToolLogic {
         int crystalCount = 0;
         int tierCount    = 0;
         float sigilAtkBonus = 0f; // 結晶に付与されたシジル由来の攻撃力ボーナス合計（form一致分のみ）
-        float traitAtkBonus = 0f; // 結晶の固有アビリティ（bandit＝AXE限定）由来の攻撃力ボーナス合計
+        // bandit（Lv上限1）：AXE限定の追加攻撃力。何個積んでも+2固定（結晶数で加算しない）。
+        boolean hasBandit = false;
 
         for (int idx : crystalIndices) {
             if (idx < 0 || idx >= crystalInv.size()) continue;
@@ -299,9 +300,7 @@ public final class CrystalToolLogic {
                 hardnessSum += cs.hardness();
                 if (traits.contains(CrystalTraitLogic.DIAMOND)) hardnessSum += CrystalTraitLogic.DIAMOND_DURABILITY_BONUS;
                 cutSum      += cs.cut();
-                if (traits.contains(CrystalTraitLogic.BANDIT) && form == ToolForm.AXE) {
-                    traitAtkBonus += CrystalTraitLogic.BANDIT_AXE_DAMAGE_BONUS;
-                }
+                if (traits.contains(CrystalTraitLogic.BANDIT)) hasBandit = true;
                 claritySum  += cs.clarity() * (traits.contains(CrystalTraitLogic.PURE) ? CrystalTraitLogic.PURE_CLARITY_MULTIPLIER : 1f);
                 crystalCount++;
             }
@@ -330,7 +329,8 @@ public final class CrystalToolLogic {
         // ただし HOE はバニラ仕様に倣い、全ティア固定で攻撃修飾子 = 0。
         // attackSpeed = form.baseAttackSpeed + (Σclarity − 20)×0.1（小数点二桁未満切り捨て）。
         // miningSpeed = form.baseMiningSpeed × avg(clarity)（現状 baseMiningSpeed=1.0 なので実質 avg(clarity)）。
-        float attackDmg = (form == ToolForm.HOE) ? 0f : (form.baseAttack() + cutSum + sigilAtkBonus + traitAtkBonus);
+        float banditBonus = (hasBandit && form == ToolForm.AXE) ? CrystalTraitLogic.BANDIT_AXE_DAMAGE_BONUS : 0f;
+        float attackDmg = (form == ToolForm.HOE) ? 0f : (form.baseAttack() + cutSum + sigilAtkBonus + banditBonus);
         float clarityAtkSpeedBonus = truncateTo2((claritySum - 20f) * 0.1f);
 
         // 原石バッテリーモード：3枠のいずれかが原石系(category=raw_ore)なら、通常の
@@ -466,6 +466,30 @@ public final class CrystalToolLogic {
         }
     }
 
+    /** NeoForge {@code IItemExtension#getXpRepairRatio} のデフォルト値（0.5経験値につき耐久1回復）。 */
+    private static final float DEFAULT_XP_REPAIR_RATIO = 1f;
+    /** 修繕(mending)シジルの「レベル2」相当：同じ経験値でより多くの耐久値を回復できるよう2倍にする。 */
+    private static final float MENDING_SIGIL_XP_REPAIR_RATIO = 2f;
+
+    /**
+     * 修繕(mending)シジルの「レベル2」効果（設計doc上の「修繕(2)」）：同じ経験値量でより多くの
+     * 耐久値を回復できるようにする。バニラの Mending エンチャント自体にはレベル概念が無く
+     * 常にLv1固定のため、この「レベル2」は本体のエンチャントレベルではなく、NeoForge が
+     * 公開している経験値→耐久回復の変換比率（{@code IItemExtension#getXpRepairRatio}、
+     * デフォルト1.0=0.5経験値につき耐久1回復）を2倍にすることで表現する。
+     * <p>
+     * 既に {@link #applyGrantedEnchantments} が結晶構成の変化のたびに {@code DataComponents.
+     * ENCHANTMENTS} へ反映済みの結果を見るだけでよく、ここで改めて結晶インベントリを読んだり
+     * {@code HolderLookup.Provider} を用意したりする必要はない
+     * （{@code IItemExtension#getXpRepairRatio(ItemStack)} は {@code ItemStack} 単体しか
+     * 受け取らないため、そもそも RegistryAccess を渡す手段が無い）。
+     */
+    public static float getXpRepairRatio(ItemStack stack) {
+        var enchantments = stack.getOrDefault(DataComponents.ENCHANTMENTS, ItemEnchantments.EMPTY);
+        boolean hasMending = enchantments.keySet().stream().anyMatch(h -> h.is(Enchantments.MENDING));
+        return hasMending ? MENDING_SIGIL_XP_REPAIR_RATIO : DEFAULT_XP_REPAIR_RATIO;
+    }
+
     /**
      * アクティブロードアウトの ToolStats を Minecraft DataComponent に反映する。
      * ロードアウト切り替え時・登録時・耐久値変化時に呼び出す。
@@ -570,15 +594,16 @@ public final class CrystalToolLogic {
 
         var crystalInv = ToolInventory.get(stack, crystalSlotCount(tier), registries);
         Map<ResourceKey<Enchantment>, Integer> granted = new HashMap<>();
+
+        // 結晶の固有アビリティ（sharp/conduction/golden/fools_gold）由来のエンチャント付与。
+        // golden/fools_gold は「異なる結晶種の数」で判定するため、1個ずつではなくロードアウト
+        // 全体を一度に見る必要がある。
+        CrystalTraitLogic.mergeLoadoutEnchantGrants(lo, crystalInv, granted);
+
         for (int idx : lo.crystalIndices()) {
             if (idx < 0 || idx >= crystalInv.size()) continue;
             var crystal = crystalInv.getResource(idx).toStack(crystalInv.getAmountAsInt(idx));
             if (crystal.isEmpty()) continue;
-
-            // 結晶の固有アビリティ（sharp/conduction/golden/fools_gold）由来のエンチャント付与。
-            // シジル付与の有無に関わらず必ず見る（下の attached==null continue の影響を受けない）。
-            CrystalStatsRegistry.get(crystal).ifPresent(range ->
-                    CrystalTraitLogic.mergeEnchantGrants(range.traits(), lo.form(), granted));
 
             var attached = crystal.get(DataComponentsRegistry.ATTACHED_SIGILS.get());
             if (attached == null) continue;
