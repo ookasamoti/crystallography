@@ -53,7 +53,7 @@ public final class DialDrawer {
     public static void arc(GuiGraphicsExtractor g, float cx, float cy, float innerR, float outerR,
                            float startRad, float endRad, int argb) {
         float sweep = normalizeSweep(startRad, endRad);
-        int segments = Math.max(12, (int)(sweep * 24));
+        int segments = Math.max(24, (int)(sweep * 64));
         float[] verts = new float[segments * 8];
         int p = 0;
         for (int i = 0; i < segments; i++) {
@@ -77,7 +77,9 @@ public final class DialDrawer {
      * かつ全体が時間とともにゆっくり回転する。
      */
     public static void circleOutline(GuiGraphicsExtractor g, float cx, float cy, float radius, float thickness, int argb) {
-        float t     = thickness * 0.2f;
+        // AA無しのQUAD塗りつぶしのため、幅がサブピクセル(1px未満)だとスキャンライン単位で
+        // 塗りむら（ジャギー・チラつき）が出る。20%細さの意匠は保ちつつ実幅は最低1pxを確保する。
+        float t     = Math.max(thickness * 0.2f, 1.0f);
         float outer = radius + t * 0.5f;
         float inner = Math.max(0f, radius - t * 0.5f);
         float rot   = (float)((System.currentTimeMillis() % 6000L) / 6000.0 * Math.PI * 2.0);

@@ -343,9 +343,23 @@ public class JewelryTableScreen extends AbstractContainerScreen<JewelryTableMenu
         int[] sc = scissorRectPixels();
         g.enableScissor(sc[0], sc[1], sc[2], sc[3]);
         try {
-            ItemStack center = menu.getRingSlots(JewelryTableMenu.Ring.CENTER)[0].peekRealItem();
+            DialSlot centerSlot = menu.getRingSlots(JewelryTableMenu.Ring.CENTER)[0];
+            ItemStack center = centerSlot.peekRealItem();
             boolean isWand = center.getItem() instanceof ICrystalTool ct && ct.getKind() == ICrystalTool.Kind.WAND;
             Icon[] toolIcons = isWand ? WAND_ICONS : ROD_ICONS;
+
+            // ロッド・ワンドスロット（CENTER）: 常に灰色の丸（+縁取り）でスロット位置を示す。
+            // 丸のサイズはホバー円ハイライト（extractContents、半径10f）と揃える。
+            // 空のときだけ empty_slot_stick を丸の上に重ねる（実アイテムがあれば通常のスロット描画に任せる）。
+            {
+                int dx = leftPos + centerSlot.x;
+                int dy = topPos  + centerSlot.y;
+                DialDrawer.filledCircle(g, dx + 8f, dy + 8f, 11f, 0xFFFFFFFF);
+                DialDrawer.filledCircle(g, dx + 8f, dy + 8f, 10f, 0xFF8B8B8B);
+                if (center.isEmpty()) {
+                    drawIcon(g, EMPTY_SLOT_STICK, dx, dy);
+                }
+            }
 
             // TOOLSボタン: slot[vi] のアイコンは vi % length で固定、選択中は pendingFormIndex でハイライト
             DialSlot[] toolSlots = menu.getRingSlots(JewelryTableMenu.Ring.TOOLS);
@@ -359,7 +373,7 @@ public class JewelryTableScreen extends AbstractContainerScreen<JewelryTableMenu
                 drawIcon(g, toolIcons[vi % toolIcons.length], dx, dy);
                 if (vi == menu.pendingFormIndex) {
                     DialDrawer.circleOutline(g, dx + 8f, dy + 8f,  9.55f, 1.5f, 0xFFFFFFFF);
-                    DialDrawer.circleOutline(g, dx + 8f, dy + 8f, 10.45f, 1.5f, 0xFFFFFFFF);
+                    DialDrawer.circleOutline(g, dx + 8f, dy + 8f, 11.45f, 1.5f, 0xFFFFFFFF);
                 }
                 g.pose().popMatrix();
             }
@@ -379,7 +393,7 @@ public class JewelryTableScreen extends AbstractContainerScreen<JewelryTableMenu
                 if (menu.pendingFormIndex >= 0
                         && menu.pendingCrystals.contains(menu.crystalBackingOf(vi))) {
                     DialDrawer.circleOutline(g, dx + 8f, dy + 8f,  9.55f, 1.5f, 0xFFFFFFFF);
-                    DialDrawer.circleOutline(g, dx + 8f, dy + 8f, 10.45f, 1.5f, 0xFFFFFFFF);
+                    DialDrawer.circleOutline(g, dx + 8f, dy + 8f, 11.45f, 1.5f, 0xFFFFFFFF);
                 }
                 g.pose().popMatrix();
             }
@@ -412,7 +426,7 @@ public class JewelryTableScreen extends AbstractContainerScreen<JewelryTableMenu
                 }
                 if (li == menu.editingRegistrySlot) {
                     DialDrawer.circleOutline(g, dx + 8f, dy + 8f,  9.55f, 1.5f, 0xFFFFFFFF);
-                    DialDrawer.circleOutline(g, dx + 8f, dy + 8f, 10.45f, 1.5f, 0xFFFFFFFF);
+                    DialDrawer.circleOutline(g, dx + 8f, dy + 8f, 11.45f, 1.5f, 0xFFFFFFFF);
                 }
                 g.pose().popMatrix();
             }
@@ -445,13 +459,14 @@ public class JewelryTableScreen extends AbstractContainerScreen<JewelryTableMenu
 
     // ---- ホバー円ハイライト（全スロット描画後＝最前面に描く） ----
     // 旧 renderSlotHighlight 相当。バニラの白四角は DialSlot.isHighlightable()=false で抑制済み。
-    // INTERACTIVE のダイヤルスロットをホバー中のときだけ、コンテナ座標で円を描画する。
+    // ダイヤルスロット（CENTER/CRYSTALSのINTERACTIVE、TOOLS/REGISTRIESのBUTTON）をホバー中のときだけ、
+    // コンテナ座標で円を描画する。DECORATION/HIDDEN は isActive()=false のため hoveredSlot に入らない。
     @Override
     public void extractContents(@NotNull GuiGraphicsExtractor g, int mouseX, int mouseY, float partialTick) {
         super.extractContents(g, mouseX, mouseY, partialTick);
         if (this.hoveredSlot instanceof DialSlot ds
                 && ds.getVisibleFlag()
-                && ds.mode() == DialSlot.Mode.INTERACTIVE) {
+                && (ds.mode() == DialSlot.Mode.INTERACTIVE || ds.mode() == DialSlot.Mode.BUTTON)) {
             g.pose().pushMatrix();
             g.pose().translate(this.leftPos, this.topPos);
             DialDrawer.filledCircleGui(g, ds.x + 8f, ds.y + 8f, 10f, 0x80FFFFFF);
