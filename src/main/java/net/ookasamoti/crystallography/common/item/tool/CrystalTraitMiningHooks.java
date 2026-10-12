@@ -21,9 +21,9 @@ import net.ookasamoti.crystallography.common.item.tool.component.ToolForm;
 
 /**
  * 結晶の固有アビリティのうち、採掘関連（{@link CrystalTraitLogic} の「採掘フック系」）の実際の
- * 適用箇所。obsidian_tear / depborn / aquatic（+ turtle 併用時の強化）は採掘速度そのものへの倍率、
- * smelting / freezing / resonance はブロックを実際に破壊した後の副作用（ドロップの製錬・周囲の水の
- * 氷結・周囲の同系統ブロックの連鎖採掘）。
+ * 適用箇所。obsidian_tear / depborn / aquatic（+ turtle 併用時の強化）/ levitation（空中採掘ペナルティ
+ * 無効化）は採掘速度そのものへの倍率、smelting / freezing / resonance はブロックを実際に破壊した後の
+ * 副作用（ドロップの製錬・周囲の水の氷結・周囲の同系統ブロックの連鎖採掘）。
  */
 public final class CrystalTraitMiningHooks {
     private CrystalTraitMiningHooks() {}
@@ -33,6 +33,8 @@ public final class CrystalTraitMiningHooks {
     /** depborn：深層岩グループ（深層岩本体・その加工品・深層岩鉱石）の採掘速度補正。Lv上限1。 */
     private static final float DEPBORN_SPEED_MULTIPLIER = 1.5f;
     private static final float AQUATIC_MINING_SPEED_MULTIPLIER = 1.5f;
+    /** vanillaがonGround()=false時に課す採掘速度ペナルティ（Player#getDestroySpeedでspeed/=5.0F）の逆数。 */
+    private static final float AIRBORNE_MINING_PENALTY_DIVISOR = 5.0f;
     /** turtle：ツールに付いているとき、同ロードアウトの aquatic の効果（速度ボーナス分）を倍増する。 */
     private static final float TURTLE_AQUATIC_BONUS_MULTIPLIER = 2.0f;
     /** freezing（効果範囲拡張グループ）：Lvごとの基礎半径（ブロック）。 */
@@ -72,6 +74,12 @@ public final class CrystalTraitMiningHooks {
                 bonus *= TURTLE_AQUATIC_BONUS_MULTIPLIER;
             }
             speed *= 1f + bonus;
+        }
+        // フロート：vanillaが空中（onGround()=false）採掘に課す速度ペナルティ（1/5倍）を無効化する。
+        // Player#getDestroySpeed はこのイベント発火の直前に speed /= 5.0F を適用済みのため、
+        // ここでは単純にその逆数を掛け戻すだけでよい。
+        if (!player.onGround() && CrystalTraitLogic.loadoutHasTrait(lo, crystalInv, CrystalTraitLogic.LEVITATION)) {
+            speed *= AIRBORNE_MINING_PENALTY_DIVISOR;
         }
         event.setNewSpeed(speed);
     }
