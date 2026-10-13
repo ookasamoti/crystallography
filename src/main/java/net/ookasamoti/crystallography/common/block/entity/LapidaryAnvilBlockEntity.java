@@ -2,15 +2,17 @@ package net.ookasamoti.crystallography.common.block.entity;
 
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.NonNullList;
-import net.minecraft.tags.ItemTags;
 import net.minecraft.world.Containers;
 import net.minecraft.world.SimpleContainer;
+import net.minecraft.tags.ItemTags;
+import net.minecraft.world.item.BlockItem;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.storage.ValueInput;
 import net.minecraft.world.level.storage.ValueOutput;
+import net.ookasamoti.crystallography.common.item.tool.ICrystalTool;
 import net.ookasamoti.crystallography.setup.BlockEntitiesRegistry;
 import net.ookasamoti.crystallography.setup.BlockRegistry;
 import net.neoforged.neoforge.transfer.item.ItemResource;
@@ -34,13 +36,18 @@ public class LapidaryAnvilBlockEntity extends BlockEntity {
             setChanged();
         }
 
-        // スロット制限：ツルハシスロットにはツルハシ系のみ、wedgeスロットにはwedgeのみ。
+        // スロット制限：ツルハシスロットには本mod製ツール（ICrystalTool）かバニラのツルハシ、
+        // wedgeスロットにはwedgeのみ、oreスロットにはブロックアイテムのみ。
         // ResourceHandlerSlot.mayPlace（プレイヤー操作）と insert（生成物の自動挿入）の両方に効く。
         @Override
         public boolean isValid(int index, ItemResource resource) {
             if (resource.isEmpty()) return true;
-            if (index == SLOT_PICK)  return resource.getItem().builtInRegistryHolder().is(ItemTags.PICKAXES);
+            if (index == SLOT_PICK) {
+                return resource.getItem() instanceof ICrystalTool
+                        || resource.getItem().builtInRegistryHolder().is(ItemTags.PICKAXES);
+            }
             if (index == SLOT_WEDGE) return resource.is(BlockRegistry.WEDGE.get().asItem());
+            if (index == SLOT_ORE)   return resource.getItem() instanceof BlockItem;
             return true;
         }
 

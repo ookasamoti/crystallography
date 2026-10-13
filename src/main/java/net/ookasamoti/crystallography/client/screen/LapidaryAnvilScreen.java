@@ -32,8 +32,6 @@ public class LapidaryAnvilScreen extends AbstractContainerScreen<LapidaryAnvilMe
         int x = leftPos;
         int y = topPos;
 
-        this.inventoryLabelY = this.inventoryLabelY + 32;
-
         btnCrackOre = Button.builder(Component.literal("⛏"), b -> {
             assert Minecraft.getInstance().gameMode != null;
             Minecraft.getInstance().gameMode.handleInventoryButtonClick(menu.containerId, LapidaryAnvilMenu.BTN_CRACK_ORE);

@@ -1,17 +1,22 @@
 package net.ookasamoti.crystallography.common.menu;
 
 import net.minecraft.network.FriendlyByteBuf;
+import net.minecraft.tags.ItemTags;
 import net.minecraft.world.entity.player.Inventory;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.inventory.AbstractContainerMenu;
 import net.minecraft.world.inventory.ContainerLevelAccess;
 import net.minecraft.world.inventory.Slot;
+import net.minecraft.world.item.BlockItem;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.core.BlockPos;
 import net.minecraft.server.level.ServerPlayer;
 import net.neoforged.neoforge.transfer.item.ResourceHandlerSlot;
 import net.ookasamoti.crystallography.common.block.entity.LapidaryAnvilBlockEntity;
+import net.ookasamoti.crystallography.common.item.crystal.Crystal;
+import net.ookasamoti.crystallography.common.item.tool.ICrystalTool;
 import net.ookasamoti.crystallography.common.util.LapidaryAnvilOperations;
+import net.ookasamoti.crystallography.setup.BlockRegistry;
 import net.ookasamoti.crystallography.setup.MenuTypesRegistry;
 import org.jetbrains.annotations.NotNull;
 
@@ -90,21 +95,36 @@ public class LapidaryAnvilMenu extends AbstractContainerMenu {
 
     @Override
     public @NotNull ItemStack quickMoveStack(@NotNull Player player, int index) {
-        ItemStack empty = ItemStack.EMPTY;
         Slot slot = this.slots.get(index);
-        if (!slot.hasItem()) return empty;
+        if (!slot.hasItem()) return ItemStack.EMPTY;
         ItemStack in = slot.getItem();
         ItemStack copy = in.copy();
 
-        int beEnd   = LapidaryAnvilBlockEntity.SLOT_COUNT;
-        int plEnd   = this.slots.size();
+        int beEnd = LapidaryAnvilBlockEntity.SLOT_COUNT;
+        int plEnd = this.slots.size();
 
         if (index < beEnd) {
             if (!this.moveItemStackTo(in, beEnd, plEnd, true)) return ItemStack.EMPTY;
         } else {
-            if (!this.moveItemStackTo(in,
-                    LapidaryAnvilBlockEntity.SLOT_RIGHT_START,
-                    LapidaryAnvilBlockEntity.SLOT_RIGHT_END + 1, false)) return ItemStack.EMPTY;
+            // 種類ごとに行き先を1つのスロット(範囲)だけに限定する：
+            // ツール→ツルハシ欄、wedge→wedge欄、ブロック→ore欄、結晶→右側グリッド。
+            int destStart, destEnd;
+            if (in.getItem() instanceof ICrystalTool || in.is(ItemTags.PICKAXES)) {
+                destStart = LapidaryAnvilBlockEntity.SLOT_PICK;
+                destEnd   = LapidaryAnvilBlockEntity.SLOT_PICK + 1;
+            } else if (in.is(BlockRegistry.WEDGE.get().asItem())) {
+                destStart = LapidaryAnvilBlockEntity.SLOT_WEDGE;
+                destEnd   = LapidaryAnvilBlockEntity.SLOT_WEDGE + 1;
+            } else if (in.getItem() instanceof BlockItem) {
+                destStart = LapidaryAnvilBlockEntity.SLOT_ORE;
+                destEnd   = LapidaryAnvilBlockEntity.SLOT_ORE + 1;
+            } else if (in.getItem() instanceof Crystal) {
+                destStart = LapidaryAnvilBlockEntity.SLOT_RIGHT_START;
+                destEnd   = LapidaryAnvilBlockEntity.SLOT_RIGHT_END + 1;
+            } else {
+                return ItemStack.EMPTY;
+            }
+            if (!this.moveItemStackTo(in, destStart, destEnd, false)) return ItemStack.EMPTY;
         }
 
         if (in.isEmpty()) slot.set(ItemStack.EMPTY);
