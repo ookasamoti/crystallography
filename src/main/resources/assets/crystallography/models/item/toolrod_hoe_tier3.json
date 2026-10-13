@@ -1,5 +1,5 @@
 {
-  "parent": "minecraft:item/generated",
+  "parent": "minecraft:item/handheld",
   "textures": {
     "layer0": "crystallography:item/toolrod_tier3",
     "layer1": "crystallography:item/toolrod_hoe_center",

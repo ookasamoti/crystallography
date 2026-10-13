@@ -1,5 +1,5 @@
 {
-  "parent": "minecraft:item/generated",
+  "parent": "crystallography:item/toolwand_bow_tier2",
   "textures": {
     "layer0": "crystallography:item/toolwand_bow_base_tier2",
     "layer1": "crystallography:item/toolwand_bow_pulling_0_center",
