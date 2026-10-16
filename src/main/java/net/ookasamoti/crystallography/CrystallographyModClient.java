@@ -32,6 +32,7 @@ import net.ookasamoti.crystallography.client.event.CrystalClientHooks;
 import net.ookasamoti.crystallography.client.model.FormProperty;
 import net.ookasamoti.crystallography.client.renderer.CrystalThrownTridentRenderer;
 import net.ookasamoti.crystallography.client.renderer.CrystalTridentSpecialRenderer;
+import net.ookasamoti.crystallography.client.renderer.ArrowSoulFireFlameRenderer;
 import net.ookasamoti.crystallography.client.renderer.SoulFireFlameRenderer;
 import net.ookasamoti.crystallography.client.renderer.SoulFireScreenOverlay;
 import net.ookasamoti.crystallography.client.screen.JewelryTableScreen;
@@ -61,6 +62,7 @@ public class CrystallographyModClient {
         bus.addListener(KeyBindingRegistry::onRegisterKeyMappings);
         NeoForge.EVENT_BUS.addListener(CrystallographyModClient::onMouseScroll);
         SoulFireFlameRenderer.register(bus);
+        ArrowSoulFireFlameRenderer.register(bus);
         SoulFireScreenOverlay.register(bus);
     }
 

@@ -29,6 +29,15 @@ public final class AttachmentTypeRegistry {
                             .build()
             );
 
+    // 矢がソウルファイア(青い炎)を通過したかどうか。通過済みの矢が命中した際、着火対象の
+    // SOUL_FIRE_IGNITED を直接確定させるために使う（詳細は ArrowSoulFireHooks）。
+    public static final DeferredHolder<AttachmentType<?>, AttachmentType<Boolean>> ARROW_SOUL_FLAME =
+            ATTACHMENT_TYPES.register("arrow_soul_flame", () ->
+                    AttachmentType.builder(() -> Boolean.FALSE)
+                            .sync(ByteBufCodecs.BOOL)
+                            .build()
+            );
+
     // blazing トレイト／flame シジルの弓・クロスボウ部分：攻撃がヒットした直後、次tickで着火判定を
     // 行うまでの間だけ保持する「保留倍率」（1.0=保留無し）。同じtickに両方の効果が重なった場合は
     // 大きい方の倍率を採用する。サーバー側のみで完結する短命な値のため同期・永続化ともに不要

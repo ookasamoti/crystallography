@@ -72,11 +72,15 @@ public final class SoulFireFlameRenderer {
 
     private static void onRegisterRenderStateModifiers(RegisterRenderStateModifiersEvent event) {
         event.registerEntityModifier(new TypeToken<EntityRenderer<Entity, EntityRenderState>>() {}, (Entity entity, EntityRenderState state) -> {
-            boolean soulFire = Boolean.TRUE.equals(entity.getData(AttachmentTypeRegistry.SOUL_FIRE_IGNITED));
+            // 矢(ARROW_SOUL_FLAME)はLivingEntityではないため RenderLivingEvent では拾えず、
+            // 青い炎の提出自体は ArrowSoulFireFlameRenderer が別途担当する。ここではバニラの
+            // (オレンジの)炎提出を止める判定にも矢の印を含める。
+            boolean soulFire = Boolean.TRUE.equals(entity.getData(AttachmentTypeRegistry.SOUL_FIRE_IGNITED))
+                    || Boolean.TRUE.equals(entity.getData(AttachmentTypeRegistry.ARROW_SOUL_FLAME));
             state.setRenderData(SOUL_FIRE_KEY, soulFire);
             if (soulFire) {
                 // バニラの(オレンジの)炎提出はこのフラグを見て行われる。ここで止めて、代わりに
-                // 下の RenderLivingEvent.Post 側で青い炎を提出する。
+                // 下の RenderLivingEvent.Post(矢は ArrowSoulFireFlameRenderer)側で青い炎を提出する。
                 state.displayFireAnimation = false;
             }
         });
