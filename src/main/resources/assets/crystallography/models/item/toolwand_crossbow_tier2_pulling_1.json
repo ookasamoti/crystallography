@@ -1,0 +1,9 @@
+{
+  "parent": "crystallography:item/toolwand_crossbow_tier2",
+  "textures": {
+    "layer0": "crystallography:item/toolwand_crossbow_base_tier2",
+    "layer1": "crystallography:item/toolwand_crossbow_center",
+    "layer2": "crystallography:item/toolwand_crossbow_left",
+    "layer3": "crystallography:item/toolwand_crossbow_pulling_1_right"
+  }
+}

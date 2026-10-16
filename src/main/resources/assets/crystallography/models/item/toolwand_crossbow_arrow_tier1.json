@@ -1,9 +1,10 @@
 {
-  "parent": "minecraft:item/generated",
+  "parent": "crystallography:item/toolwand_crossbow_tier1",
   "textures": {
     "layer0": "crystallography:item/toolwand_crossbow_base_tier1",
     "layer1": "crystallography:item/toolwand_crossbow_center",
     "layer2": "crystallography:item/toolwand_crossbow_left",
-    "layer3": "crystallography:item/toolwand_crossbow_right"
+    "layer3": "crystallography:item/toolwand_crossbow_pulling_2_right",
+    "layer4": "crystallography:item/toolwand_crossbow_arrow"
   }
 }

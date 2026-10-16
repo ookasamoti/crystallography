@@ -3,8 +3,92 @@
     "type": "minecraft:select",
     "property": "crystallography:form",
     "fallback": {
-      "type": "minecraft:model",
-      "model": "crystallography:item/toolwand_tier3"
+      "type": "minecraft:select",
+      "property": "minecraft:charge_type",
+      "cases": [
+        {
+          "when": "arrow",
+          "model": {
+            "type": "minecraft:model",
+            "model": "crystallography:item/toolwand_crossbow_arrow_tier3",
+            "tints": [
+              { "type": "minecraft:constant", "value": -1 },
+              { "type": "crystallography:crystal", "crystal_slot": 0 },
+              { "type": "crystallography:crystal", "crystal_slot": 1 },
+              { "type": "crystallography:crystal", "crystal_slot": 2 }
+            ]
+          }
+        },
+        {
+          "when": "rocket",
+          "model": {
+            "type": "minecraft:model",
+            "model": "crystallography:item/toolwand_crossbow_firework_tier3",
+            "tints": [
+              { "type": "minecraft:constant", "value": -1 },
+              { "type": "crystallography:crystal", "crystal_slot": 0 },
+              { "type": "crystallography:crystal", "crystal_slot": 1 },
+              { "type": "crystallography:crystal", "crystal_slot": 2 }
+            ]
+          }
+        }
+      ],
+      "fallback": {
+        "type": "minecraft:condition",
+        "property": "minecraft:using_item",
+        "on_false": {
+          "type": "minecraft:model",
+          "model": "crystallography:item/toolwand_crossbow_tier3",
+          "tints": [
+            { "type": "minecraft:constant", "value": -1 },
+            { "type": "crystallography:crystal", "crystal_slot": 0 },
+            { "type": "crystallography:crystal", "crystal_slot": 1 },
+            { "type": "crystallography:crystal", "crystal_slot": 2 }
+          ]
+        },
+        "on_true": {
+          "type": "minecraft:range_dispatch",
+          "property": "minecraft:crossbow/pull",
+          "entries": [
+            {
+              "threshold": 0.58,
+              "model": {
+                "type": "minecraft:model",
+                "model": "crystallography:item/toolwand_crossbow_tier3_pulling_1",
+                "tints": [
+                  { "type": "minecraft:constant", "value": -1 },
+                  { "type": "crystallography:crystal", "crystal_slot": 0 },
+                  { "type": "crystallography:crystal", "crystal_slot": 1 },
+                  { "type": "crystallography:crystal", "crystal_slot": 2 }
+                ]
+              }
+            },
+            {
+              "threshold": 1.0,
+              "model": {
+                "type": "minecraft:model",
+                "model": "crystallography:item/toolwand_crossbow_tier3_pulling_2",
+                "tints": [
+                  { "type": "minecraft:constant", "value": -1 },
+                  { "type": "crystallography:crystal", "crystal_slot": 0 },
+                  { "type": "crystallography:crystal", "crystal_slot": 1 },
+                  { "type": "crystallography:crystal", "crystal_slot": 2 }
+                ]
+              }
+            }
+          ],
+          "fallback": {
+            "type": "minecraft:model",
+            "model": "crystallography:item/toolwand_crossbow_tier3_pulling_0",
+            "tints": [
+              { "type": "minecraft:constant", "value": -1 },
+              { "type": "crystallography:crystal", "crystal_slot": 0 },
+              { "type": "crystallography:crystal", "crystal_slot": 1 },
+              { "type": "crystallography:crystal", "crystal_slot": 2 }
+            ]
+          }
+        }
+      }
     },
     "cases": [
       {
