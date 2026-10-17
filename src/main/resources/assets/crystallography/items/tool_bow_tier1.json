@@ -53,6 +53,10 @@
                 {
                   "type": "crystallography:crystal",
                   "crystal_slot": 2
+                },
+                {
+                  "type": "minecraft:constant",
+                  "value": -1
                 }
               ]
             }
@@ -78,6 +82,10 @@
                 {
                   "type": "crystallography:crystal",
                   "crystal_slot": 2
+                },
+                {
+                  "type": "minecraft:constant",
+                  "value": -1
                 }
               ]
             }
@@ -102,6 +110,10 @@
             {
               "type": "crystallography:crystal",
               "crystal_slot": 2
+            },
+            {
+              "type": "minecraft:constant",
+              "value": -1
             }
           ]
         }
