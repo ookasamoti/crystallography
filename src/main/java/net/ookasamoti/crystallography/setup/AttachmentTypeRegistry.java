@@ -21,18 +21,11 @@ public final class AttachmentTypeRegistry {
             );
 
     // ソウルファイア(青い炎)で着火されたかどうかのサーバー側判定結果。クライアントの見た目
-    // (炎エフェクトの色)にのみ使うため永続化は不要で、同期のみ行う（詳細は SoulFireIgnitionHooks）。
+    // (炎エフェクトの色)にのみ使うため永続化は不要で、同期のみ行う。LivingEntity(mob・プレイヤー)
+    // と矢(AbstractArrow)の両方に立つ（詳細は BaseFireBlockMixin / SoulFireIgnitionHooks /
+    // ArrowSoulFireHooks）。
     public static final DeferredHolder<AttachmentType<?>, AttachmentType<Boolean>> SOUL_FIRE_IGNITED =
             ATTACHMENT_TYPES.register("soul_fire_ignited", () ->
-                    AttachmentType.builder(() -> Boolean.FALSE)
-                            .sync(ByteBufCodecs.BOOL)
-                            .build()
-            );
-
-    // 矢がソウルファイア(青い炎)を通過したかどうか。通過済みの矢が命中した際、着火対象の
-    // SOUL_FIRE_IGNITED を直接確定させるために使う（詳細は ArrowSoulFireHooks）。
-    public static final DeferredHolder<AttachmentType<?>, AttachmentType<Boolean>> ARROW_SOUL_FLAME =
-            ATTACHMENT_TYPES.register("arrow_soul_flame", () ->
                     AttachmentType.builder(() -> Boolean.FALSE)
                             .sync(ByteBufCodecs.BOOL)
                             .build()

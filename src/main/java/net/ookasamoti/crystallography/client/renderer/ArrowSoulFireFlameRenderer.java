@@ -20,8 +20,9 @@ import net.ookasamoti.crystallography.setup.AttachmentTypeRegistry;
 import org.joml.Quaternionf;
 
 /**
- * {@link ArrowSoulFireHooks} がソウルファイアブロックを通過したと判定した矢({@code ARROW_SOUL_FLAME})
- * について、飛行中にバニラが表示する(オレンジの)小さな炎を青に差し替える。
+ * {@link net.ookasamoti.crystallography.mixin.BaseFireBlockMixin} がソウルファイアブロックを
+ * 通過したと判定した矢({@code SOUL_FIRE_IGNITED})について、飛行中にバニラが表示する
+ * (オレンジの)小さな炎を青に差し替える。
  * <p>
  * {@link SoulFireFlameRenderer} と同じ見た目の差し替えだが、使っているフック
  * ({@link net.neoforged.neoforge.client.event.RenderLivingEvent}) は {@code LivingEntity} 専用で
@@ -72,7 +73,7 @@ public final class ArrowSoulFireFlameRenderer {
         for (var entity : mc.level.entitiesForRendering()) {
             if (!(entity instanceof AbstractArrow arrow)) continue;
             if (!arrow.isOnFire()) continue;
-            if (!Boolean.TRUE.equals(arrow.getData(AttachmentTypeRegistry.ARROW_SOUL_FLAME))) continue;
+            if (!Boolean.TRUE.equals(arrow.getData(AttachmentTypeRegistry.SOUL_FIRE_IGNITED))) continue;
 
             Vec3 worldPos = arrow.getPosition(partialTick);
             Vec3 relative = worldPos.subtract(cameraPos);

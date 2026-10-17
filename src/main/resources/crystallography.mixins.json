@@ -1,0 +1,12 @@
+{
+  "required": true,
+  "minVersion": "0.8",
+  "package": "net.ookasamoti.crystallography.mixin",
+  "compatibilityLevel": "JAVA_21",
+  "mixins": [
+    "BaseFireBlockMixin"
+  ],
+  "injectors": {
+    "defaultRequire": 1
+  }
+}
