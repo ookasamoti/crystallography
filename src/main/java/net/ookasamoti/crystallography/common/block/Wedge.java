@@ -33,8 +33,7 @@ import net.minecraft.world.phys.shapes.CollisionContext;
 import net.minecraft.world.phys.shapes.VoxelShape;
 import net.ookasamoti.crystallography.setup.BlockRegistry;
 import org.jetbrains.annotations.NotNull;
-
-import java.util.List;
+import org.jetbrains.annotations.Nullable;
 
 public class Wedge extends Block implements SimpleWaterloggedBlock {
     public static final IntegerProperty WEDGES = IntegerProperty.create("wedges", 1, 4);
@@ -207,15 +206,14 @@ public class Wedge extends Block implements SimpleWaterloggedBlock {
     private void attemptWedgeMining(Level level, BlockPos targetPos, BlockPos wedgePos, int wedgeCount, Player player) {
         BlockState targetState = level.getBlockState(targetPos);
         BlockEntity blockEntity = level.getBlockEntity(targetPos);
-        ItemStack blockStack = new ItemStack(targetState.getBlock());
 
         boolean canHarvest = targetState.canHarvestBlock(level, targetPos, player);
-        double blockDropChance = 0.2 + (wedgeCount * 0.2);
-        boolean canDropBlock = RandomSource.create().nextDouble() < blockDropChance;
+        if (canHarvest && targetState.getDestroySpeed(level, targetPos) >= 0) {
+            double blockDropChance = 0.2 + (wedgeCount * 0.2);
+            boolean canDropBlock = level.getRandom().nextDouble() < blockDropChance;
 
-        if (level.getBlockState(targetPos).getDestroySpeed(level, targetPos) >= 0 && canHarvest) {
-
-            if (!isMultiParts(level, targetPos) && canDropBlock) {
+            if (canDropBlock && !hasEmptyLootDrop(level, targetPos, targetState, blockEntity)) {
+                ItemStack blockStack = new ItemStack(targetState.getBlock());
                 if (blockEntity != null) {
                     var beOutput = TagValueOutput.createWithContext(ProblemReporter.DISCARDING, level.registryAccess());
                     blockEntity.saveWithFullMetadata(beOutput);
@@ -230,23 +228,15 @@ public class Wedge extends Block implements SimpleWaterloggedBlock {
         }
     }
 
-    private boolean isMultiParts(Level level, BlockPos targetPos){
-        boolean result = false;
-        BlockState targetState = level.getBlockState(targetPos);
-        if (level instanceof ServerLevel serverLevel) {
-            for (Direction side : Direction.values()) {
-                BlockPos adjacentPos = targetPos.relative(side);
-                BlockState adjacentState = level.getBlockState(adjacentPos);
-
-                if (adjacentState.getBlock() == targetState.getBlock()) {
-                    List<ItemStack> drops = Block.getDrops(targetState, serverLevel, targetPos, null);
-                    if (drops.isEmpty()) {
-                        result = true;
-                    }
-                    break;
-                }
-            }
-        }
-        return result;
+    /**
+     * このブロックの状態自身が、通常のドロップ（ルートテーブル）上は何も落とさないか判定する。
+     * ドアの上半分（{@code half=upper}）のように、同じブロックの片方の状態だけが本来の
+     * アイテムをドロップする多部位ブロックは、ここで単独で割ってもウェッジの強制ドロップを
+     * 発生させないようにするための判定。隣接ブロックを自前でスキャンする必要はなく、
+     * ルートテーブル自体が「このstateでは空」と答えるので、それをそのまま使えば足りる。
+     */
+    private boolean hasEmptyLootDrop(Level level, BlockPos targetPos, BlockState targetState, @Nullable BlockEntity blockEntity) {
+        return level instanceof ServerLevel serverLevel
+                && Block.getDrops(targetState, serverLevel, targetPos, blockEntity).isEmpty();
     }
 }
