@@ -2,8 +2,8 @@
   "item": "crystallography:stone",
   "tier": 1,
   "hardness": 64,
-  "cut":     { "min": 0.3, "max": 0.5 },
+  "cut":     { "min": 0.3, "max": 0.3 },
   "carat":   { "min": 4, "max": 8 },
-  "clarity": { "min": 5.0, "max": 6.0 },
+  "clarity": { "min": 5.0, "max": 5.0 },
   "category": "stone"
 }

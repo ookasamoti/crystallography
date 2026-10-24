@@ -2,9 +2,9 @@
   "item": "crystallography:glowstone",
   "tier": 1,
   "hardness": 32,
-  "cut":     { "min": 0.2, "max": 0.6 },
+  "cut":     { "min": 0.2, "max": 0.2 },
   "carat":   { "min": 5, "max": 9 },
-  "clarity": { "min": 7.0, "max": 8.4 },
+  "clarity": { "min": 7.0, "max": 7.0 },
   "category": "stone",
   "traits": [ "amplify", "rubble" ],
   "color": "#FFD34D"
