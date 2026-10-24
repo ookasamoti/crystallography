@@ -6,7 +6,7 @@
   "carat":   { "min": 6, "max": 10 },
   "clarity": { "min": 6.0, "max": 7.2 },
   "category": "quartz",
-  "traits": [ "sharp" ],
+  "traits": [ "lucid" ],
   "crack_result": { "item": "minecraft:quartz", "count": 1 },
   "color": "#E8DCCB"
 }

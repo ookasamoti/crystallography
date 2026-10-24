@@ -6,6 +6,6 @@
   "carat":   { "min": 7, "max": 11 },
   "clarity": { "min": 8.0, "max": 9.6 },
   "category": "stone",
-  "traits": [ "obsidian_tear" ],
+  "traits": [ "obsidian_tear", "sharp", "rubble" ],
   "color": "#6A4BB5"
 }

@@ -33,7 +33,7 @@ import java.util.Set;
  * <ul>
  *   <li>効果範囲拡張：resonance / freezing / magnetism</li>
  *   <li>効果時間延長：blazing / levitation / wither</li>
- *   <li>補正強化：diamond / breezing / conduction / lifesteal / amplify</li>
+ *   <li>補正強化：boltz / breezing / conduction / lifesteal / amplify</li>
  * </ul>
  */
 public final class CrystalTraitLogic {
@@ -44,15 +44,19 @@ public final class CrystalTraitLogic {
     public static final int SCALING_MAX_LEVEL = 3;
 
     // ---- 数値折り込み系（buildStats） ----
-    public static final String DIAMOND = "diamond";
     public static final String PURE = "pure";
     public static final String BANDIT = "bandit";
-    /** diamond トレイト1個あたりの耐久値ボーナス（tier0/1結晶の基礎hardnessと同程度の値）。補正強化。 */
-    public static final int DIAMOND_DURABILITY_BONUS = 64;
+    /** クォーツ系（ネザークォーツ・ウィザーローズクォーツ）限定の攻撃速度ボーナス。 */
+    public static final String LUCID = "lucid";
+    /** diamond/boltzの性能入れ替え後：boltz トレイト1個あたりの耐久値ボーナス。補正強化。 */
+    public static final String BOLTZ = "boltz";
+    public static final int BOLTZ_DURABILITY_BONUS = 512;
     /** pure トレイトを持つ結晶自身の clarity 寄与に掛かる倍率。 */
     public static final float PURE_CLARITY_MULTIPLIER = 1.2f;
     /** bandit トレイト1個あたりの、AXE フォーム限定の追加攻撃力。Lv上限1＝複数積んでも+2固定。 */
     public static final float BANDIT_AXE_DAMAGE_BONUS = 2.0f;
+    /** lucid トレイトが1つでもあれば加算される攻撃速度ボーナス。Lv上限1＝複数積んでも変わらない。 */
+    public static final float LUCID_ATTACK_SPEED_BONUS = 0.5f;
 
     // ---- vanilla エンチャント付与系（CrystalToolLogic#applyGrantedEnchantments） ----
     public static final String SHARP = "sharp";
@@ -61,9 +65,9 @@ public final class CrystalTraitLogic {
     public static final String FOOLS_GOLD = "fools_gold";
 
     // ---- 耐久力エンチャント実効レベル系（applyUnbreaking） ----
-    public static final String BOLTZ = "boltz";
-    /** boltz トレイトが1つでもあれば、tier由来のUnbreaking実効レベル底上げにさらに+1する。 */
-    public static final int BOLTZ_UNBREAKING_BONUS = 1;
+    public static final String DIAMOND = "diamond";
+    /** diamond トレイトが1つでもあれば、tier由来のUnbreaking実効レベル底上げにさらに+1する（diamond/boltzの性能入れ替え後）。 */
+    public static final int DIAMOND_UNBREAKING_BONUS = 1;
 
     // ---- 宝石彫刻台のcarat予算ボーナス系（LapidaryAnvilOperations） ----
     public static final String WARD = "ward";
@@ -74,6 +78,7 @@ public final class CrystalTraitLogic {
     // ---- 戦闘フック系（CrystalTraitCombatHooks / SigilCombatHooks） ----
     public static final String ORDER = "order";
     public static final String LIFESTEAL = "lifesteal";
+    /** ヒット時にウィザー状態を付与（CrystalTraitCombatHooks）。採掘時の植物枯らし効果もこのトレイトが兼ねる（CrystalTraitMiningHooks）。 */
     public static final String WITHER = "wither";
     public static final String LEVITATION = "levitation";
     /** 旧 potion_amplify。シジル由来の命中時効果にも適用される。 */
@@ -82,7 +87,12 @@ public final class CrystalTraitLogic {
     public static final String DURATION = "duration";
     public static final String BREEZING = "breezing";
     public static final String SONIC = "sonic";
-    /** 旧 swap。遠距離攻撃：地形にヒットでエンダーパール移動、mobにヒットで位置入れ替え。 */
+    /**
+     * 旧 swap。遠距離攻撃：地形にヒットでエンダーパール移動、mobにヒットで位置入れ替え
+     * （CrystalTraitProjectileHooks）。採掘時の即時インベントリ回収効果もこのトレイトが兼ねる
+     * （CrystalTraitMiningHooks）。遠距離／採掘のどちらで発動するかはフックの発火イベントが
+     * 違うだけで、分岐は不要。
+     */
     public static final String ENDER = "ender";
 
     // ---- 着火フック系（CrystalTraitFireHooks） ----
@@ -98,6 +108,14 @@ public final class CrystalTraitLogic {
     public static final String FREEZING = "freezing";
     /** 新規：採掘時、周囲の同系統ブロックも採掘する（対象はフォームごとに異なる）。 */
     public static final String RESONANCE = "resonance";
+    /** 新規：振管石限定。resonance の連鎖半径を拡大する（resonance 自体は持たない）。Lv上限1。 */
+    public static final String OVERTONE = "overtone";
+    /** overtone が有効なとき、resonance の連鎖半径に上乗せするボーナス（ブロック）。 */
+    public static final int OVERTONE_RADIUS_BONUS = 1;
+    /** 新規：石カテゴリ結晶限定。採掘速度を即時採掘が発生しない範囲に制限する。 */
+    public static final String RUBBLE = "rubble";
+    /** rubble：即時採掘を防ぐため、破壊に必要な速度の上限倍率（1.0未満にして必ず1tick以上かける）。 */
+    public static final float RUBBLE_SPEED_CAP_FACTOR = 0.95f;
 
     // ---- 常時効果系（CrystalTraitTickHooks / AmuletStatLogic） ----
     public static final String MAGNETISM = "magnetism";

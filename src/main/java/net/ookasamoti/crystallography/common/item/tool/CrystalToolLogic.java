@@ -286,6 +286,8 @@ public final class CrystalToolLogic {
         float sigilAtkBonus = 0f; // 結晶に付与されたシジル由来の攻撃力ボーナス合計（form一致分のみ）
         // bandit（Lv上限1）：AXE限定の追加攻撃力。何個積んでも+2固定（結晶数で加算しない）。
         boolean hasBandit = false;
+        // lucid（Lv上限1）：攻撃速度ボーナス。何個積んでも固定（結晶数で加算しない）。
+        boolean hasLucid = false;
 
         for (int idx : crystalIndices) {
             if (idx < 0 || idx >= crystalInv.size()) continue;
@@ -298,9 +300,10 @@ public final class CrystalToolLogic {
             var cs = crystal.get(statsType);
             if (cs != null) {
                 hardnessSum += cs.hardness();
-                if (traits.contains(CrystalTraitLogic.DIAMOND)) hardnessSum += CrystalTraitLogic.DIAMOND_DURABILITY_BONUS;
+                if (traits.contains(CrystalTraitLogic.BOLTZ)) hardnessSum += CrystalTraitLogic.BOLTZ_DURABILITY_BONUS;
                 cutSum      += cs.cut();
                 if (traits.contains(CrystalTraitLogic.BANDIT)) hasBandit = true;
+                if (traits.contains(CrystalTraitLogic.LUCID)) hasLucid = true;
                 claritySum  += cs.clarity() * (traits.contains(CrystalTraitLogic.PURE) ? CrystalTraitLogic.PURE_CLARITY_MULTIPLIER : 1f);
                 crystalCount++;
             }
@@ -327,11 +330,12 @@ public final class CrystalToolLogic {
         // attackDamage = form.baseAttack + Σcut（form 別の武器特性で剣／ピッケル等を差別化）。
         // Σcut が表 damage 相当（満強化で表×1.2）、form ベースで武器形状ごとのボーナスを上乗せ。
         // ただし HOE はバニラ仕様に倣い、全ティア固定で攻撃修飾子 = 0。
-        // attackSpeed = form.baseAttackSpeed + (Σclarity − 20)×0.1（小数点二桁未満切り捨て）。
+        // attackSpeed = form.baseAttackSpeed + (Σclarity − 20)×0.1（小数点二桁未満切り捨て）+ lucidBonus。
         // miningSpeed = form.baseMiningSpeed × avg(clarity)（現状 baseMiningSpeed=1.0 なので実質 avg(clarity)）。
         float banditBonus = (hasBandit && form == ToolForm.AXE) ? CrystalTraitLogic.BANDIT_AXE_DAMAGE_BONUS : 0f;
         float attackDmg = (form == ToolForm.HOE) ? 0f : (form.baseAttack() + cutSum + sigilAtkBonus + banditBonus);
         float clarityAtkSpeedBonus = truncateTo2((claritySum - 20f) * 0.1f);
+        float lucidBonus = hasLucid ? CrystalTraitLogic.LUCID_ATTACK_SPEED_BONUS : 0f;
 
         // 原石バッテリーモード：3枠のいずれかが原石系(category=raw_ore)なら、通常の
         // tier*128+Σhardness とは別系統で「原石の hardness + 残り2枠の hardness(=ボーナス)」
@@ -344,7 +348,7 @@ public final class CrystalToolLogic {
                 avgTier,
                 durability,
                 attackDmg,
-                form.baseAttackSpeed() + clarityAtkSpeedBonus,
+                form.baseAttackSpeed() + clarityAtkSpeedBonus + lucidBonus,
                 form.baseMiningSpeed() * clarityAvg
         );
     }
@@ -974,10 +978,10 @@ public final class CrystalToolLogic {
             case 3 -> 2;
             default -> 0;
         };
-        // boltz トレイト：tier由来のUnbreaking実効レベル底上げにさらに+1する。
+        // diamond トレイト（diamond/boltzの性能入れ替え後）：tier由来のUnbreaking実効レベル底上げにさらに+1する。
         var crystalInv = ToolInventory.get(stack, crystalSlotCount(tier), serverLevel.registryAccess());
-        if (CrystalTraitLogic.loadoutHasTrait(lo, crystalInv, CrystalTraitLogic.BOLTZ)) {
-            tierBonus += CrystalTraitLogic.BOLTZ_UNBREAKING_BONUS;
+        if (CrystalTraitLogic.loadoutHasTrait(lo, crystalInv, CrystalTraitLogic.DIAMOND)) {
+            tierBonus += CrystalTraitLogic.DIAMOND_UNBREAKING_BONUS;
         }
         if (tierBonus <= 0) return EnchantmentHelper.processDurabilityChange(serverLevel, stack, amount);
 

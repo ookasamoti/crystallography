@@ -6,6 +6,6 @@
   "carat":   { "min": 5, "max": 9 },
   "clarity": { "min": 8.0, "max": 9.6 },
   "category": "stone",
-  "traits": [ "sharp" ],
+  "traits": [ "sharp", "rubble" ],
   "color": "#1E1726"
 }

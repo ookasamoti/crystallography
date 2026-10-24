@@ -1,13 +1,17 @@
 package net.ookasamoti.crystallography.common.item.tool;
 
 import net.minecraft.core.BlockPos;
+import net.minecraft.core.registries.Registries;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.tags.BlockTags;
+import net.minecraft.core.component.DataComponents;
 import net.minecraft.world.entity.item.ItemEntity;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.crafting.RecipeType;
 import net.minecraft.world.item.crafting.SingleRecipeInput;
+import net.minecraft.world.item.enchantment.Enchantments;
+import net.minecraft.world.item.enchantment.ItemEnchantments;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.block.entity.BlockEntity;
@@ -19,11 +23,14 @@ import net.neoforged.neoforge.event.entity.player.PlayerEvent;
 import net.neoforged.neoforge.event.level.BlockDropsEvent;
 import net.ookasamoti.crystallography.common.item.tool.component.ToolForm;
 
+import java.util.List;
+
 /**
  * 結晶の固有アビリティのうち、採掘関連（{@link CrystalTraitLogic} の「採掘フック系」）の実際の
  * 適用箇所。obsidian_tear / depborn / aquatic（+ turtle 併用時の強化）/ levitation（空中採掘ペナルティ
- * 無効化）は採掘速度そのものへの倍率、smelting / freezing / resonance はブロックを実際に破壊した後の
- * 副作用（ドロップの製錬・周囲の水の氷結・周囲の同系統ブロックの連鎖採掘）。
+ * 無効化）/ rubble（即時採掘の抑制）は採掘速度そのものへの倍率、smelting / freezing / resonance /
+ * ender（ドロップのインベントリ直接回収）/ wither（対象ブロックのシルクタッチ無効化）はブロックを
+ * 実際に破壊した後の副作用。
  */
 public final class CrystalTraitMiningHooks {
     private CrystalTraitMiningHooks() {}
@@ -81,6 +88,18 @@ public final class CrystalTraitMiningHooks {
         if (!player.onGround() && CrystalTraitLogic.loadoutHasTrait(lo, crystalInv, CrystalTraitLogic.LEVITATION)) {
             speed *= AIRBORNE_MINING_PENALTY_DIVISOR;
         }
+        // 石礫：ブロックが壊れる前に必ず1tick以上かかるよう、即時採掘が発生する閾値の手前まで速度を頭打ちにする
+        // （硬度0の元々常に即時採掘のブロックは対象外）。
+        if (CrystalTraitLogic.loadoutHasTrait(lo, crystalInv, CrystalTraitLogic.RUBBLE)) {
+            BlockPos pos = event.getPosition().orElse(null);
+            if (pos != null) {
+                float hardness = state.getDestroySpeed(player.level(), pos);
+                if (hardness > 0f) {
+                    float instantBreakThreshold = hardness * (player.hasCorrectToolForDrops(state) ? 30f : 100f);
+                    speed = Math.min(speed, instantBreakThreshold * CrystalTraitLogic.RUBBLE_SPEED_CAP_FACTOR);
+                }
+            }
+        }
         event.setNewSpeed(speed);
     }
 
@@ -114,7 +133,81 @@ public final class CrystalTraitMiningHooks {
         if (!RESONANCE_EXPANDING.get()) {
             int resonanceLevel = CrystalTraitLogic.traitLevel(lo, crystalInv, CrystalTraitLogic.RESONANCE, CrystalTraitLogic.SCALING_MAX_LEVEL);
             if (resonanceLevel > 0 && matchesResonanceCategory(lo.form(), event.getState())) {
-                expandResonance(event.getLevel(), event.getPos(), lo.form(), RESONANCE_BASE_RADIUS * resonanceLevel, player, tool);
+                // overtone（振管石限定、resonance 自体は持たない）：resonance の連鎖半径にさらに+1。
+                int radius = RESONANCE_BASE_RADIUS * resonanceLevel;
+                if (CrystalTraitLogic.loadoutHasTrait(lo, crystalInv, CrystalTraitLogic.OVERTONE)) {
+                    radius += CrystalTraitLogic.OVERTONE_RADIUS_BONUS;
+                }
+                expandResonance(event.getLevel(), event.getPos(), lo.form(), radius, player, tool);
+            }
+        }
+
+        if (CrystalTraitLogic.loadoutHasTrait(lo, crystalInv, CrystalTraitLogic.WITHER)) {
+            applyWitherNoSilkTouch(event, player, tool);
+        }
+        if (CrystalTraitLogic.loadoutHasTrait(lo, crystalInv, CrystalTraitLogic.ENDER)) {
+            applyEnderPickup(event, player);
+        }
+    }
+
+    /** wither：草ブロック・ポドゾル・菌糸ブロック・根付いた土・葉ブロックをシルクタッチ適用外にする（採掘時、植物を枯らす）。 */
+    private static boolean isWitherTarget(BlockState state) {
+        return state.is(Blocks.GRASS_BLOCK) || state.is(Blocks.PODZOL) || state.is(Blocks.MYCELIUM)
+                || state.is(Blocks.ROOTED_DIRT) || state.is(BlockTags.LEAVES);
+    }
+
+    /**
+     * {@link #isWitherTarget} に該当するブロックのドロップを、ツールのシルクタッチを無視した
+     * 結果（通常ドロップ）へ丸ごと差し替える。シルクタッチの有無でルートテーブルの分岐自体が
+     * 変わるため、既存ドロップの変換ではなく {@link Block#getDrops} による再計算で対応する。
+     */
+    private static void applyWitherNoSilkTouch(BlockDropsEvent event, Player player, ItemStack tool) {
+        BlockState state = event.getState();
+        if (!isWitherTarget(state)) return;
+
+        ServerLevel level = event.getLevel();
+        BlockPos pos = event.getPos();
+        BlockEntity blockEntity = event.getBlockEntity();
+
+        ItemStack strippedTool = tool.copy();
+        ItemEnchantments real = strippedTool.getOrDefault(DataComponents.ENCHANTMENTS, ItemEnchantments.EMPTY);
+        if (!real.isEmpty()) {
+            var mutable = new ItemEnchantments.Mutable(real);
+            level.registryAccess().lookupOrThrow(Registries.ENCHANTMENT).get(Enchantments.SILK_TOUCH)
+                    .ifPresent(silkTouch -> mutable.removeIf(holder -> holder.is(silkTouch)));
+            strippedTool.set(DataComponents.ENCHANTMENTS, mutable.toImmutable());
+        }
+
+        List<ItemStack> forcedDrops = Block.getDrops(state, level, pos, blockEntity, player, strippedTool);
+        event.getDrops().clear();
+        for (ItemStack drop : forcedDrops) {
+            if (drop.isEmpty()) continue;
+            event.getDrops().add(new ItemEntity(level, pos.getX() + 0.5, pos.getY() + 0.5, pos.getZ() + 0.5, drop));
+        }
+    }
+
+    /**
+     * ender（採掘時）：ドロップをプレイヤーのインベントリへ直接テレポートさせる。入りきらない分は
+     * 足元（プレイヤーの現在位置）へ落とす。遠距離攻撃時の瞬間移動効果（{@link CrystalTraitProjectileHooks}）
+     * とはイベントの発火元が異なるだけで、分岐は不要。
+     */
+    private static void applyEnderPickup(BlockDropsEvent event, Player player) {
+        // この時点のドロップはまだ ServerLevel に spawn されておらず（イベント処理後に呼び出し元が
+        // event.getDrops() を走査して addFreshEntity する）、未spawnエンティティへの discard() は
+        // 想定外の経路のため、インベントリに収まりきった分はリストから直接取り除く。
+        var it = event.getDrops().iterator();
+        while (it.hasNext()) {
+            ItemEntity drop = it.next();
+            ItemStack stack = drop.getItem();
+            if (stack.isEmpty()) continue;
+            // Inventory#add は stack を直接書き換え、入りきらなかった分だけ残す（戻り値は
+            // 「1個でも入ったか」であって「全部入ったか」ではないため、判定には使わない）。
+            player.getInventory().add(stack);
+            if (stack.isEmpty()) {
+                it.remove();
+            } else {
+                drop.setPos(player.getX(), player.getY(), player.getZ());
+                drop.setItem(stack);
             }
         }
     }
