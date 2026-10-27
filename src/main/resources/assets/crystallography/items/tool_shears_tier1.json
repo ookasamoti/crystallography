@@ -4,7 +4,13 @@
     "property": "crystallography:form",
     "fallback": {
       "type": "minecraft:model",
-      "model": "crystallography:item/toolwand_tier1"
+      "model": "crystallography:item/toolwand_knife_tier1",
+      "tints": [
+        { "type": "minecraft:constant", "value": -1 },
+        { "type": "crystallography:crystal", "crystal_slot": 0 },
+        { "type": "crystallography:crystal", "crystal_slot": 1 },
+        { "type": "crystallography:crystal", "crystal_slot": 2 }
+      ]
     },
     "cases": [
       {

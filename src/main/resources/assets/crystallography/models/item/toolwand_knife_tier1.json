@@ -1,0 +1,9 @@
+{
+  "parent": "minecraft:item/handheld",
+  "textures": {
+    "layer0": "crystallography:item/toolwand_tier1",
+    "layer1": "crystallography:item/toolwand_knife_center",
+    "layer2": "crystallography:item/toolwand_knife_left",
+    "layer3": "crystallography:item/toolwand_knife_right"
+  }
+}
