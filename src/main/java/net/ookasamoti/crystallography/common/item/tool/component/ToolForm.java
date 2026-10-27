@@ -24,10 +24,10 @@ public enum ToolForm {
     // バニラに対応するアイテム属性はない（SHEARS を除く）。仮の値として「遠隔／補助系は遅め」とした暫定値。
     BOW         (3f,    -3.0f,  1.00f),
     CROSSBOW    (2f,    -3.0f,  1.00f),
-    // 短剣（ナイフ）としての武器性能：手動調整値。リーチは剣（＝vanilla基礎値のまま）の0.8倍
-    // （entity_interaction_range: 3.0→2.4、block_interaction_range: 4.5→3.6）になるよう、
-    // vanilla基礎値からの差分（delta）をentityReach/blockReachに指定する。
-    SHEARS      (1.0f,  -1.2f,  1.00f, -0.6f, -0.9f),
+    // 短剣（ナイフ）としての武器性能：手動調整値。エンティティリーチのみ剣（＝vanilla基礎値のまま）
+    // の0.8倍（entity_interaction_range: 3.0→2.4）に短縮。ブロックリーチ（設置/採掘対象への距離）は
+    // vanilla基礎値のまま変更しない。
+    SHEARS      (1.0f,  -1.2f,  1.00f, -0.6f, 0f),
     SPYGLASS    (0f,    -3.0f,  1.00f),
     FISHING_ROD (0f,    -3.0f,  1.00f),
     SHIELD      (0f,    -3.0f,  1.00f);
