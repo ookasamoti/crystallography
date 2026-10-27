@@ -101,6 +101,14 @@ public final class CrystalToolLogic {
     public static final Identifier CRYSTAL_ATK_SPEED_ID =
             Identifier.fromNamespaceAndPath(CrystallographyMod.MOD_ID, "crystal_atk_speed");
 
+    // ---- Reach（interaction range）属性修飾子ID ----
+    // フォームごとの静的な加算値（ToolForm#entityReach/blockReach）をそのまま登録する。
+    // ほとんどのフォームは0（vanillaデフォルトのまま）のため影響なし。
+    public static final Identifier FORM_ENTITY_REACH_ID =
+            Identifier.fromNamespaceAndPath(CrystallographyMod.MOD_ID, "form_entity_reach");
+    public static final Identifier FORM_BLOCK_REACH_ID =
+            Identifier.fromNamespaceAndPath(CrystallographyMod.MOD_ID, "form_block_reach");
+
     // ---- Tier定数（設計書準拠） ----
 
     /** Tier に対応する内部結晶インベントリのスロット数（tier1=6, tier2=9, tier3=12）。 */
@@ -429,6 +437,17 @@ public final class CrystalToolLogic {
             rules.add(Tool.Rule.overrideSpeed(tagHolderSet(BlockTags.SWORD_EFFICIENT), 1.5f));
             damagePerBlock = 2;
         }
+        // バニラ ShearsItem#createToolProperties と同じ採掘速度ルール（クモの巣=正規ドロップ+高速、
+        // 葉=15倍速、羊毛=5倍速、ツル/発光地衣類=2倍速）。ドロップの可否（アイテム判定）自体は
+        // loot table 側の "minecraft:shears" 単体アイテム指定に阻まれるため別途
+        // CrystalTraitMiningHooks 側で本物の Shears への差し替え再計算を行う。
+        if (form == ToolForm.SHEARS) {
+            rules.add(Tool.Rule.minesAndDrops(HolderSet.direct(Blocks.COBWEB.builtInRegistryHolder()), 15.0f));
+            rules.add(Tool.Rule.overrideSpeed(tagHolderSet(BlockTags.LEAVES), 15.0f));
+            rules.add(Tool.Rule.overrideSpeed(tagHolderSet(BlockTags.WOOL), 5.0f));
+            rules.add(Tool.Rule.overrideSpeed(
+                    HolderSet.direct(Blocks.VINE.builtInRegistryHolder(), Blocks.GLOW_LICHEN.builtInRegistryHolder()), 2.0f));
+        }
 
         return new Tool(rules, 1.0f, damagePerBlock, false);
     }
@@ -558,6 +577,12 @@ public final class CrystalToolLogic {
                 EquipmentSlotGroup.MAINHAND);
         b.add(Attributes.ATTACK_SPEED,
                 new AttributeModifier(CRYSTAL_ATK_SPEED_ID, s.attackSpeed() - formSpd, AttributeModifier.Operation.ADD_VALUE),
+                EquipmentSlotGroup.MAINHAND);
+        b.add(Attributes.ENTITY_INTERACTION_RANGE,
+                new AttributeModifier(FORM_ENTITY_REACH_ID, lo.form().entityReach(), AttributeModifier.Operation.ADD_VALUE),
+                EquipmentSlotGroup.MAINHAND);
+        b.add(Attributes.BLOCK_INTERACTION_RANGE,
+                new AttributeModifier(FORM_BLOCK_REACH_ID, lo.form().blockReach(), AttributeModifier.Operation.ADD_VALUE),
                 EquipmentSlotGroup.MAINHAND);
         stack.set(DataComponents.ATTRIBUTE_MODIFIERS, b.build());
 

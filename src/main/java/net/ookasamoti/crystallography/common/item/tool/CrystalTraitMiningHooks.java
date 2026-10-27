@@ -8,6 +8,7 @@ import net.minecraft.core.component.DataComponents;
 import net.minecraft.world.entity.item.ItemEntity;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.item.Items;
 import net.minecraft.world.item.crafting.RecipeType;
 import net.minecraft.world.item.crafting.SingleRecipeInput;
 import net.minecraft.world.item.enchantment.Enchantments;
@@ -142,8 +143,16 @@ public final class CrystalTraitMiningHooks {
             }
         }
 
-        if (CrystalTraitLogic.loadoutHasTrait(lo, crystalInv, CrystalTraitLogic.WITHER)) {
-            applyWitherNoSilkTouch(event, player, tool);
+        boolean hasWither = CrystalTraitLogic.loadoutHasTrait(lo, crystalInv, CrystalTraitLogic.WITHER);
+        if (hasWither) {
+            applyWitherNoSilkTouch(event, player, tool, lo.form());
+        }
+        // ハサミ枠（短剣＝ナイフ）の本来のドロップ可否再計算。クモの巣／葉／羊毛／ツル等の loot table は
+        // 「道具が minecraft:shears というアイテムそのものか」を直接見ているため、本 mod 独自の
+        // CrystalShears アイテムではこの mod の Tool コンポーネント（採掘速度ルール）をどれだけ整えても
+        // ドロップ自体は発生しない。wither 側が既に対象ブロック（葉等）を処理済みならそちらを優先する。
+        if (lo.form() == ToolForm.SHEARS && !(hasWither && isWitherTarget(event.getState()))) {
+            applyShearsCleanHarvest(event, player, tool);
         }
         if (CrystalTraitLogic.loadoutHasTrait(lo, crystalInv, CrystalTraitLogic.ENDER)) {
             applyEnderPickup(event, player);
@@ -160,8 +169,11 @@ public final class CrystalTraitMiningHooks {
      * {@link #isWitherTarget} に該当するブロックのドロップを、ツールのシルクタッチを無視した
      * 結果（通常ドロップ）へ丸ごと差し替える。シルクタッチの有無でルートテーブルの分岐自体が
      * 変わるため、既存ドロップの変換ではなく {@link Block#getDrops} による再計算で対応する。
+     * フォームが SHEARS の場合、葉ブロックの loot table は「道具が本物の {@code minecraft:shears}
+     * アイテムか」も見ているため、シルクタッチ除去と同時に {@link #buildShearsSubstitute} で
+     * 道具自体も差し替える（さもないとシルクタッチなし・shears判定もなしで何もドロップしなくなる）。
      */
-    private static void applyWitherNoSilkTouch(BlockDropsEvent event, Player player, ItemStack tool) {
+    private static void applyWitherNoSilkTouch(BlockDropsEvent event, Player player, ItemStack tool, ToolForm form) {
         BlockState state = event.getState();
         if (!isWitherTarget(state)) return;
 
@@ -169,7 +181,7 @@ public final class CrystalTraitMiningHooks {
         BlockPos pos = event.getPos();
         BlockEntity blockEntity = event.getBlockEntity();
 
-        ItemStack strippedTool = tool.copy();
+        ItemStack strippedTool = (form == ToolForm.SHEARS) ? buildShearsSubstitute(tool) : tool.copy();
         ItemEnchantments real = strippedTool.getOrDefault(DataComponents.ENCHANTMENTS, ItemEnchantments.EMPTY);
         if (!real.isEmpty()) {
             var mutable = new ItemEnchantments.Mutable(real);
@@ -184,6 +196,38 @@ public final class CrystalTraitMiningHooks {
             if (drop.isEmpty()) continue;
             event.getDrops().add(new ItemEntity(level, pos.getX() + 0.5, pos.getY() + 0.5, pos.getZ() + 0.5, drop));
         }
+    }
+
+    /**
+     * ハサミ枠（短剣＝ナイフ）：クモの巣／葉／ツル／発光地衣類等の loot table が「道具が本物の
+     * {@code minecraft:shears} アイテムそのものか」を直接判定しているため、この mod 独自の
+     * {@code CrystalShears} アイテムではタグや Tool コンポーネントをいくら整えても対象にならない。
+     * {@link Block#getDrops} を本物の {@link Items#SHEARS}（同じエンチャント付き）で再計算し、
+     * そのままドロップを丸ごと差し替えることで実質的に「本物のハサミと同一のドロップ」を再現する。
+     */
+    private static void applyShearsCleanHarvest(BlockDropsEvent event, Player player, ItemStack tool) {
+        ServerLevel level = event.getLevel();
+        BlockPos pos = event.getPos();
+        BlockEntity blockEntity = event.getBlockEntity();
+        BlockState state = event.getState();
+
+        ItemStack substitute = buildShearsSubstitute(tool);
+        List<ItemStack> forcedDrops = Block.getDrops(state, level, pos, blockEntity, player, substitute);
+        event.getDrops().clear();
+        for (ItemStack drop : forcedDrops) {
+            if (drop.isEmpty()) continue;
+            event.getDrops().add(new ItemEntity(level, pos.getX() + 0.5, pos.getY() + 0.5, pos.getZ() + 0.5, drop));
+        }
+    }
+
+    /** 本物の {@link Items#SHEARS} のコピーに、元の道具のエンチャント（幸運等）だけを引き継がせる。 */
+    private static ItemStack buildShearsSubstitute(ItemStack tool) {
+        ItemStack substitute = new ItemStack(Items.SHEARS);
+        ItemEnchantments enchantments = tool.getOrDefault(DataComponents.ENCHANTMENTS, ItemEnchantments.EMPTY);
+        if (!enchantments.isEmpty()) {
+            substitute.set(DataComponents.ENCHANTMENTS, enchantments);
+        }
+        return substitute;
     }
 
     /**

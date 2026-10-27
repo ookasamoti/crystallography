@@ -21,10 +21,13 @@ public enum ToolForm {
     MACE        (5.0f,  -3.4f,  1.00f),  // vanilla mace    (5.0, -3.4)
 
     // ---- ワンドフォーム ----
-    // バニラに対応するアイテム属性はない。仮の値として「遠隔／補助系は遅め」とした暫定値。
+    // バニラに対応するアイテム属性はない（SHEARS を除く）。仮の値として「遠隔／補助系は遅め」とした暫定値。
     BOW         (3f,    -3.0f,  1.00f),
     CROSSBOW    (2f,    -3.0f,  1.00f),
-    SHEARS      (1f,    -1.5f,  1.00f),
+    // 短剣（ナイフ）としての武器性能：手動調整値。リーチは剣（＝vanilla基礎値のまま）の0.8倍
+    // （entity_interaction_range: 3.0→2.4、block_interaction_range: 4.5→3.6）になるよう、
+    // vanilla基礎値からの差分（delta）をentityReach/blockReachに指定する。
+    SHEARS      (1.0f,  -1.2f,  1.00f, -0.6f, -0.9f),
     SPYGLASS    (0f,    -3.0f,  1.00f),
     FISHING_ROD (0f,    -3.0f,  1.00f),
     SHIELD      (0f,    -3.0f,  1.00f);
@@ -32,14 +35,26 @@ public enum ToolForm {
     private final float baseAttack;
     private final float baseAttackSpeed;
     private final float baseMiningSpeed;
+    // vanilla基礎値（entity_interaction_range=3.0, block_interaction_range=4.5）からの加算分。
+    // 他フォームは0＝vanillaデフォルトのまま。
+    private final float entityReach;
+    private final float blockReach;
 
     ToolForm(float baseAttack, float baseAttackSpeed, float baseMiningSpeed) {
+        this(baseAttack, baseAttackSpeed, baseMiningSpeed, 0f, 0f);
+    }
+
+    ToolForm(float baseAttack, float baseAttackSpeed, float baseMiningSpeed, float entityReach, float blockReach) {
         this.baseAttack = baseAttack;
         this.baseAttackSpeed = baseAttackSpeed;
         this.baseMiningSpeed = baseMiningSpeed;
+        this.entityReach = entityReach;
+        this.blockReach = blockReach;
     }
 
     public float baseAttack()      { return baseAttack; }
     public float baseAttackSpeed() { return baseAttackSpeed; }
     public float baseMiningSpeed() { return baseMiningSpeed; }
+    public float entityReach()     { return entityReach; }
+    public float blockReach()      { return blockReach; }
 }
