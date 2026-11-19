@@ -1,7 +1,6 @@
 package net.ookasamoti.crystallography;
 
 import net.minecraft.resources.Identifier;
-import net.minecraft.world.item.ItemStack;
 import net.neoforged.api.distmarker.Dist;
 import net.neoforged.bus.api.SubscribeEvent;
 import net.neoforged.fml.ModContainer;
@@ -30,6 +29,7 @@ import net.ookasamoti.crystallography.client.color.AmuletCrystalTintSource;
 import net.ookasamoti.crystallography.client.color.CrystalTintSource;
 import net.ookasamoti.crystallography.client.event.CrystalClientHooks;
 import net.ookasamoti.crystallography.client.model.FormProperty;
+import net.ookasamoti.crystallography.client.renderer.CrystalFishingHookRenderer;
 import net.ookasamoti.crystallography.client.renderer.CrystalThrownTridentRenderer;
 import net.ookasamoti.crystallography.client.renderer.CrystalTridentSpecialRenderer;
 import net.ookasamoti.crystallography.client.renderer.ArrowSoulFireFlameRenderer;
@@ -96,6 +96,9 @@ public class CrystallographyModClient {
         // Overrides vanilla's ThrownTridentRenderer, which always draws the hardcoded
         // entity/trident/trident.png special model regardless of the actual thrown stack.
         event.registerEntityRenderer(EntityType.TRIDENT, CrystalThrownTridentRenderer::new);
+        // Overrides vanilla's FishingHookRenderer so the bobber's "right"-slot overlay and the
+        // line colour (from the "left" slot) reflect the casting crystal fishing rod's crystals.
+        event.registerEntityRenderer(EntityType.FISHING_BOBBER, CrystalFishingHookRenderer::new);
     }
 
     @SubscribeEvent
@@ -145,25 +148,16 @@ public class CrystallographyModClient {
         var main = mc.player.getMainHandItem();
         var off  = mc.player.getOffhandItem();
 
-        boolean rodHeld  = isKind(main, ICrystalTool.Kind.ROD)  || isKind(off, ICrystalTool.Kind.ROD);
-        boolean wandHeld = isKind(main, ICrystalTool.Kind.WAND) || isKind(off, ICrystalTool.Kind.WAND);
+        boolean mainIsTool = main.getItem() instanceof ICrystalTool;
+        boolean offIsTool  = off.getItem() instanceof ICrystalTool;
 
-        boolean rodKey  = KeyBindingRegistry.KEY_ROD_CYCLE.isDown();
-        boolean wandKey = KeyBindingRegistry.KEY_WAND_CYCLE.isDown();
+        boolean mainKey = KeyBindingRegistry.KEY_MAINHAND_CYCLE.isDown();
+        boolean offKey  = KeyBindingRegistry.KEY_OFFHAND_CYCLE.isDown();
 
-        if ((rodHeld && rodKey) || (wandHeld && wandKey)) {
+        if ((mainIsTool && mainKey) || (offIsTool && offKey)) {
             event.setCanceled(true);
             int delta = event.getScrollDeltaY() > 0 ? 1 : -1;
-            ClientPacketDistributor.sendToServer(new ToolCycleC2S(delta));
+            ClientPacketDistributor.sendToServer(new ToolCycleC2S(delta, offIsTool && offKey));
         }
-    }
-
-    /**
-     * stack がロッド系／ワンド系かを判定する。フォーム確定前の「素の状態」
-     * ({@code ToolRod}/{@code ToolWand}) と、確定後のフォーム別 Item の両方に対応するため
-     * {@link ICrystalTool#getKind()} を見る（特定クラスへの instanceof は使わない）。
-     */
-    private static boolean isKind(ItemStack stack, ICrystalTool.Kind kind) {
-        return stack.getItem() instanceof ICrystalTool ct && ct.getKind() == kind;
     }
 }

@@ -13,15 +13,15 @@ public class KeyBindingRegistry {
     public static final KeyMapping.Category CATEGORY =
             new KeyMapping.Category(Identifier.fromNamespaceAndPath(CrystallographyMod.MOD_ID, "general"));
 
-    public static final KeyMapping KEY_ROD_CYCLE = new KeyMapping(
-            "key.crystallography.cycle_rod",
+    public static final KeyMapping KEY_MAINHAND_CYCLE = new KeyMapping(
+            "key.crystallography.cycle_mainhand",
             InputConstants.Type.KEYSYM,
             GLFW.GLFW_KEY_LEFT_CONTROL,
             CATEGORY
     );
 
-    public static final KeyMapping KEY_WAND_CYCLE = new KeyMapping(
-            "key.crystallography.cycle_wand",
+    public static final KeyMapping KEY_OFFHAND_CYCLE = new KeyMapping(
+            "key.crystallography.cycle_offhand",
             InputConstants.Type.KEYSYM,
             GLFW.GLFW_KEY_LEFT_SHIFT,
             CATEGORY
@@ -29,7 +29,7 @@ public class KeyBindingRegistry {
 
     public static void onRegisterKeyMappings(RegisterKeyMappingsEvent event) {
         event.registerCategory(CATEGORY);
-        event.register(KEY_ROD_CYCLE);
-        event.register(KEY_WAND_CYCLE);
+        event.register(KEY_MAINHAND_CYCLE);
+        event.register(KEY_OFFHAND_CYCLE);
     }
 }

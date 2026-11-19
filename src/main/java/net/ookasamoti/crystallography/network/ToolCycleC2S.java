@@ -7,13 +7,14 @@ import net.minecraft.network.protocol.common.custom.CustomPacketPayload;
 import net.minecraft.resources.Identifier;
 import org.jetbrains.annotations.NotNull;
 
-public record ToolCycleC2S(int delta) implements CustomPacketPayload {
+public record ToolCycleC2S(int delta, boolean offhand) implements CustomPacketPayload {
     public static final Type<ToolCycleC2S> TYPE =
             new Type<>(Identifier.fromNamespaceAndPath("crystallography", "tool_cycle"));
 
     public static final StreamCodec<RegistryFriendlyByteBuf, ToolCycleC2S> STREAM_CODEC =
             StreamCodec.composite(
                     ByteBufCodecs.VAR_INT, ToolCycleC2S::delta,
+                    ByteBufCodecs.BOOL, ToolCycleC2S::offhand,
                     ToolCycleC2S::new
             );
 

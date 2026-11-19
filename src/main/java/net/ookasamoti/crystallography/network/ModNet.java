@@ -50,13 +50,9 @@ public final class ModNet {
                 (msg, ctx) -> ctx.enqueueWork(() -> {
                     if (!(ctx.player() instanceof ServerPlayer sp)) return;
 
-                    InteractionHand hand = InteractionHand.MAIN_HAND;
-                    ItemStack stack = sp.getMainHandItem();
-                    if (!(stack.getItem() instanceof ICrystalTool)) {
-                        hand = InteractionHand.OFF_HAND;
-                        stack = sp.getOffhandItem();
-                        if (!(stack.getItem() instanceof ICrystalTool)) return;
-                    }
+                    InteractionHand hand = msg.offhand() ? InteractionHand.OFF_HAND : InteractionHand.MAIN_HAND;
+                    ItemStack stack = sp.getItemInHand(hand);
+                    if (!(stack.getItem() instanceof ICrystalTool)) return;
 
                     var registered = ToolBase.getLoadout(stack).entries().stream()
                             .mapToInt(ToolLoadout::slotIndex)

@@ -145,6 +145,6 @@
   "tooltip.crystallography.category.pearl.desc": "Set bonus: x1.2 cooldown reduction",
 
   "key.categories.crystallography": "Crystallography",
-  "key.crystallography.cycle_rod": "Cycle Rod Loadout",
-  "key.crystallography.cycle_wand": "Cycle Wand Loadout"
+  "key.crystallography.cycle_mainhand": "Cycle Main Hand Loadout",
+  "key.crystallography.cycle_offhand": "Cycle Off Hand Loadout"
 }
