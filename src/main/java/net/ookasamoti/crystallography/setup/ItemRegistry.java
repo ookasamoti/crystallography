@@ -28,7 +28,6 @@ import net.ookasamoti.crystallography.common.item.tool.form.CrystalShears;
 import net.ookasamoti.crystallography.common.item.tool.form.CrystalShield;
 import net.ookasamoti.crystallography.common.item.tool.form.CrystalShovel;
 import net.ookasamoti.crystallography.common.item.tool.form.CrystalSpear;
-import net.ookasamoti.crystallography.common.item.tool.form.CrystalSpyglass;
 import net.ookasamoti.crystallography.common.item.tool.form.CrystalSword;
 import net.ookasamoti.crystallography.common.item.tool.form.CrystalTrident;
 
@@ -63,7 +62,6 @@ public class ItemRegistry {
         FORM_FACTORIES.put(ToolForm.BOW,         CrystalBow::new);
         FORM_FACTORIES.put(ToolForm.CROSSBOW,    CrystalCrossbow::new);
         FORM_FACTORIES.put(ToolForm.SHEARS,      CrystalShears::new);
-        FORM_FACTORIES.put(ToolForm.SPYGLASS,    CrystalSpyglass::new);
         FORM_FACTORIES.put(ToolForm.FISHING_ROD, CrystalFishingRod::new);
         FORM_FACTORIES.put(ToolForm.SHIELD,      CrystalShield::new);
     }

@@ -741,7 +741,7 @@ public final class CrystalToolLogic {
      * {@link ItemStack#hurtEnemy} はこのコンポーネントの有無だけを見て {@code postHurtEnemy}
      * （＝耐久減少）を呼ぶかどうかを決めるため、フォーム変更のたびに必ず再設定/削除する。
      * SWORD/MACE/TRIDENT はバニラ同様 1、PICKAXE/HOE/SHOVEL は 2、AXE は 2 かつ盾無効化5秒。
-     * BOW/CROSSBOW/FISHING_ROD/SPYGLASS/SHEARS/SHIELD はバニラ同様コンポーネント無し
+     * BOW/CROSSBOW/FISHING_ROD/SHEARS/SHIELD はバニラ同様コンポーネント無し
      * （近接で殴っても耐久が減らない）。SPEAR は {@link #applySpearComponents} 側で個別に設定する。
      */
     private static void applyWeaponComponent(ItemStack stack, ToolForm form) {

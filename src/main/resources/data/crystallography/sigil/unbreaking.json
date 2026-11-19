@@ -13,7 +13,6 @@
     { "form": "BOW", "enchantment": "minecraft:unbreaking", "level": 3 },
     { "form": "CROSSBOW", "enchantment": "minecraft:unbreaking", "level": 3 },
     { "form": "SHEARS", "enchantment": "minecraft:unbreaking", "level": 3 },
-    { "form": "SPYGLASS", "enchantment": "minecraft:unbreaking", "level": 3 },
     { "form": "FISHING_ROD", "enchantment": "minecraft:unbreaking", "level": 3 },
     { "form": "SHIELD", "enchantment": "minecraft:unbreaking", "level": 3 }
   ]

@@ -50,7 +50,6 @@ public class JewelryTableScreen extends AbstractContainerScreen<JewelryTableMenu
             tex("crystallography:textures/item/empty_slot_bow.png"),
             tex("crystallography:textures/item/empty_slot_crossbow.png"),
             tex("crystallography:textures/item/empty_slot_knife.png"),
-            tex("crystallography:textures/item/empty_slot_wrench.png"),
             tex("crystallography:textures/item/empty_slot_fishing_rod.png"),
             spr("minecraft:container/slot/shield"),
     };

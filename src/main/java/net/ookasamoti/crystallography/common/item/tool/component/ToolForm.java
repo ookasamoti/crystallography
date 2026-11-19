@@ -28,7 +28,6 @@ public enum ToolForm {
     // の0.8倍（entity_interaction_range: 3.0→2.4）に短縮。ブロックリーチ（設置/採掘対象への距離）は
     // vanilla基礎値のまま変更しない。
     SHEARS      (1.0f,  -1.2f,  1.00f, -0.6f, 0f),
-    SPYGLASS    (0f,    -3.0f,  1.00f),
     FISHING_ROD (0f,    -3.0f,  1.00f),
     SHIELD      (0f,    -3.0f,  1.00f);
 

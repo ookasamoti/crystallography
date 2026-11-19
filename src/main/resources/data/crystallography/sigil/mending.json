@@ -13,7 +13,6 @@
     { "form": "BOW", "enchantment": "minecraft:mending", "level": 1 },
     { "form": "CROSSBOW", "enchantment": "minecraft:mending", "level": 1 },
     { "form": "SHEARS", "enchantment": "minecraft:mending", "level": 1 },
-    { "form": "SPYGLASS", "enchantment": "minecraft:mending", "level": 1 },
     { "form": "FISHING_ROD", "enchantment": "minecraft:mending", "level": 1 },
     { "form": "SHIELD", "enchantment": "minecraft:mending", "level": 1 }
   ]

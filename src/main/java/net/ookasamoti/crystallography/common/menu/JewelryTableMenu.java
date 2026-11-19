@@ -74,7 +74,7 @@ public class JewelryTableMenu extends AbstractContainerMenu {
     };
     public static final ToolForm[] WAND_FORMS = {
             ToolForm.BOW, ToolForm.CROSSBOW, ToolForm.SHEARS,
-            ToolForm.SPYGLASS, ToolForm.FISHING_ROD, ToolForm.SHIELD
+            ToolForm.FISHING_ROD, ToolForm.SHIELD
     };
 
     /* ===== 状態 ===== */
@@ -293,13 +293,13 @@ public class JewelryTableMenu extends AbstractContainerMenu {
             }
             case EDIT_CRYSTALS -> {
                 showFirstN(Ring.CENTER, 1, DialSlot.Mode.INTERACTIVE);
-                showFirstN(Ring.TOOLS, countOf(Ring.TOOLS), DialSlot.Mode.BUTTON);
+                showFirstN(Ring.TOOLS, toolFormsCount(), DialSlot.Mode.BUTTON);
                 showFirstN(Ring.REGISTRIES, effectiveCountOf(Ring.REGISTRIES), DialSlot.Mode.BUTTON);
                 showFirstN(Ring.CRYSTALS, effectiveCountOf(Ring.CRYSTALS), DialSlot.Mode.INTERACTIVE);
             }
             case FORM_SELECTED -> {
                 showFirstN(Ring.CENTER, 1, DialSlot.Mode.BUTTON);
-                showFirstN(Ring.TOOLS, countOf(Ring.TOOLS), DialSlot.Mode.BUTTON);
+                showFirstN(Ring.TOOLS, toolFormsCount(), DialSlot.Mode.BUTTON);
                 showFirstN(Ring.REGISTRIES, effectiveCountOf(Ring.REGISTRIES), DialSlot.Mode.BUTTON);
                 showFirstN(Ring.CRYSTALS, effectiveCountOf(Ring.CRYSTALS), DialSlot.Mode.BUTTON);
             }
@@ -311,6 +311,16 @@ public class JewelryTableMenu extends AbstractContainerMenu {
                 showFirstN(Ring.CRYSTALS, IAmuletItem.CRYSTAL_SLOTS, DialSlot.Mode.INTERACTIVE);
             }
         }
+    }
+
+    /**
+     * TOOLS リングの物理スロット数は DEF 上 6固定(ロッドの6形態分)だが、ワンドは5形態しかない
+     * ため、現在 CENTER に乗っている道具の種類に応じて実際に表示する数を絞る。
+     */
+    private int toolFormsCount() {
+        ItemStack tool = rings.get(Ring.CENTER)[0].peekRealItem();
+        boolean isWand = kindOf(tool) == ICrystalTool.Kind.WAND;
+        return (isWand ? WAND_FORMS : ROD_FORMS).length;
     }
 
     private void showFirstN(Ring ring, int n, DialSlot.Mode mode) {
