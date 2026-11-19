@@ -1,0 +1,9 @@
+{
+  "parent": "minecraft:item/handheld_rod",
+  "textures": {
+    "layer0": "crystallography:item/toolwand_fishing_rod_base_tier3",
+    "layer1": "crystallography:item/toolwand_fishing_rod_center",
+    "layer2": "crystallography:item/toolwand_fishing_rod_left_cast",
+    "layer3": "crystallography:item/toolwand_fishing_rod_right"
+  }
+}
