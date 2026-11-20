@@ -131,7 +131,11 @@ public class JewelryTableScreen extends AbstractContainerScreen<JewelryTableMenu
         for (JewelryTableMenu.Ring ring : JewelryTableMenu.Ring.values()) {
             if (ring == JewelryTableMenu.Ring.CENTER) continue;
             // 間隔は物理数(位置数)で固定 = tier 非依存。無限回転。
-            float step    = 360f / JewelryTableMenu.countOf(ring);
+            // TOOLS だけは例外: ロッド/ワンドで実フォーム数が違う(6/5)ため、現在の実数に応じて
+            // 間隔を詰め直す(物理スロット自体は共有の6枠のままで、表示数だけ showFirstN で絞る)。
+            float step    = (ring == JewelryTableMenu.Ring.TOOLS)
+                    ? 360f / menu.toolFormsCount()
+                    : 360f / JewelryTableMenu.countOf(ring);
             float rot     = getVisualRot(ring);
             int   radius  = JewelryTableMenu.radiusOf(ring);
             float baseDeg = JewelryTableMenu.baseDegOf(ring);

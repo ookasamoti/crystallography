@@ -317,7 +317,7 @@ public class JewelryTableMenu extends AbstractContainerMenu {
      * TOOLS リングの物理スロット数は DEF 上 6固定(ロッドの6形態分)だが、ワンドは5形態しかない
      * ため、現在 CENTER に乗っている道具の種類に応じて実際に表示する数を絞る。
      */
-    private int toolFormsCount() {
+    public int toolFormsCount() {
         ItemStack tool = rings.get(Ring.CENTER)[0].peekRealItem();
         boolean isWand = kindOf(tool) == ICrystalTool.Kind.WAND;
         return (isWand ? WAND_FORMS : ROD_FORMS).length;
